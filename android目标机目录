@@ -1,0 +1,225 @@
+root@sabresd_6dq:/ # mount
+
+rootfs / rootfs ro,relatime 0 0
+tmpfs /dev tmpfs rw,seclabel,nosuid,relatime,mode=755 0 0
+devpts /dev/pts devpts rw,seclabel,relatime,mode=600 0 0
+proc /proc proc rw,relatime 0 0
+sysfs /sys sysfs rw,seclabel,relatime 0 0
+selinuxfs /sys/fs/selinux selinuxfs rw,relatime 0 0
+none /acct cgroup rw,relatime,cpuacct 0 0
+none /sys/fs/cgroup tmpfs rw,seclabel,relatime,mode=750,gid=1000 0 0
+tmpfs /mnt/secure tmpfs rw,seclabel,relatime,mode=700 0 0
+tmpfs /mnt/asec tmpfs rw,seclabel,relatime,mode=755,gid=1000 0 0
+tmpfs /mnt/obb tmpfs rw,seclabel,relatime,mode=755,gid=1000 0 0
+tmpfs /mnt/shm tmpfs rw,seclabel,relatime,size=1024k,mode=775,uid=1013,gid=1000 0 0
+none /dev/cpuctl cgroup rw,relatime,cpu 0 0
+pstore /sys/fs/pstore pstore rw,relatime 0 0
+/dev/block/mmcblk3p5 /system ext4 ro,seclabel,relatime,data=ordered 0 0
+/dev/block/mmcblk3p4 /data ext4 rw,seclabel,nosuid,nodev,noatime,nodiratime,noauto_da_alloc,errors=panic,data=ordered 0 0
+/dev/block/mmcblk3p6 /cache ext4 rw,seclabel,nosuid,nodev,relatime,data=ordered 0 0
+/dev/block/mmcblk3p7 /device ext4 ro,seclabel,nosuid,nodev,relatime,data=ordered 0 0
+adb /dev/usb-ffs/adb functionfs rw,relatime 0 0
+none /sys/kernel/debug debugfs rw,relatime 0 0
+/dev/fuse /mnt/shell/emulated fuse rw,nosuid,nodev,relatime,user_id=1023,group_id=1023,default_permissions,allow_other 0 0
+/dev/block/vold/8:4 /mnt/media_rw/udisk vfat rw,dirsync,nosuid,nodev,noexec,relatime,uid=1023,gid=1023,fmask=0000,dmask=0000,allow_utime=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,utf8,errors=r0
+
+root@sabresd_6dq:/ # 
+
+以上就是 Android 系统的分区结构，可见其挂载方式和 Linux 非常类似，熟悉 Linux 的朋友应该能很容易的看出这些分区的作用大概是什么。
+
+其中需要说明一下的可能是 /dev/block/mtdblock* 这几个核心分区（写入 ROM 的），他们都是使用 yaffs2 文件系统（基于 FLASH 存储），
+
+其中是 /system 这个分区只有特殊的 ro 只读权限，由此可见 Android 在安全性设计方面所下的一些功夫。另外 /dev/block/vold 据说是设计来替代 udev 的功能，主要用于支持一些热插拔设备。
+ls -l
+drwxr-xr-x root     root              1970-01-01 00:00 acct
+drwxrwx--- system   cache             1970-01-02 00:00 cache
+-rwxr-x--- root     root       268244 1970-01-01 00:00 charger
+dr-x------ root     root              1970-01-01 00:00 config
+lrwxrwxrwx root     root              1970-01-01 00:00 d -> /sys/kernel/debug
+drwxrwx--x system   system            1970-01-02 00:00 data
+-rw-r--r-- root     root          120 1970-01-01 00:00 default.prop
+drwxr-xr-x root     root              1970-01-01 00:00 dev
+drwxr-xr-x root     root              1970-01-01 00:00 device
+lrwxrwxrwx root     root              1970-01-01 00:00 etc -> /system/etc
+-rw-r--r-- root     root         9263 1970-01-01 00:00 file_contexts
+-rw-r----- root     root         1522 1970-01-01 00:00 fstab.freescale
+-rwxr-x--- root     root       179508 1970-01-01 00:00 init
+-rwxr-x--- root     root          919 1970-01-01 00:00 init.environ.rc
+-rwxr-x--- root     root         7522 1970-01-01 00:00 init.freescale.rc
+-rwxr-x--- root     root         3206 1970-01-01 00:00 init.freescale.usb.rc
+-rwxr-x--- root     root        25689 1970-01-01 00:00 init.rc
+-rwxr-x--- root     root         1795 1970-01-01 00:00 init.trace.rc
+-rwxr-x--- root     root         3915 1970-01-01 00:00 init.usb.rc
+drwxrwxr-x root     system            1970-01-01 00:00 mnt
+dr-xr-xr-x root     root              1970-01-01 00:00 proc
+-rw-r--r-- root     root         2161 1970-01-01 00:00 property_contexts
+drwxr-xr-x root     root              1970-01-01 00:00 res
+drwx------ root     root              2015-10-29 10:09 root
+drwxr-x--- root     root              1970-01-01 00:00 sbin
+lrwxrwxrwx root     root              1970-01-01 00:00 sdcard -> /storage/emulated/legacy
+-rw-r--r-- root     root          656 1970-01-01 00:00 seapp_contexts
+-rw-r--r-- root     root        75113 1970-01-01 00:00 sepolicy
+drwxr-x--x root     sdcard_r          1970-01-01 00:00 storage
+dr-xr-xr-x root     root              1970-01-01 00:00 sys
+drwxr-xr-x root     root              1970-01-01 00:00 system
+-rw-r--r-- root     root         3399 1970-01-01 00:00 ueventd.freescale.rc
+-rw-r--r-- root     root         4024 1970-01-01 00:00 ueventd.rc
+lrwxrwxrwx root     root              1970-01-01 00:00 vendor -> /system/vendor
+
+以上是 Android 根目录下文件目录，根据之前的分区结构可以大致看出每个目录的所处位置和大致功能，
+以下是几个重要目录/文件的说明：
+
+　　1、mnt                挂载点目录
+　　2、etc                系统主要配置文件
+　　3、system            Android 系统文件
+　　4、sys                Linux 内核文件
+　　5、proc                运行时文件
+　　6、init.rc            启动脚本
+　　7、default.prop        系统属性配置文件
+　　8、data                用户程序目录
+　　9、dev                设备文件
+
+root@sabresd_6dq:/system # ls -l
+drwxr-xr-x root     root              2015-09-14 08:39 app
+drwxr-xr-x root     shell             2015-09-14 08:35 bin
+-rw-r--r-- root     root         1582 2015-09-14 07:03 build.prop
+drwxr-xr-x root     root              2015-10-29 10:24 etc
+drwxr-xr-x root     root              2015-09-14 07:57 fonts
+drwxr-xr-x root     root              2015-09-14 08:40 framework
+drwxr-xr-x root     root              2015-09-14 08:40 lib
+drwx------ root     root              1970-01-01 00:00 lost+found
+drwxr-xr-x root     root              2015-09-14 07:32 media
+drwxr-xr-x root     root              2015-09-14 08:39 priv-app
+drwxr-xr-x root     root              2015-09-14 07:33 usr
+drwxr-xr-x root     shell             2015-09-14 08:26 vendor
+drwxr-xr-x root     shell             2015-09-14 08:34 xbin
+root@sabresd_6dq:/system # 
+
+
+以上是 system 目录下面的主要文件目录下面也简单介绍一下：
+
+　　1、usr            用户文件夹，包含共享、键盘布局、时间区域文件等
+　　2、app            常规下载的应用程序，这些 apk 包都是受保护的哦
+　　3、lib            系统底层库，如平台运行时库等
+　　4、etc            系统的配置文件，比如APN接入点设置等核心配置等
+　　5、framework    Android 系统平台核心 framework 的文件
+　　6、build.prop    Android 系统属性配置文件
+　　7、xbin            常用开发工具，比如 tcpdump/sqlite3 等
+　　8、bin            系统工具，比如 ps/cp/pm 等
+
+
+root@sabresd_6dq:/ # ls -l /data                                               
+drwxrwx--x system   system            1970-01-01 00:00 app
+drwx------ root     root              1970-01-01 00:00 app-asec
+drwxrwx--x system   system            1970-01-01 00:00 app-lib
+drwxrwx--x system   system            1970-01-01 00:00 app-private
+drwx------ system   system            1970-01-02 00:00 backup
+lrwxrwxrwx root     root              1970-01-01 00:00 bugreports -> /data/data/com.android.shell/fis
+drwxrwx--x system   system            1970-01-02 00:02 dalvik-cache
+drwxrwx--x system   system            1970-01-02 00:00 data
+drwxr-x--- root     log               1970-01-01 00:00 dontpanic
+drwxrwx--- drm      drm               1970-01-02 00:00 drm
+drwxr-x--x root     root              1970-01-01 00:00 local
+drwxrwx--- root     root              1970-01-01 00:00 lost+found
+drwxrwx--- media_rw media_rw          1970-01-02 00:00 media
+drwxrwx--- mediadrm mediadrm          1970-01-01 00:00 mediadrm
+drwxrwx--t system   misc              1970-01-01 00:00 misc
+drwx------ root     root              1970-01-02 00:00 property
+drwxrwx--x system   system            1970-01-01 00:00 resource-cache
+drwx--x--x system   system            1970-01-01 00:00 security
+drwxr-x--- root     shell             1970-01-01 00:00 ssh
+drwxrwxr-x system   system            1970-01-02 01:00 system
+drwx--x--x system   system            1970-01-01 00:00 user
+root@sabresd_6dq:/ #
+　可以看到 /data 目录下结构都和应用有关，平时安装的用户应用/游戏程序，对应APP的数据，
+都被安装在 /data/app 下就可以了
+
+查看系统变量：
+# set
+root@sabresd_6dq:/ # set
+ANDROID_ASSETS=/system/app
+ANDROID_BOOTLOGO=1
+ANDROID_DATA=/data
+ANDROID_PROPERTY_WORKSPACE=9,0
+ANDROID_ROOT=/system
+ANDROID_STORAGE=/storage
+ASEC_MOUNTPOINT=/mnt/asec
+BASHPID=151
+BOOTCLASSPATH=/system/framework/core.jar:/system/framework/conscrypt.jar:/system/framework/okhttp.jar
+CODEC_SHM_PATH=/mnt/shm
+COLUMNS
+COMPONENT_REGISTER_FILE=/system/etc/component_register
+CONTENTPIPE_REGISTER_FILE=/system/etc/contentpipe_register
+CORE_REGISTER_FILE=/system/etc/core_register
+EMULATED_STORAGE_SOURCE=/mnt/shell/emulated
+EMULATED_STORAGE_TARGET=/storage/emulated
+EPOCHREALTIME=90323.406355
+EXTERNAL_STORAGE=/storage/emulated/legacy
+HOME=/data
+HOSTNAME=sabresd_6dq
+IFS=$' \t\n'
+KSHEGID=0
+KSHGID=0
+KSHUID=0
+KSH_VERSION='@(#)MIRBSD KSH R43 2013/02/19'
+LD_LIBRARY_PATH=/vendor/lib:/system/lib
+LIGHTSENSOR_PATH=/sys/class/i2c-adapter/i2c-1/1-0044
+LINES
+LOOP_MOUNTPOINT=/mnt/obb
+MKSH=/system/bin/sh
+OLDPWD=/system
+OPTIND=1
+PATH=/sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin
+PGRP=151
+PIPESTATUS[0]=0
+PPID=1
+PS1='$(precmd)$USER@$HOSTNAME:${PWD:-?} # '
+PS2='> '
+PS3='#? '
+PS4='+ '
+PWD=/
+RANDOM=14026
+SECONDS=90318
+SHELL=/system/bin/sh
+SHM_MOUNTPOINT=/mnt/shm
+TERM=vt100
+TMOUT=0
+USER=root
+USER_ID=0
+VPU_FW_PATH=/system/lib/firmware/vpu
+_=set
+root@sabresd_6dq:/ #
+从系统变量我们也可以看到一些系统使用中的重要目录。
+
+root@sabresd_6dq:/ # ps
+USER     PID   PPID  VSIZE  RSS     WCHAN    PC         NAME
+root      1     0     676    492   800ee084 0001a05c S /init
+root      2     0     0      0     8004b4a0 00000000 S kthreadd
+root      3     2     0      0     80052744 00000000 S ksoftirqd/0
+root      5     2     0      0     8004562c 00000000 S kworker/0:0H
+root      6     2     0      0     8004562c 00000000 S kworker/u4:0
+root      7     2     0      0     80052744 00000000 S migration/0
+root      8     2     0      0     80095d30 00000000 S rcu_preempt
+root      9     2     0      0     80095d30 00000000 S rcu_bh
+root      10    2     0      0     80095d30 00000000 S rcu_sched
+root      11    2     0      0     80052744 00000000 S migration/1
+root      12    2     0      0     80052744 00000000 S ksoftirqd/1
+root      13    2     0      0     8004562c 00000000 S kworker/1:0
+root      14    2     0      0     8004562c 00000000 S kworker/1:0H
+root      15    2     0      0     80045998 00000000 S khelper
+root      16    2     0      0     803978e4 00000000 S kdevtmpfs
+root      17    2     0      0     80045998 00000000 S suspend_sys_syn
+root      18    2     0      0     80045998 00000000 S suspend
+root      19    2     0      0     8004562c 00000000 S kworker/0:1
+root      20    2     0      0     8004562c 00000000 S kworker/1:1
+...
+root@sabresd_6dq:/ #
+从这里我们可以看出和 Linux 一样所有进程的入口都是 init，接下来的系统进程也和 Linux 类似，
+再接下来就是一些系统的守护程序（Native Service），最后是系统重要的应用程序。
+通过这个列表大家也可以看出 Android 启动过程的一些端倪。 
+
+
+
+
+
+

@@ -1,0 +1,79 @@
+adb am start -n com.autolink.debuggingoption/com.autolink.debuggingoption.DebuggingOptionActivity
+
+更新代码，编译完成之后，执行如下命令生成升级包：
+source build/envsetup.sh
+lunch m41s_6dl-eng
+make otapackage
+
+http://blog.csdn.net/kevinx_xu/article/details/8589833  recovery升级
+
+生成的升级包路径如下
+out\target\product\m41s_6dl\m41s_6dl-ota-20150123.zip
+out\target\product\m41s_6dl\m41s_6dl-ota-20150123-imx6dl.zip
+两个都是升级包，只是命名不同而已
+
+生成的升级包路径如下
+out\target\product\m41s_6dl\m41s_6dl-ota-20150123.zip
+out\target\product\m41s_6dl\m41s_6dl-ota-20150123-imx6dl.zip
+两个都是升级包，只是命名不同而已。
+
+
+  现adb和u盘可以切换了，切换命令如下：
+adb模式：echo 1 > /sys/devices/soc0/soc.1/2100000.aips-bus/2184000.usb/ci_hdrc.0/otg_mode_trigger/otg_mode
+u盘模式：echo 0 > /sys/devices/soc0/soc.1/2100000.aips-bus/2184000.usb/ci_hdrc.0/otg_mode_trigger/otg_mode
+如果需要将该功能做在程序中，则open /sys/devices/soc0/soc.1/2100000.aips-bus/2184000.usb/ci_hdrc.0/otg_mode_trigger/otg_mode这个节点，往这个节点写0或1就可以切换相应模式，该节点权限是已经所有用户可以写，不过我没写代码测试。
+
+adb am start -n com.autolink.debuggingoption/com.autolink.debuggingoption.DebuggingOptionActivity
+
+
+03-10 12:45:18.749 V/NfServiceBluetooth(  416): isBtEnabled()
+03-10 12:45:18.749 D/BluetoothAdapter(  416): 747008968: getState() :  mService = null. Returning STATE_OFF
+03-10 12:45:18.749 E/NfServiceManagerBinder_2.20.28(  416): BluetoothAdapter state is not ON. state: 10
+03-10 12:45:18.749 W/AudioTrack(  253): AUDIO_OUTPUT_FLAG_FAST denied by client due to mismatching sample rate (48000 vs 44100)
+03-10 12:45:18.749 V/NfServiceBluetooth(  416): isBtEnabled()
+03-10 12:45:18.749 D/BluetoothAdapter(  416): 747008968: getState() :  mService = null. Returning STATE_OFF
+03-10 12:45:18.749 E/NfServiceManagerBinder_2.20.28(  416): BluetoothAdapter state is not ON. state: 10
+03-10 12:45:18.749 V/NfServiceBluetooth(  416): setBtEnable() true
+03-10 12:45:18.749 V/NfServiceManagerBinder_2.20.28(  416): setBtEnable() true
+03-10 12:45:18.749 V/NfBluetooth(  416): setBtEnable() enable: true
+03-10 12:45:18.749 D/BluetoothAdapter(  416): 747008968: getState() :  mService = null. Returning STATE_OFF
+03-10 12:45:18.749 V/NfPrimitive(  416): setBtEnable() true Current BT State: 10
+03-10 12:45:18.749 W/audio_hw_primary(   99): out_set_parameters routing=2, ret 1, out 2005337776
+03-10 12:45:18.749 E/NfPrimitive(  416): Reject : Too frequent, LastOnOff = 1457585118603 currentTimeMillis = 1457585118761
+03-10 12:45:18.749 I/audio_hw_primary(   99): start_output_stream... 2005337776, device 2
+03-10 12:45:18.749 D/MVCBT   (  453): [DefaultController] onMessage: ACTION_OPEN_SWITCH [] [BTServiceBinder]
+03-10 12:45:18.759 W/audio_hw_primary(   99): card 0, port 0 device 0x2
+03-10 12:45:18.759 W/audio_hw_primary(   99): rate 44100, channel 2 period_size 0xc0
+03-10 12:45:18.759 D/audio_hw_primary(   99): [nFore] nFore AEC enable
+03-10 12:45:18.759 D/audio_hw_primary(   99): [nFore] nf_buffer = 1536
+03-10 12:45:18.769 I/nForeAEC(   99): [nFore]Playback trigger.
+03-10 12:45:18.779 D/        (  253): Setting time of day to sec=1457585118
+03-10 12:45:18.800 D/        (  253): Setting time of day to sec=1457585118
+03-10 12:45:18.960 I/McuApplogicStub(  505): McuApplogicStub handleMessage() msg.what = 1537
+03-10 12:45:18.960 I/McuApplogicStub(  505): McuApplogicStub handleMessage() MSG_SETTIME
+03-10 12:45:18.960 I/McuApplogicStub(  505): McuApplogicStub SendDateTime()
+03-10 12:45:18.960 I/McuApplogicStub(  505): SendDateTime() year = 2016
+03-10 12:45:18.960 I/McuApplogicStub(  505): SendDateTime() month = 3
+03-10 12:45:18.960 I/McuApplogicStub(  505): SendDateTime() day = 10
+03-10 12:45:18.960 I/McuApplogicStub(  505): SendDateTime() hour = 12
+03-10 12:45:18.960 I/McuApplogicStub(  505): SendDateTime() minute = 45
+03-10 12:45:18.960 I/McuApplogicStub(  505): SendDateTime() second = 18
+03-10 12:45:18.960 I/McuApplogicStub(  505): McuApplogicStub handleMessage() msg.what = 5
+03-10 12:45:18.960 I/McuTransctionStub(  505): handleMessage:MSG_MCU_TRANSCTION_TX
+03-10 12:45:18.960 I/SerialPortStub(  505): SerialPortStub  Send2SerialPort:  0xaa 0x77 0x00 0xf8 0x00 0xa0 0x00 0x08 0x8d 0x07 0xe0 0x03 0x0a 0x0c 0x2d 0x12
+03-10 12:45:18.960 I/SerialPortStubExtExt(  505): SerialArm2StubExt  send2SerialPort
+03-10 12:45:18.990 D/        (  253): Setting time of day to sec=1457585119
+03-10 12:45:19.000 D/        (  253): Setting time of day to sec=1457585119
+03-10 12:45:19.140 I/McuApplogicStub(  505): McuApplogicStub handleMessage() msg.what = 1536
+03-10 12:45:19.140 I/McuApplogicStub(  505): McuApplogicStub handleMessage() MSG_TIMEOUT
+03-10 12:45:19.140 I/McuApplogicStub(  505): McuApplogicStub tiggerHeartbeat() send 444
+03-10 12:45:19.140 I/McuApplogicStub(  505): McuApplogicStub tiggerHeartbeat() send mSendBroadSystemUICount =30
+03-10 12:45:19.140 I/McuApplogicStub(  505): McuApplogicStub handleMessage() msg.what = 5
+03-10 12:45:19.140 I/McuTransctionStub(  505): handleMessage:MSG_MCU_TRANSCTION_TX
+03-10 12:45:19.140 I/SerialPortStub(  505): SerialPortStub  Send2SerialPort:  0xaa 0x77 0x00 0x22 0x00 0xa0 0x00 0x02 0x81 0x01
+03-10 12:45:19.140 I/SerialPortStubExtExt(  505): SerialArm2StubExt  send2SerialPort
+03-10 12:45:19.180 D/        (  253): Setting time of day to sec=1457585119
+03-10 12:45:19.199 D/        (  253): Setting time of day to sec=1457585119
+03-10 12:45:19.379 D/        (  253): Setting time of day to sec=1457585119
+03-10 12:45:19.400 D/        (  253): Setting time of day to sec=1457585119
+

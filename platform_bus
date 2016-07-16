@@ -1,0 +1,339 @@
+http://blog.chinaunix.net/uid-20626696-id-77698.html
+http://blog.csdn.net/jmq_0000/article/details/7473682  I2C
+
+Platform_device 和 Platform_driver 。
+
+Linux传统的设备管理机制是由device driver机制来完成的，我个人对设备管理模型的理解就是用一个链表将系统中所有使用的设备以及驱动连接起来(总线连接)，以供内核来方便的管理。platform管理模型与与传统管理机制相比，最大的优势就是将设备用到得资源也注册进了内核，比如说内存、irq、DMA以及IO等。这样提高了驱动和资源管理的独立性。
+Platform 机制的本身使用并不复杂，由两部分组成： platform_device 和 platfrom_driver 。
+开发过程是：定义platform_device-----注册platform_device-------定义platform_driver ------注册platform_driver。
+
+1.       首先从platform_device的定义开始说起。
+struct platform_device {
+
+	const char        * name;
+
+	u32            id;
+
+	struct device    dev;
+
+	u32            num_resources;
+
+	struct resource        * resource;
+
+};
+
+struct resource {
+
+	resource_size_t start;
+
+	resource_size_t end;
+
+	const char *name;
+
+	unsigned long flags;
+
+	struct resource *parent, *sibling, *child;
+
+};
+
+ 
+
+static struct mxc_i2c_platform_data mxci2c1_data = {
+
+    .i2c_clk = 100000,
+
+};
+
+static struct resource mxci2c1_resources[] = {
+
+    [0] = {
+
+           .start = I2C_BASE_ADDR,
+
+           .end = I2C_BASE_ADDR + SZ_4K - 1,
+
+           .flags = IORESOURCE_MEM,
+
+           },
+
+    [1] = {
+
+           .start = INT_I2C,
+
+           .end = INT_I2C,
+
+           .flags = IORESOURCE_IRQ,
+
+           },
+
+};
+
+static struct platform_device mxci2c_devices = {
+
+    {
+
+     .name = "mxc_i2c",
+
+     .id = 0,
+
+     .dev = {
+
+         .release = mxc_nop_release,
+
+         .platform_data = &mxci2c1_data,
+
+         },
+
+     .num_resources = ARRAY_SIZE(mxci2c1_resources),
+
+     .resource = mxci2c1_resources,}}
+
+
+2.       注册platform_device
+
+注册platform_device就是调用注册函数对该设备进行注册。
+
+        if (platform_device_register (&mxci2c_devices) < 0)
+
+            dev_err(&mxci2c_devices[i].dev,
+
+                "Unable to register I2C device\n");
+
+上述代码中直接调用了platform_device_register函数来执行，对于该函数以后再做详细的介绍。
+
+ 
+
+3.       定义platform_driver
+
+struct platform_driver {
+
+	int (*probe)(struct platform_device *);
+
+	int (*remove)(struct platform_device *);
+
+	void (*shutdown)(struct platform_device *);
+
+	int (*suspend)(struct platform_device *, pm_message_t state);
+
+	int (*suspend_late)(struct platform_device *, pm_message_t state);
+
+	int (*resume_early)(struct platform_device *);
+
+	int (*resume)(struct platform_device *);
+
+	struct device_driver driver;
+
+};
+
+static struct platform_driver mxci2c_driver = {
+
+         .driver = {
+
+                      .name = "mxc_i2c",
+
+                      .owner = THIS_MODULE,
+
+                      },
+
+         .probe = mxci2c_probe,
+
+         .remove = mxci2c_remove,
+
+         .suspend = mxci2c_suspend,
+
+         .resume = mxci2c_resume,
+
+};
+
+由上面的.driver.name可以看出，正式由name将device与device_driver联系起来的。
+
+ 
+
+4.       注册platform_driver
+
+注册platform_driver就是调用platform_driver_register，
+
+platform_driver_register (&mxci2c_driver)；
+
+platform_driver_register  函数会引发probe函数的执行。
+
+mxci2c_probe函数的原型是：
+
+static int mxci2c_probe(struct platform_device *pdev)
+
+在引发该函数执行的过程中，会将对应的platform_device结构体做为参数传递给mxci2c_probe函数。那么我们就可以直接用这个结构体中的resource以及platform_data了。同时在mxci2c_probe函数中要做的就是完成驱动的其他工作了，比如说在字符驱动里，就是要完成cdev结构体的添加。
+
+
+
+
+上面一篇主要是介绍了怎么样用platform_device模型来管理设备，下面介绍下
+
+platform_device和platform_driver的注册函数。这两个注册函数在drivers/base下的platform.c文件里面。
+
+ 
+1.       首先来看platform_device_register函数。
+
+
+struct platform_device {
+
+         const char        * name;
+
+         u32            id;
+
+         struct device    dev;
+
+         u32            num_resources;
+
+         struct resource        * resource;
+
+};
+
+int platform_device_register(struct platform_device * pdev)
+
+{
+
+         device_ initialize (&pdev->dev);
+
+         return platform_device_add(pdev);
+
+}
+
+首先是完成对dev的initialize。然后调用platform_device_add函数向系统添加一个platform设备。下面对该函数的关键部分注释。
+
+ 
+
+int platform_device_add(struct platform_device *pdev)
+
+{
+
+         int i, ret = 0;
+
+ 
+
+  
+//让dev的parent指向 platform_bus,platform_bus也是作为一个设备向系统添加的。
+
+         if (!pdev->dev.parent)
+
+                   pdev->dev.parent = &platform_bus;
+
+//dev所连接的总线是platform_bus_type
+
+         pdev->dev.bus = &platform_bus_type;
+
+//就是将设备注册到指定的bus_type,这个在以后的文章中在详细介绍
+
+         ret = device_add(&pdev->dev);
+
+}
+
+2.       下面来看看platform_driver_register的实现。
+
+ 
+
+struct platform_driver {
+
+         int (*probe)(struct platform_device *);
+
+         int (*remove)(struct platform_device *);
+
+         void (*shutdown)(struct platform_device *);
+
+         int (*suspend)(struct platform_device *, pm_message_t state);
+
+         int (*suspend_late)(struct platform_device *, pm_message_t state);
+
+         int (*resume_early)(struct platform_device *);
+
+         int (*resume)(struct platform_device *);
+
+         struct device_driver driver;
+
+};
+
+int platform_driver_register(struct platform_driver *drv)
+
+{
+
+	//指定了device_driver所属的总线
+
+	drv->driver.bus = &platform_bus_type;
+
+	//如果指定了platform的各项接口操作就会赋给对应的driver的接口。
+
+	if (drv->probe)
+
+		   drv->driver.probe = platform_drv_probe;
+
+	if (drv->remove)
+
+		   drv->driver.remove = platform_drv_remove;
+
+	if (drv->shutdown)
+
+		   drv->driver.shutdown = platform_drv_shutdown;
+
+	if (drv->suspend)
+
+		   drv->driver.suspend = platform_drv_suspend;
+
+	if (drv->resume)
+
+		   drv->driver.resume = platform_drv_resume;
+
+	//调用driver_register注册驱动
+
+	return driver_register(&drv->driver);
+
+}
+
+这样在platform_bus_type总线上面既有设备又有驱动了。这两个注册函数是内核提供的，对于其中调用的device_register以及driver_register函数将会在后面的文章中具体介绍。在上面对pdev->dev.parent = &platform_bus;的解释中，我们得知platform_bus也是一个设备，具体将在下一篇文章里介绍。
+
+   Platform总线是Kernel中加入的一种虚拟总线，在最近版本的2.6的内核版本中，很多的驱动都已经用platform改写了。前面已经介绍了如何用platform总线在管理设备，下面介绍platform总线它本身是如何建立的。下面的内核代码是linux2.6.31.5版本的。 
+
+首先可以把Platform总线看成一个设备，然后也是一个总线。Platform总线的初始化是在/drivers/base/platform.c中的platform_bus_init()中完成的。
+
+struct device platform_bus = {
+
+      .init_name   = "platform",
+
+};
+
+struct bus_type platform_bus_type = {
+
+      .name        = "platform",
+
+      .dev_attrs   = platform_dev_attrs,
+
+      .match        = platform_match,
+
+      .uevent       = platform_uevent,
+
+      .pm      = PLATFORM_PM_OPS_PTR,
+
+};
+
+int __init platform_bus_init(void)
+{
+
+         int error;
+         early_platform_cleanup();
+         error = device_register(&platform_bus);
+         if (error)
+
+                   return error;
+
+         error =  bus_register(&platform_bus_type);
+         if (error)
+                   device_unregister(&platform_bus);
+         return error;
+
+}
+
+这个函数向系统注册platform_bus设备以及platform_bus_type总线。以后的platform的设备都会以此为parent，在sysfs系统中表现为，所有platform类型的设备都会添加在/sys/devices/platform下面。至于device_register， bus_register以及刚才提到的sysfs系统将在以后的文章中介绍。
+
+
+
+
+
+ 

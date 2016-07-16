@@ -1,0 +1,62 @@
+阳江车管所地址电话
+
+阳江车管所地址：阳江市江城区新江北路
+阳江车管所电话：0662-3410716 
+
+名　　称：阳江市公安局交通警察支队
+地　　址：广东省阳江市江城区新江北路
+电　　话：0662-3433110、
+0662-3419496
+0662-3417546
+0662-3363600 
+
+
+
+南山驾校详情
+地址： 	深圳市宝安区裕安二路314 
+电话： 	18926025839, (0755)27965990
+
+int main(int argc, char* argv[])  
+{  
+    SYSTEMTIME stCurTime = {0};  
+    GetSystemTime(&stCurTime); // UTC时间  
+    printf("%d/%d/%d\n", stCurTime.wMonth, stCurTime.wDay, stCurTime.wYear);    
+    printf("%d:%d:%d\n", stCurTime.wHour, stCurTime.wMinute, stCurTime.wSecond);   
+  
+    printf("----------\n");  
+  
+    GetLocalTime(&stCurTime);  // 北京时间  
+    printf("%d/%d/%d\n", stCurTime.wMonth, stCurTime.wDay, stCurTime.wYear);    
+    printf("%d:%d:%d\n", stCurTime.wHour, stCurTime.wMinute, stCurTime.wSecond);   
+      
+    return 0;  
+} 
+
+
+
+
+bool CProtocolNMEA::CalcTime(double d, int& h, int& m, double& s)
+{
+	// extracts hh, mm and ss.ssss from a value in the format hhmmss.ssss
+	if ((d >= 1000000.0) || (d < 0.0))
+		return false;
+	int t = (int)(d / 100);
+	m = t % 100;
+	h = (t - m) / 100;
+	s = d - 100.0 * t;
+	return (h >= 0) && (h <= 23) && (m >= 0) && (m < 60) && (s >= 0.0) && (s < 60.0);
+}
+
+bool CProtocolNMEA::CalcDate(int d, int& day, int& mon, int& yr)
+{
+	// extracts yy, mm and dd from a value in the format ddmmyy
+	if ((d > 999999) || (d < 0))
+		return false;
+	yr = d % 100;
+	d /= 100;
+	mon = d % 100;
+	d /= 100;
+	day = d % 100;
+	return (day >= 1) && (day <= 31) && (mon >= 1) && (mon <= 12) && (yr >= 0) && (yr <= 99);
+}
+

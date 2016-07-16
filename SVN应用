@@ -1,0 +1,125 @@
+在之前的开发阶段，由于大家的任务是按模块划分的，而模块间耦合度很低，因此一直都是各编各的，直到近期需要合并代码的时候才注意到，其实有些工具函数都写重了，而且还有宏定义、结构体之类的问题，所以代码同步问题已刻不容缓了。下面简单介绍下ubuntu中使用svn客户端的一些事项：
+
+1、首先需要安装SVN。Ubuntu下的SVN安装十分简单。
+使用命令：sudo apt-get install subversion(或者sudo apt-get install rapidsvn)
+然后根据提示一步一步，就完成了SVN的安装； 也可以通过Synaptic Package Manager来搜索安装两者。
+
+2、检出文件（checkout）。
+使用命令：svn co http://{svn repository url} /destination
+然后系统会用当前的用户名登录，提示输入密码，如果第一次密码输入错误，会提示你输入用户名；
+输入正确后，就可以检出文件了。
+
+3、提交文件（commit）。
+进入需要更新的目录，输入命令：
+svn commit -m path-to-commit，其中path-to-commit可以为空，成功后会提示更新后的版本号。
+
+4、更新文件（update）。
+svn update，在要更新的目录运行这个命令就可以了。
+
+5、查看日志（log）。
+svn log path
+
+几个常用命令
+
+svn up  更新
+
+svn st 状态
+
+svn di 修改对比
+
+svn log 查看日志
+
+svn ci -m "note" 提交
+
+svn add 增加到版本控制
+
+ 
+
+svn 文件忽略
+
+用svn st查看时，常有 ? 标记的文件，其实这些文件是不要版本控制的，每次出现会干扰视线。
+
+可以通过svn的配置文件: /etc/subversion/config
+
+配置全局忽略: global-ignores
+
+对个别目录和文件的忽略:
+如果想对public/photos目录设置为ignores ,要对public目录进行设置： svn pe svn:ignore public
+
+进入编辑器输入photos 保存就可以了。多个文件分隔用换行
+
+
+ubuntu下安装RapidSVN： 图型界面
+
+         $sudo apt-get install RapidSVN
+
+http://jingyan.baidu.com/article/215817f7e255bc1edb142355.html
+
+
+安装SVN 
+在终端命令行下键入
+	sudo apt-get install subversion  
+系统会自动联机下载安装
+ 
+
+使用SVN 客户端
+
+ 
+Dear All:
+1)登录svn://192.168.2.249/Android，将FSL-MFG-Tools目录下的内容下载至本地
+
+3.1
+
+ 
+
+检出服务器文件到本地
+新建一个目录存放你想检出的文件
+mkdir  mysvnfile 
+进入到此目录下
+cd  mysvnfile 
+检出服务器文件到此目录
+svn  checkout  svn://192.168.2.249/Android
+3.2 
+
+往版本库中添加新的文件
+svn add *.c (添加当前目录下所有的 c文件)
+
+将改动的文件提交到版本库
+	svn commit -m “add test file”( 得先执行add命令再执行此命令才可以成功) 
+3.3 更新文件 
+	3.3.1 默认将当前目录以及子目录下的所有文件都更新到最新版本 
+svn update       
+3.3.2 更新文件到特别的版本 
+	svn update –r  版本号 文件路径
+
+5.1 检出 
+svn  co  http://路径(目录或文件的全路径) [本地目录全路径]  --username 用户名 --password 密码 
+svn  co  svn://路径(目录或文件的全路径)  [本地目录全路径]   --username 用户名 --password 密码 
+svn  checkout  http://路径(目录或文件的全路径) [本地目录全路径] --username 用户名 
+svn  checkout  svn://路径(目录或文件的全路径)  [本地目录全路径]   --username 用户名 
+注：如果不带--password 参数传输密码的话，会提示输入密码，建议不要用明文的--password 选项。 
+  其中 username 与 password前是两个短线，不是一个。   不指定本地目录全路径，则检出到当前目录下。 例子： 
+svn co svn://192.168.0.3/测试工具 /home/testtools --username wzhnsc svn co http://192.168.0.3/test/testapp --username wzhnsc 
+svn checkout svn://192.168.0.3/测试工具 /home/testtools --username wzhnsc 
+svn checkouthttp://192.168.0.3/test/testapp --username wzhnsc  
+5.2、导出(导出一个干净的不带.svn文件夹的目录树) 
+svn  export  [-r 版本号]  http://路径(目录或文件的全路径) [本地目录全路径] --username 用户名 
+svn  export  [-r 版本号]  svn://路径(目录或文件的全路径) [本地目录全路径] --username 用户名 
+svn  export  本地检出的(即带有.svn文件夹的)目录全路径  要导出的本地目录全路径 
+注：第一种从版本库导出干净工作目录树的形式是指定URL，    如果指定了修订版本号，会导出相应的版本， 
+   如果没有指定修订版本，则会导出最新的，导出到指定位置。 
+   如果省略 本地目录全路径，URL的最后一部分会作为本地目录的名字。   第二种形式是指定 本地检出的目录全路径 到要导出的本地目录全路径，所有的本地修改将会保留， 
+   但是不在版本控制下(即没提交的新文件，因为.svn文件夹里没有与之相关的信息记录)的文件不会拷贝。 例子： svn exportsvn://192.168.0.3/测试工具 /home/testtools --username wzhnsc svn exporthttp://192.168.0.3/test/testapp --username wzhnsc svn export/home/testapp /home/testtools  
+5.3、添加新文件  svn add 文件名 
+注：告诉SVN服务器要添加文件了，还要用svn commint -m真实的上传上去！ 例子： 
+svn add test.php ＜－ 添加test.php  
+svn commit -m “添加我的测试用test.php“ test.php svn add *.php ＜－ 添加当前目录下所有的php文件 svn commit -m “添加我的测试用全部php文件“ *.php  
+5.4、提交 
+svn commit -m “提交备注信息文本“ [-N] [--no-unlock] 文件名 svn ci -m “提交备注信息文本“ [-N] [--no-unlock] 文件名 必须带上-m参数，参数可以为空，但是必须写上-m 例子： 
+svn commit -m “提交当前目录下的全部在版本控制下的文件“ * ＜－ 注意这个*表示全部文件 
+svn commit -m “提交我的测试用test.php“ test.php 
+svn commit -m “提交我的测试用test.php“ -N --no-unlock test.php ＜－ 保持锁就用–no-unlock开关 
+svn ci -m “提交当前目录下的全部在版本控制下的文件“ * ＜－ 注意这个*表示全部文件 
+svn ci -m “提交我的测试用test.php“ test.php 
+svn ci -m “提交我的测试用test.php“ -N --no-unlock test.php ＜－ 保持锁就用–no-unlock开关 
+

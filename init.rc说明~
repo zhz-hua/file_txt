@@ -1,0 +1,3 @@
+当我们只是按下电源键开机时,会进入正常启动模式。 Secondary stage bootloader 会从boot 分区开始启动。Boot 分区的格式是固定的,首先是一个头部,然后是 Linux 内核,最后是用作根文件系统的 ramdisk。
+当 Linux 内核启动完毕后,就开始执行根文件系统中的 init 程序,init 程序会读取启动脚本文件(init.rc 和init.goldfish)。
+现在就来说一下，init.rc到底在做些什么

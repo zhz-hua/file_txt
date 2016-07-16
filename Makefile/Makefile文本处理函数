@@ -1,0 +1,141 @@
+$(subst FROM,TO,TEXT)
+
+         函数名称：字符串替换函数
+
+         函数功能：把字符串TEXT中的FROM字符串替换为TO
+
+         返回值：替换后的新字符串
+
+                   $(subst ee,EE,feet on the stree) //替换“feet on the street“中的ee为EE。结果得到字符串”fEEt on the strEEt”
+
+$(patsubst PATTERN,REPLACEMENT,TEXT)
+
+         函数名称：模式替换函数
+
+         函数功能：搜索TEXT中以空格分开的单词，将符合模式PATTERN替换为REPLACEMENT。参数PATTERN中可以用模式通配符%来表示一个单词中的诺干字符。如果参数REPLACEMENT中也包含一个%，那么REPLACEMENT中的”%”将使PATTERN中的那个”%”所代表的字符串。而且只有第一个%作为模式字符来处理，之后出现的不再作为模式字符（作为一个字符）。转义字符可以避免%不作为为模式字符
+
+         返回值：替换后的新字符串
+
+         函数说明：参数TEXT单词之间的多个空格在处理时被合并为一个空格，并忽略前导和结尾空格
+
+                   $(patsubst %.c,%.o,x.c.c bar.c)
+
+                  替换以.o结尾的字符，函数的返回结果就为”x.c.o bar.o”
+
+$(strip STRING)
+
+         函数名称：去空格函数
+
+         函数功能：去掉字符串STRING开头和结尾的空格，并将其中多个连续空字符合并为一个空字符
+
+         返回值：无前导和结尾空字符，使用单一空格分隔的多个单词的字符串
+
+         Strip函数常用语条件判断语句的表达式中，确保表达式比较可靠和健壮
+
+$(findstring FIND,IN)
+
+         函数名称：查找字符串函数
+
+         函数功能：在字符串IN中查找FIND字符串
+
+         返回值：如果在IN中找到FIND子字符串，则返回FIND，否则返回空
+
+         函数说明：收索是严格的文本匹配
+
+                   $(findstring a,a b c)     返回 a
+
+                   $(findstring a,b c)       返回 空字符
+
+$(filter PATTERN…,TEXT)
+
+         函数名称:过滤函数
+
+         函数功能：过滤掉字符串TEXT中所有不符合模式PATTERN的单词，保留所有符合此模式的单词。模式中一般需要包含字符%，存在多个模式时，模式之间用空格分隔
+
+         返回值：空格分隔的TEXT字符串中所有符合模式PATTERN的字符串
+
+         函数说明：filter可以用来去除一个变量中的某些字符串。
+
+                   source := foo.c bar.c baz.s ugh.h
+
+                   foo: $(source)
+
+                            cc $(filter %.c %s,$(source)) -o foo       此句话等于 cc foo.c bar.c baz.s -o foo 剔除掉了不符合.c,.s 的文件
+
+$(filter-out PATTERN…,TEXT)
+
+         函数名称：反过滤函数
+
+         函数功能：和filter相反，剔除掉TEXT中所有符合模式PATTERN的单词
+
+         返回值：空格分隔的所有不符合模式PATTERN的字符串
+
+                   objects = main1.o foo.o main2.o bar.o
+
+                   mains = main1.o main2.o
+
+                   $(filter-out $(mains),$(objects))     去除了变量object中mains定义的字符串（文件名）的功能，返回”foo.o bar.o”
+
+$(sort LIST)
+
+         函数名称：排序
+
+         函数功能：给字符串LIST中的单词以首字母为主进行排序，并去掉重复的单词
+
+         返回值：空格分隔的没有重复单词的字符串
+
+                   $(sort foo bar lose foo)
+
+                   返回值为”bar foo lose”    升序排，去掉重复单词
+
+$(word N,TEXT)
+
+         函数名称：取单词函数
+
+         函数功能：取字符串TEXT中第N个单词(N的值从1开始)
+
+         返回值：返回字符串TEXT中第N个单词
+
+         函数说明：N大雨字符串TEXT中单词数目，返回空字符串。如果N为0，出错！！
+
+                   $(word 2,foo bar baz)        返回bar
+
+$(wordlist S,E,TEXT)
+
+         函数名称：取字符串函数
+
+         函数功能：从字符串TEXT中去除从S开始到E打单词串。S和E表示单词在字符串中位置的数字
+
+         返回值：TEXT中从第S到E的单词串
+
+         函数说明：“S”和“E”都是从1开始的数字。当“S”比“TEXT”中的字数大时，返回空。如果“E”大于“TEXT”字数，返回从“S”开始，到“TEXT”结束的单词串。如果“S”大于“E”，返回空。
+
+                   $(wordlist 2,3,foo bar baz)   返回”bar baz”
+
+$(words TEXT)
+
+         统计TEXT字符串的单词个数，返回值即为单词个数
+
+                   $(words,foo bar)  返回值为2.字符串TEXT最后一个单词就是$(word $(words TEXT),TEXT)
+
+$(firstword NAMES…)
+
+         函数名称：取首单词函数
+
+         功能：取字符串“NAMES…“的第一个单词
+
+         返回值：返回NAMES的第一个单词
+
+                   $(firstword foo bar)
+
+                   返回值为foo。Firstword的实现功能等同于$(word 1,NAMES…)
+
+         下面我们来看一个实际应用：Makefile中可以使用VPATH来指定搜索路径。对于源代码所包含的头文件的搜索路径需要使用gcc的-l参数指定目录来实现。VPATH罗列的目录是用:分隔的
+
+         ……
+
+         VPATH = src:../includes
+
+         override CFLAGS += $(patsubst %,-l%,$(subst :, ,$(VPATH)))  à CFLAGS += -lsrc -l../includes
+
+         首先$(subst :, ,$(VPATH))将VPATH中的:用空格代替。$(patsubst %,-l%,src ../includes) 在patsubst函数中，模式和替换模式中都有%时，两个%表示同样的值。而模式直接使用%表示无论啥都匹配，全匹配

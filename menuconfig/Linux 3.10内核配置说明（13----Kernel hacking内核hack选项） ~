@@ -1,0 +1,103 @@
+ [*] Show timing information on printks                               
+ (4) Default message log level (1-7)                                 
+ [*] Enable __deprecated logic                                       
+ [*] Enable __must_check logic                                       
+ (1024) Warn for stack frames larger than (needs gcc 4.4)            
+ [*] Magic SysRq key                                                 
+ [ ] Strip assembler-generated symbols during link                   
+ [ ] Generate readable assembler code                                
+ [ ] Enable unused/obsolete exported symbols                         
+ -*- Debug Filesystem                                                
+ [ ] Run 'make headers_check' when building vmlinux                  
+ [ ] Enable full Section mismatch analysis                           
+ -*- Kernel debugging                                                
+ [ ]   Debug shared IRQ handlers                                     
+ [ ]   Detect Hard and Soft Lockups                                  
+ [ ] Panic on Oops                                                   
+ [ ] Detect Hung Tasks                                               
+ [ ] Collect scheduler debugging info                                
+ [*] Collect scheduler statistics                                    
+ [*] Collect kernel timers statistics                                
+ [ ] Debug object operations                                         
+ [ ] Enable SLUB performance statistics                              
+ [ ] Kernel memory leak detector                                     
+ [*] Debug preemptible kernel                                        
+ [ ] RT Mutex debugging, deadlock detection                          
+ [ ] Built-in scriptable tester for rt-mutexes                       
+ [ ] Spinlock and rw-lock debugging: basic checks                    
+ [ ] Mutex debugging: basic checks                                   
+ [ ] Lock debugging: detect incorrect freeing of live locks          
+ [ ] Lock debugging: prove locking correctness                       
+ [ ] Lock usage statistics                                           
+ [ ] Sleep inside atomic section checking                            
+ [ ] Locking API boot-time self-tests                                
+ [*] Stacktrace                                                      
+ [ ] Stack utilization instrumentation                               
+ [ ] kobject debugging                                               
+ [ ] Highmem debugging                                               
+ [ ] Verbose BUG() reporting (adds 70K)                              
+ [ ] Compile the kernel with debug info                              
+ [ ] Debug VM                                                        
+ [ ] Debug filesystem writers count 
+ [ ] Debug memory initialisation                                     
+ [ ] Debug linked list manipulation                                  
+ [ ] Linked list sorting test                                        
+ [ ] Debug SG table operations                                       
+ [ ] Debug notifier call chains                                      
+ [ ] Debug credential management                                     
+ [ ] Delay each boot printk message by N milliseconds                
+     RCU Debugging  --->                                             
+ < > Self test for the backtrace code                                
+ [ ] Force extended block device numbers and spread them             
+ [ ] Force weak per-cpu definitions                                  
+ [ ] Debug access to per_cpu maps                                    
+ < > Linux Kernel Dump Test Tool Module                              
+ < > Notifier error injection                                        
+ [ ] Fault-injection framework                                       
+ [ ] Debug page memory allocations                                   
+ [*] Tracers  --->                                                   
+ < > Red-Black tree test                                             
+ < > Interval tree test                                              
+ [ ] Enable dynamic printk() support                                 
+ [ ] Enable debugging of DMA-API usage                               
+ [ ] Perform an atomic64_t self-test at boot                         
+ [ ] Sample kernel code  --->                                        
+ [ ] KGDB: kernel debugger  --->                                     
+ < > Test functions located in the string_helpers module at runtime  
+ < > Test kstrto*() family of functions at runtime                   
+ [ ] Filter access to /dev/mem                                       
+ [*] Enable stack unwinding support (EXPERIMENTAL)                   
+ [ ] Verbose user fault messages                                     
+ [ ] Write protect kernel text section                               
+ [ ] Kernel low-level debugging functions (read help!)               
+ [ ] Write the current PID to the CONTEXTIDR register
+          
+[*] Show timing information on printks  
+	在printk的输出中包含时间信息,可以用来分析内核启动过程各步骤所用时间
+
+Enable __must_check logic
+	在编译内核的过程中使用"必须检查"的逻辑,禁用它将不会显示某些警告信息
+
+Magic SysRq key
+	不懂的千万别选
+
+Enable unused/obsolete exported symbols
+	导出无用和废弃的符号,这将使内核不必要的增大
+
+Kernel debugging
+	不是内核开发者的别选
+
+Debug Filesystem
+	不是内核开发者的别选
+
+Compile the kernel with frame unwind information
+	不是内核开发者的别选
+
+Run 'make headers_check' when building vmlinux
+	在编译内核时运行'make headers_check'命令检查内核头文件,当你修改了与用户空间相关的内核头文件后建议启用该选项
+
+Linux Kernel Dump Test Tool Module
+	不是内核开发者的别选
+
+Enable doublefault exception handler
+	允许捕获非常罕见的导致系统无警告重启的doublefault异常,对于调试非常重要 

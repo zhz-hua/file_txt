@@ -1,0 +1,122 @@
+
+http://blog.csdn.net/ljianhui/article/details/10128731
+五、发送信号
+上面说到的函数都是一些进程接收到一个信号之后怎么对这个信号作出反应，即信号的处理的问题，有没有什么函数可以向一个进程主动地发出一个信号呢？我们可以通过两个函数kill和alarm来发送一个信号。
+
+1、kill函数
+先来看看kill函数，进程可以通过kill函数向包括它本身在内的其他进程发送一个信号，如果程序没有发送这个信号的权限，对kill函数的调用就将失败，而失败的常见原因是目标进程由另一个用户所拥有。想一想也是容易明白的，你总不能控制别人的程序吧，当然超级用户root，这种上帝般的存在就除外了。
+
+kill函数的原型为：
+[cpp] view plain copy
+print?
+
+    #include <sys/types.h>  
+    #include <signal.h>  
+    int kill(pid_t pid, int sig);  
+
+它的作用把信号sig发送给进程号为pid的进程，成功时返回0。
+
+kill调用失败返回-1，调用失败通常有三大原因：
+1、给定的信号无效（errno = EINVAL)
+2、发送权限不够( errno = EPERM ）
+3、目标进程不存在( errno = ESRCH )
+
+2、alarm函数
+这个函数跟它的名字一样，给我们提供了一个闹钟的功能，进程可以调用alarm函数在经过预定时间后向发送一个SIGALRM信号。
+
+alarm函数的型如下：
+[cpp] view plain copy
+print?
+
+    #include <unistd.h>  
+    unsigned int alarm(unsigned int seconds);  
+
+alarm函数用来在seconds秒之后安排发送一个SIGALRM信号，如果seconds为0，将取消所有已设置的闹钟请求。alarm函数的返回值是以前设置的闹钟时间的余留秒数，如果返回失败返回-1。
+
+马不停蹄，下面就给合fork、sleep和signal函数，用一个例子来说明kill函数的用法吧，源文件为signal3.c，代码如下：
+[cpp] view plain copy
+print?
+
+    #include <unistd.h>  
+    #include <sys/types.h>  
+    #include <stdlib.h>  
+    #include <stdio.h>  
+    #include <signal.h>  
+      
+    static int alarm_fired = 0;  
+      
+    void ouch(int sig)  
+    {  
+        alarm_fired = 1;  
+    }  
+      
+    int main()  
+    {  
+        pid_t pid;  
+        pid = fork();  
+        switch(pid)  
+        {  
+        case -1:  
+            perror("fork failed\n");  
+            exit(1);  
+        case 0:  
+            //子进程  
+            sleep(5);  
+            //向父进程发送信号  
+            kill(getppid(), SIGALRM);  
+            exit(0);  
+        default:;  
+        }  
+        //设置处理函数  
+        signal(SIGALRM, ouch);  
+        while(!alarm_fired)  
+        {  
+            printf("Hello World!\n");  
+            sleep(1);  
+        }  
+        if(alarm_fired)  
+            printf("\nI got a signal %d\n", SIGALRM);  
+      
+        exit(0);  
+    }  
+
+运行结果如下：
+
+在代码中我们使用fork调用复制了一个新进程，在子进程中，5秒后向父进程中发送一个SIGALRM信号，父进程中捕获这个信号，并用ouch函数来处理，变改alarm_fired的值，然后退出循环。从结果中我们也可以看到输出了5个Hello World！之后，程序就收到一个SIGARLM信号，然后结束了进程。
+
+注：如果父进程在子进程的信号到来之前没有事情可做，我们可以用函数pause（）来挂起父进程，直到父进程接收到信号。当进程接收到一个信号时，预设好的信号处理函数将开始运行，程序也将恢复正常的执行。这样可以节省CPU的资源，因为可以避免使用一个循环来等待。以本例子为例，则可以把while循环改为一句pause();
+
+下面再以一个小小的例子来说明alarm函数和pause函数的用法吧，源文件名为，signal4.c，代码如下：
+[cpp] view plain copy
+print?
+
+    #include <unistd.h>  
+    #include <sys/types.h>  
+    #include <stdlib.h>  
+    #include <stdio.h>  
+    #include <signal.h>  
+      
+    static int alarm_fired = 0;  
+      
+    void ouch(int sig)  
+    {  
+        alarm_fired = 1;  
+    }  
+      
+    int main()  
+    {  
+        //关联信号处理函数  
+        signal(SIGALRM, ouch);  
+        //调用alarm函数，5秒后发送信号SIGALRM  
+        alarm(5);  
+        //挂起进程  
+        pause();  
+        //接收到信号后，恢复正常执行  
+        if(alarm_fired == 1)  
+            printf("Receive a signal %d\n", SIGALRM);  
+        exit(0);  
+    }  
+
+运行结果如下：
+
+进程在5秒后接收到一个SIGALRM，进程恢复运行，打印信息并退出。

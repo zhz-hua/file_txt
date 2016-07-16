@@ -1,0 +1,288 @@
+lient 
+service 
+jni 
+hardware
+client ：
+(client 部分，用于上层APP调用，API包是android.location)
+frameworks/base/location/* 
+ervice ：服务层
+
+frameworks/base/services/java/com/android/server/location 
+frameworks/base/services/java/com/android/server/LocationManagerService.java  
+
+jni：JNI层只有一个文件，起到承上启下的作用。上层承接Framework
+，下层调用HAL层具体硬件抽象
+实现。
+frameworks/base/core/jni/android_location_GpsLocationProvider.cpp  
+
+hardware：Hardware Abstract Layer
+
+硬件抽象层，HAL层相当于一个linux应用程序接口，通过open，close
+等操作，操作硬件设备。
+/hardware/libhardware/include/hardware/gps.h接口
+
+/frameworks/base/services/java/com/android/server/location/GpsLocationProvider.java
+/frameworks/base/services/jni/com_android_server_location_GpsLocationProvider.cpp
+/frameworks/base/services/java/com/android/server/LocationManagerService.java
+
+实现 LocationProviderInterface 接口的方法
+
+这些方法是实现 LocationProviderInterface 接口的方法，它们已经在表 3 中说明。
+
+向 GpsLocationProviderThread 发送请求的方法
+
+这些方法通过 Message 机制发送请求到 GpsLocationProviderThread，它们如表 7 所示：
+
+表 7. GpsLocationProviderThread 的主要方法
+名称 	说明
+enable 	见表 2
+disable 	见表 2
+enableLocationTracking 	见表 2
+requestSingleShotFix 	见表 2
+updateNetworkState 	见表 2
+requestUtcTime 	请求 Utc 时间信息
+xtraDownloadRequest 	XTRA 下载请求
+updateLocation 	见表 2
+addListener 	见表 2
+removeListener 	见表 2
+
+ProviderHandler 调用的处理方法
+
+ProviderHandler 对于请求的处理逻辑并没有直接写在 handleMessage 方法中，而是对于每一个请求专门用一个方法来处理，这些方法如表 8 所示。这些方法的实现通常都是依赖于表 9 的本地方法的。
+
+表 8. ProviderHandler 的方法
+名称 	说明
+handleEnable 	使该 Provider 有效
+handleDisable 	使该 Provider 无效
+handleEnableLocationTracking 	使该 Provider 开始记录位置追踪信息
+handleRequestSingleShot 	使该 Provider 完成 singleShot 请求
+handleUpdateNetworkState 	处理网络状态更新
+handleInjectNtpTime 	处理 Ntp 时间注入
+handleDownloadXtraData 	处理下载 Xtra 数据
+handleUpdateLocation 	处理位置 更新
+handleAddListener 	增加监听器
+handleRemoveListener 	删除监听器
+
+本地方法
+
+Gps 模块的功能实现最终需要调用硬件来完成，这些实现必须通过 C/C++ 语言才能完成。为了能在 GpsLocationProvider.java 中调用到这些功能，GpsLocationProvider 中包含了许多的 native 方法，这些方法如表 9 所示，这些方法都是以 JNI 的方式来实现的。这些 JNI 的实现方法位于 com_android_server_location_GpsLocationProvider.cpp（位于：frameworks/base/services/jni）中。
+
+表 9. GpsLocationProvider 中包含的 native 方法
+名称 	说明
+class_init_native 	类的初始化方法
+native_is_supported 	是否支持 Gps 模块
+native_init 	初始化方法
+native_cleanup 	负责清理工作
+native_set_position_mode 	设置位置模式
+native_start 	开始导航
+native_stop 	停止导航
+native_delete_aiding_data 	删除辅助信息
+native_read_sv_status 	读取 SV 状态
+native_read_nmea 	读取 nmea 信息
+native_inject_location 	注入位置信息
+native_inject_time 	注入时间信息
+native_supports_xtra 	是否支持 XTRA
+native_inject_xtra_data 	注入 XTRA 数据
+native_get_internal_state 	获取内部状态
+native_agps_data_conn_open 	打开 AGps 数据连接
+native_agps_data_conn_closed 	关闭 AGps 数据连接
+native_agps_data_conn_failed 	AGps 数据连接失败
+native_agps_ni_message 	AGps NI（Network-initiated）消息
+native_set_agps_server 	设置 AGPS 服务器
+native_send_ni_response 	发送 NI 响应
+native_agps_set_ref_location_cellid 	AGPS 设置引用位置
+native_agps_set_id 	AGPS 设置 id
+native_update_network_state 	更新网络状态
+
+被 JNI 方法回调的方法
+
+GpsLocationProvider 中最后一类方法是被 JNI 方法回调的方法。在 JNI 的实现中，通过这些方法的回调来传递 JNI 层的执行结果。它们如表 10 所示：
+
+表 10. GpsLocationProvider 中被 JNI 回调的方法
+名称 	说明
+reportLocation 	报告位置
+reportStatus 	报告状态
+reportSvStatus 	报告 SV 状态
+reportAGpsStatus 	报告 AGps 状态
+reportNmea 	报告 Nmea
+setEngineCapabilities 	设置引擎能力
+xtraDownloadRequest 	XTRA 下载请求
+reportNiNotification 	报告 NI 通知
+requestRefLocation 	请求引用位置
+requestSetID 	请求设置 id
+requestUtcTime 	请求 Utc 时间
+
+JNI 层与 HAL 层
+
+JNI(Java Native Interface) 层依赖于 HAL 层为上层提供服务。 HAL(Hardware Abstract Layer) 层是对硬件的抽象，这是整个模块实现的最底层。
+
+JNI 层
+
+上文中我们已经提到，Gps 模块 JNI 层的实现在 com_android_server_location_GpsLocationProvider.cpp（位于：frameworks/base/services/jni）文件中。该层依赖 HAL 层接口，提供对于 GpsLocationProvider.java 中本地方法的实现。这些本地方法和 JNI 方法是一一对应（关于 GpsLocationProvider.java 中的本地方法请参阅表 9。）。这种对应关系是在 register_android_server_location_GpsLocationProvider 方法中，通过 jniRegisterNativeMethods 函数建立的。两个文件中函数的对应关系如表 11 所示：
+
+表 11. GpsLocationProvider 中的 native 方法及其 JNI 实现方法的对应关系
+GpsLocationProvider.java 中的方法名 	com_android_server_location_
+GpsLocationProvider.cpp 中对应的实现方法
+class_init_native 	android_location_GpsLocationProvider_
+class_init_native
+native_is_supported 	android_location_GpsLocationProvider_
+is_supported
+native_init 	android_location_GpsLocationProvider_
+init
+native_cleanup 	android_location_GpsLocationProvider_
+cleanup
+native_set_position_mode 	android_location_GpsLocationProvider_
+set_position_mode
+native_start 	android_location_GpsLocationProvider_
+start
+native_stop 	android_location_GpsLocationProvider_
+stop
+native_delete_aiding_data 	android_location_GpsLocationProvider_
+delete_aiding_data
+native_read_sv_status 	android_location_GpsLocationProvider_
+read_sv_status
+native_read_nmea 	android_location_GpsLocationProvider_
+read_nmea
+native_inject_location 	android_location_GpsLocationProvider_
+inject_location
+native_inject_time 	android_location_GpsLocationProvider_
+inject_time
+native_supports_xtra 	android_location_GpsLocationProvider_
+supports_xtra
+native_inject_xtra_data 	android_location_GpsLocationProvider_
+inject_xtra_data
+native_get_internal_state 	android_location_GpsLocationProvider_
+get_internal_state
+native_agps_data_conn_open 	android_location_GpsLocationProvider_
+agps_data_conn_open
+native_agps_data_conn_closed 	android_location_GpsLocationProvider_
+agps_data_conn_closed
+native_agps_data_conn_failed 	android_location_GpsLocationProvider_
+agps_data_conn_failed
+native_agps_ni_message 	android_location_GpsLocationProvider_
+send_ni_response
+native_set_agps_server 	android_location_GpsLocationProvider_
+set_agps_server
+native_send_ni_response 	android_location_GpsLocationProvider_
+send_ni_response
+native_agps_set_
+ref_location_cellid 	android_location_GpsLocationProvider_
+agps_set_reference_location_cellid
+native_agps_set_id 	android_location_GpsLocationProvider_
+agps_set_id
+native_update_network_state 	android_location_GpsLocationProvider_
+update_network_state
+
+这其中，最为重要的是两个初始化方法：一个是 android_location_GpsLocationProvider_class_init_native 方法。这个方法在 GpsLocationProvider 类中的静态初始化块中被调用，它的作用有三个：
+
+    在 JNI 层初始化对于 GpsLocationProvider.java 中回调方法的引用。
+    尝试打开 Gps 设备。
+    如果 Gps 设备打开成功，则获取 Gps 扩展接口的指针，它们一共有五种，分别是：GpsXtraInterface，AGpsInterface，GpsNiInterface，GpsDebugInterface，AGpsRilInterface。这些结构的说明见表 12。
+
+另一个是 android_location_GpsLocationProvider_init 方法。这个方法的作用是：
+
+    尝试初始化 Gps 设备模块，如果初始化失败，直接返回 false。
+    尝试初始化 XTRA 扩展接口，如果初始化失败，则使 sGpsXtraInterface 指向 NULL。
+    尝试初始化 AGpsInterface，GpsNiInterface，AGpsRilInterface 扩展组件。
+
+HAL 层
+
+HAL 层是与硬件相接触的一层，该层使用 C 语言实现。 Gps 模块的 HAL 层的头文件是 gps.h（位于：hardware/libhardware/include/hardware）。gps.h 中包含了很多的常量（这些常量是和 GpsLocationProvider 中的内容相对应的，请参见表 6）以及结构体的定义。这其中，最重要的结构体就是 GpsInterface，这是对 Gps 模块的抽象。它的内容如清单 7 所示：
+
+清单 6. GpsInterface 结构体定义
+
+				
+ typedef struct { 
+    // 设置为 sizeof(GpsInterface) 
+    size_t          size; 
+    // 打开 Gps 模块，提供接口实现的回调函数
+    int   (*init)( GpsCallbacks* callbacks ); 
+    // 开始导航
+    int   (*start)( void ); 
+    // 停止导航
+    int   (*stop)( void ); 
+    // 关闭 Gps 模块
+    void  (*cleanup)( void ); 
+    // 注入当前时间
+    int   (*inject_time)(GpsUtcTime time, int64_t timeReference, 
+        int uncertainty); 
+    // 注入当前位置
+    int  (*inject_location)(double latitude, double longitude, 
+        float accuracy); 
+    // 指定下一次启动时，不使用 flags 所定义的信息
+    void  (*delete_aiding_data)(GpsAidingData flags); 
+    // 设置位置模式
+    int   (*set_position_mode)(GpsPositionMode mode, 
+        GpsPositionRecurrence recurrence, 
+        uint32_t min_interval, uint32_t preferred_accuracy, 
+        uint32_t preferred_time); 
+    // 获取扩展信息的指针
+    const void* (*get_extension)(const char* name); 
+ } GpsInterface; 
+
+除此以外，该头文件中还定义了与 Gps 模块相关的其他结构体，它们如表 12 所示：
+
+表 12. gps.h 中定义的其他结构体
+名称 	说明
+GpsLocation 	描述 Gps 位置，包括经度，维度，海拔，速度，方位，精度等信息。
+GpsStatus 	描述 Gps 状态
+GpsSvInfo 	描述 Gps SV 信息
+GpsSvStatus 	描述 Gps SV 状态
+AGpsRefLocationCellID 	描述 AGps 引用位置单元 Id
+AGpsRefLocationMac 	描述 AGps 引用位置 Mac
+AGpsRefLocation 	描述 AGps 引用位置
+GpsCallbacks 	描述 Gps 回调函数
+GpsXtraCallbacks 	描述 XTRA 接口回调函数
+GpsXtraInterface 	提供 XTRA 支持的扩展接口
+GpsDebugInterface 	提供 DEBUG 支持的扩展接口
+AGpsStatus 	描述 AGps 状态
+AGpsCallbacks 	描述 AGps 接口回调函数
+AGpsInterface 	提供 AGps 支持的扩展接口
+GpsNiNotification 	描述一次 NI（Network-initiated）请求
+GpsNiCallbacks 	描述 Gps NI 回调函数结构体
+GpsNiInterface 	提供 NI 支持的扩展接口
+AGpsRilCallbacks 	描述 AGps Ril 回调函数结构体
+AGpsRilInterface 	提供 AGPS-RIL 支持的扩展接口
+
+由于篇幅所限，这里就不将这些内容展开讲解，请读者自行参阅 Android 源码。同时，Android 源码中包含了对于高通公司的 Gps 模块的实现，其代码位于 hardware/qcom/gps 中。
+
+总结
+
+综合以上知识，我们来看一下当硬件接受到位置更新之后，为了通知这个信息，整个调用关系是如何的 ( 为了描述方便，下文将 com_android_server_location_GpsLocationProvider.cpp 简称为 GpsLocationProvider.cpp)。
+
+    当硬件检测到有位置更新之后，最初调用的是 GpsLocationProvider.cpp 中的 location_callback 函数。
+    location_callback 函数中对应的是调用 GpsLocationProvider.java 中的 reportLocation 方法。
+    GpsLocationProvider.java 中的 reportLocation 方法会调用 ILocationManager 的 reportLocation 方法，然后是调用 LocationManagerService 的 reportLocation 方法。
+    LocationManagerService 的 reportLocation 方法中会对 LocationWorkerHandler 发送消息 MESSAGE_LOCATION_CHANGED。该消息在 LocationWorkerHandler 的 handleMessage 方法中被处理。处理方法中会调用 LocationProviderInterface 的 updateLocation 方法和 LocationManagerService 的 handleLocationChangedLocked 的方法。前者对于 Gps 模块来说就是调用 GpsLocationProvider 的 updateLocation 方法。
+    GpsLocationProvider 的 updateLocation 方法会对 ProviderHandler 发送消息 UPDATE_LOCATION，该消息在 ProviderHandler 的 handler 方法中被处理，处理的方法是调用 handleUpdateLocation 方法，该方法中会调用 native_inject_location 方法以注入。
+    而 LocationManagerService 的 handleLocationChangedLocked 的方法会将最新的位置存放到 mLastKnownLocation 中。至此，便可以通过 LocationManagerService 的 getLastKnownLocation 方法获取到最新更新的位置信息了。
+
+下面是上述的逻辑顺序图。由于调用过程比较复杂，所以分成了两部分。 图 4 描述了上述步骤的 1 ～ 4，图 5 描述了上述步骤的 4 ～ 6
+
+图 4. 位置更新后的调用关系（前半部分）
+图 4. 位置更新后的调用关系（前半部分）
+
+查看大图
+
+图 5. 位置更新后的调用关系（后半部分）
+图 5. 位置更新后的调用关系（后半部分）
+
+查看大图
+
+最后，我们来总结一下定位服务的实现牵涉到的文件及所处路径，它们如表 13 所示。
+
+表 13. 定位服务实现中牵涉到的文件一览
+路径 	说明
+frameworks/base/location/java/android 	包含提供给应用开发的 API
+frameworks/base/services/java/com/android/server 	包含 LocationManagerService.java
+frameworks/base/core/java/android/os 	包含 ServiceManager.java
+frameworks/base/core/java/android/app 	包含 ContextImpl.java
+system/core/rootdir 	包含 init.rc
+frameworks/base/services/java/com/
+android/server/location 	包含 LocationManagerService.java
+frameworks/base/services/jni 	包含 com_android_server_location_
+GpsLocationProvider.cpp
+hardware/libhardware/include/hardware 	包含了 HAL 层的接口
+hardware/qcom/gps 	包含了对于高通公司的 Gps 模块的实现
+
+前面我们说了，在 Android 系统中，所有的系统服务的实现结构都是类似的。相信读者在理解了定位服务的实现之后再去理解其他的系统服务是比较容易的。

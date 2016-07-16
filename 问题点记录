@@ -1,0 +1,53 @@
+1：关于I2c
+		在注册I2c Goodix-TS 驱动的是没找到 device 设备。但是能正常调用probe函数
+		sys/bus/i2c/devices/1-005d
+				  i2c-0
+		sys/bus/i2c/drives/Goodix-TS
+
+		dev/i2c-0
+		/sys/bus/platform/drivers/imx-i2c # ls
+		21a0000.i2c
+		21a4000.i2c
+		/sys/class/i2c-dev # ll
+	lrwxrwxrwx root     root              2015-01-01 01:47 i2c-0 -> ../../devices/soc0/soc.1/2100000.aips-bus/21a0000.i2c/i2c-0/i2c-dev/i2c-0
+	lrwxrwxrwx root     root              2015-01-01 01:47 i2c-1 -> ../../devices/soc0/soc.1/2100000.aips-bus/21a4000.i2c/i2c-1/i2c-dev/i2c-1
+2：关于class
+	class中的文件怎么和dev的文件怎么关联的
+        如不需要class  直接只有dev的设备文件有什么问题
+3；关于Vibrator 
+
+	frameworks/base/core/java/android/os/Vibrator.java
+	frameworks/base/core/java/android/os/IVibratorService.aidl
+	frameworks/base/services/jni/com_android_server_VibratorService.cpp
+	frameworks/base/services/java/com/android/server/VibratorService.java
+
+	hardware/libhardware_legacy/vibrator/vibrator.c
+	三个函数
+		vibrator_exists
+		vibrator_on
+		virbrator_off
+	有在	frameworks/base/services/jni/com_android_server_VibratorService.cpp找到
+		但hal层和这个JNI层是怎么连接就不知道了
+		JNI层 其一注册vibrator服务，其二，实现了vibratorExists，vibratorOn，vibratorOff三个服务函数
+
+	frameworks/base/core/java/android/os/IVibratorService.aidl 实现接口
+	interface IVibratorService
+	{
+	     boolean hasVibrator();
+	     void vibrate(int uid, String packageName, long milliseconds, IBinder token);
+	     void vibratePattern(int uid, String packageName, in long[] pattern, int repeat, IBinder token);
+	     void cancelVibrate(IBinder token);
+	}
+	frameworks/base/core/java/android/os/Vibrator.java  做Vibrator的类
+	public abstract class Vibrator {
+	 public abstract boolean hasVibrator(); 
+	 public abstract void cancel();
+	}
+	frameworks/base/services/java/com/android/server/VibratorService.java
+	 服务函数  。。调用以上接口
+		vibrator=(Vibrator)this.getSystemService(VIBRATOR_SERVICE); 
+		vibrator.vibrate(new long[] { 100, 100, 100, 1000 }, 0);
+		vibrator.cancel();
+
+
+

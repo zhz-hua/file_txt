@@ -1,0 +1,39 @@
+Android FATAL EXCEPTION:main
+是NullPointerException空指针错误，检查下下面的点：
+1、maintestinfo.xml文件里面添加该activity了么？
+2、在activity中应用的控件，有没有用findViewbyId方法和xml中的id对应起来？ 
+
+ComponentInfo:NullPointerException,没做过android相关的开发，但是很明显根本原因是空指针异常，可以debug去定位；
+
+下面这些是有可能会用到的定位信息，或者从开始的入口去一步一步进入，肯定可以找到的~
+android.os.Looper.loop(Looper.java:123)
+at java.lang.reflect.Method.invoke(Method.java:5
+
+
+E/AndroidRuntime( 1823): FATAL EXCEPTION: main
+E/AndroidRuntime( 1823): java.lang.RuntimeException: Unable to start activity ComponentInfo{com.android.settings/com.android.settings.MultiSimSettings}: java.lang.NullPointerException
+E/AndroidRuntime( 1823):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2185)
+E/AndroidRuntime( 1823):  at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2210)
+E/AndroidRuntime( 1823):  at android.app.ActivityThread.access$600(ActivityThread.java:142)
+E/AndroidRuntime( 1823):  at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1208)
+E/AndroidRuntime( 1823):  at android.os.Handler.dispatchMessage(Handler.java:99)
+E/AndroidRuntime( 1823):  at android.os.Looper.loop(Looper.java:137)
+E/AndroidRuntime( 1823):  at android.app.ActivityThread.main(ActivityThread.java:4931)
+E/AndroidRuntime( 1823):  at java.lang.reflect.Method.invokeNative(Native Method)
+E/AndroidRuntime( 1823):  at java.lang.reflect.Method.invoke(Method.java:511)
+E/AndroidRuntime( 1823):  at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:791)
+E/AndroidRuntime( 1823):  at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:558)
+E/AndroidRuntime( 1823):  at dalvik.system.NativeStart.main(Native Method)
+E/AndroidRuntime( 1823): Caused by: java.lang.NullPointerException
+
+
+E/AndroidRuntime( 1823):  at com.android.settings.MultiSimSettings.onCreate(MultiSimSettings.java:107)
+
+
+E/AndroidRuntime( 1823):  at android.app.Activity.performCreate(Activity.java:5008)
+E/AndroidRuntime( 1823):  at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1079)
+E/AndroidRuntime( 1823):  at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2139)
+E/AndroidRuntime( 1823):  ... 11 more
+
+MultiSimSettings.java:107
+空指针 

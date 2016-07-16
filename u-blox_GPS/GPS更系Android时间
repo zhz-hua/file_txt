@@ -1,0 +1,65 @@
+mmm -B packages/apps/SetSystemTime/
+权限
+time = location.getTime();;
+SystemClock.setCurrentTimeMillis(time);
+
+android:sharedUserId="android.uid.system"
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/> 
+ <uses-sdk
+        android:minSdkVersion="17"
+        android:targetSdkVersion="23" />
+
+
+
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
+
+		LocationManager GpsManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+		Location location = GpsManager .getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		time = location.getTime();;
+ 			
+			Calendar c = Calendar.getInstance();
+			calendar = Calendar.getInstance();
+			calendar.setTimeInMillis(Long.valueOf(time));
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			datestring = df.format(calendar.getTime());
+		data_NowTime = df.format(c.getTime());
+		settIME = "";
+		
+		textView = (TextView) findViewById(R.id.time_show);
+		textView.setText("GPS" + datestring + "   LOCATION:" + data_NowTime
+				+ " SET end time :=" + settIME);
+		button = (Button) findViewById(R.id.time_set);
+		button.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				setSysTime(calendar);
+			}
+		});
+	}
+
+	public void setSysTime(Calendar calendar) {
+
+		try {
+			Long when = calendar.getTimeInMillis();
+			if (when / 1000 < Integer.MAX_VALUE) {
+				SystemClock.setCurrentTimeMillis(when);
+				Toast.makeText(MainActivity.this, "OK", Toast.LENGTH_LONG)
+						.show();
+				SimpleDateFormat df = new SimpleDateFormat(
+						"yyyy-MM-dd HH:mm:ss");
+				settIME = df.format(Calendar.getInstance().getTime());
+				;
+			}
+		} catch (Exception e) {
+			Toast.makeText(MainActivity.this, "ERROR", Toast.LENGTH_LONG)
+					.show();
+			e.printStackTrace();
+			settIME = "";
+		}
+		textView.setText("GPS" + datestring + "   LOCATION:" + data_NowTime
+				+ " SET end time :=" + settIME);
+	}
+

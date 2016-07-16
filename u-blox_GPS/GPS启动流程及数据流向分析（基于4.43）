@@ -1,0 +1,239 @@
+一：架构分析
+	Android GPS架构如下图所示，整个定位服务的系统架构共分为六层。
+	（1）最上面是应用层，可安装基于定位服务的应用，这些应用可以发起定位请求，比如百度地图等。
+	（2）第二层是框架层(framework层)，这一层包含了被APP调用的API以及系统服务的实现，主要由 Java 语言来实现。
+		a. Java语言实现的API，即android.location包中的内容，主要用来被APP调用
+			目录：frameworks/base/location/java/android/location
+		b.系统服务实现
+
+			目录1：frameworks/base/location/java/com/android/internal/location
+				这个目录是Framework对Location服务的内部实现
+		
+			目录2：
+				frameworks/base/services/java/com/android/server/SystemServer.java 
+				frameworks/base/services/java/com/android/server/SystemServer.java
+				frameworks/base/services/java/com/android/server/LocationManagerService.java
+				frameworks/base/services/java/com/android/server/location/GpsLocationProvider.java
+				/frameworks/base/location/java/android/location/ILocationManager.aidl			//jni层和java层的接口  相当C语言的.h文件
+				//package android.location;
+				interface ILocationManage{}
+				/frameworks/base/services/java/com/android/server/LocationManagerService.java	        //方法在这实现 
+				//import android.location.ILocationManager; 
+				//public class LocationManagerService extends ILocationManager.Stub
+					这个目录中的LocationManagerService.java是Location服务对内部实现的一种封装
+
+	（3）第三层是JNI层
+			JNI层只有一个文件，起到承上启下的作用。上层承接Framework，下层调用HAL层具体硬件抽象实现。
+			目录：
+					frameworks/base/services/jni/com_android_server_location_GpsLocationProvider.cpp
+	（4）第四层是共享库层(HAL层)，本层由 C 以及 C++ 语言实现, 框架层与共享库层使用 JNI进行衔接。HAL层相当于一个linux应用程序接口，通过open，close等操作，操作硬件设备。
+			目录：
+				hardware/libhardware/include/hardware/gps.h  接口
+				实现GPS移植的目录
+	（5）第五层是 Linux内核层,整个Android系统都是以Linux内核为基础的。
+	（6）最底层是GPS硬件设备层
+
+	【概要定位流程】：由应用层APP发起定位请求，调用Framework层提供的API接口，此时会去启动一个定位服务的线程，通过LocationManagerService定位服务，
+		会调用到对应的Location provider，然后通过native方法调用到JNI中，JNI获得GpsInterface并传递给接口一个回调函数的实现。GpsInterface是HAL层最主要的实现
+二：概念LMS
+ 	LocationManagerService（简称LMS）和Android Java Framework中的其他Service一样由SystemServer创建并运行在system_process进程中。LMS是系统Location模块的核心，我们来看一下它的初始化。
+1. SystemServer.java
+    在SystemServer.java文件中，startOtherService函数创建LMS的代码如下，首先创建了LMS对象，并将LOCATION_SERVICE添加到ServiceManager中。
+    if (!disableLocation) {  
+                    try {  
+                        Slog.i(TAG, "Location Manager");  
+                        location = new LocationManagerService(context);  
+                        ServiceManager.addService(Context.LOCATION_SERVICE, location);  
+                    } catch (Throwable e) {  
+                        reportWtf("starting Location Manager", e);  
+                    }  
+
+		final LocationManagerService locationF = location;  
+		同样是在startOtherService函数中，调用了LMS的systemRunning函数，代码如下：
+		    try {  
+			     if (locationF != null) locationF.systemRunning();  
+			 } catch (Throwable e) {  
+			     reportWtf("Notifying Location Service running", e);  
+			 }  
+2. LMS(LocationManagerService)
+    public void systemRunning() {  
+            synchronized (mLock) {  
+                if (D) Log.d(TAG, "systemReady()");  
+      
+                ...              
+                mGeofenceManager = new GeofenceManager(mContext, mBlacklist);  
+      
+                // prepare providers 关键函数  
+                loadProvidersLocked();  
+                // 根据设置中的开关情况，开启或者禁止某个LP。在此函数中，各LP实现的LocationProviderInterface接口的enable/disable函数被调用  
+                updateProvidersLocked();  
+            }  
+               ...  
+        }  
+
+3.loadProvidersLocked()，该函数用于创建及加载系统中所有的LP，其代码如下：
+	private void loadProvidersLocked() {              
+		    ...              
+		    //创建GPSLP实例   
+		    GpsLocationProvider gpsProvider = new GpsLocationProvider(mContext, this,  
+		            mLocationHandler.getLooper());                    //实体化GPS
+	      
+		    if (GpsLocationProvider.isSupported()) {  
+		        mGpsStatusProvider = gpsProvider.getGpsStatusProvider();   
+		        mNetInitiatedListener = gpsProvider.getNetInitiatedListener();  
+		        //保存GPSLP  
+		        addProviderLocked(gpsProvider);  
+		        //GPSLP是真实的位置提供者，将它保存在mRealProviders中             
+		        mRealProviders.put(LocationManager.GPS_PROVIDER, gpsProvider);  
+		    }  
+		    mGpsMeasurementsProvider = gpsProvider.getGpsMeasurementsProvider();  
+		    mGpsNavigationMessageProvider = gpsProvider.getGpsNavigationMessageProvider();  
+			...  
+		      
+		}  
+4.updateProvidersLocked
+ private void updateProvidersLocked() {
+        boolean changesMade = false;
+        for (int i = mProviders.size() - 1; i >= 0; i--) {
+            LocationProviderInterface p = mProviders.get(i);
+            boolean isEnabled = p.isEnabled();
+            String name = p.getName();
+            boolean shouldBeEnabled = isAllowedByCurrentUserSettingsLocked(name);
+            if (isEnabled && !shouldBeEnabled) {
+                updateProviderListenersLocked(name, false, mCurrentUserId);
+                // If any provider has been disabled, clear all last locations for all providers.
+                // This is to be on the safe side in case a provider has location derived from
+                // this disabled provider.
+                mLastLocation.clear();
+                mLastLocationCoarseInterval.clear();
+                changesMade = true;
+            } else if (!isEnabled && shouldBeEnabled) {
+                updateProviderListenersLocked(name, true, mCurrentUserId);   //调用
+                changesMade = true;
+            }
+        }                                                                                                                                                                                                    
+        ... 
+    }    
+5.
+    private void updateProviderListenersLocked(String provider, boolean enabled, int userId) {
+        int listeners = 0; 
+	...
+
+        if (deadReceivers != null) {
+            for (int i = deadReceivers.size() - 1; i >= 0; i--) {
+                removeUpdatesLocked(deadReceivers.get(i));
+            }
+        }
+
+        if (enabled) {
+            p.enable();
+            if (listeners > 0) {
+                applyRequirementsLocked(provider);
+            }
+        } else {
+            p.disable();
+        }                                                                                                                                                                                                    
+    }
+
+
+三 数据流分析
+	首先在系统init阶段， 会通过ServiceManager addService添加很多的Service，这其中就包含LocationService。
+   启动函数文件有：init.rc.init.c app_main.cpp.AndroidRuntime.cpp ZygoteInit.java RuntimeInit.java
+代码在SystemServer.java中:
+		1: 在SystemServer.java文件中，startOtherService函数创建LMS的代码如下，首先创建了LMS对象，并将LOCATION_SERVICE添加到ServiceManager中
+			并调用systemRunning函数.
+			location = new LocationManagerService(context);
+			final LocationManagerService locationF = location; 
+			if (locationF != null) locationF.systemRunning();  
+		2:      随后调用LocationManagerService的systemReady函数开启一个线程。 
+			ActivityManagerService.self().systemReady(new Runnable() {
+			    public void run() {
+				Slog.i(TAG, "Making services ready");
+				...
+				try {
+					if (locationF != null) locationF.systemRunning();
+					} catch (Throwable e) {
+					reportWtf("Notifying Location Service running", e);
+					}
+
+				} 
+				...
+			}   
+
+
+			在 LocationManagerService运行 systemRunning();
+			热后调用 loadProvidersLocked();           
+                		updateProvidersLocked();  
+					在updateProvidersLocked()中调用updateProviderListenersLocked();
+	                      在 updateProviderListenersLocked函数中，通过 LocationProviderInterface 
+				p调用enable或者disable来开关位置服务。这里会调用到 LocationProviderInterface的子类GpsLocationProvider中的enable或者disable中
+	        3: GpsLocationProvider.java
+			public void enable() {                                                                                                                    
+				synchronized (mLock) {
+				if (mEnabled) return;
+				mEnabled = true;
+				}    
+
+				sendMessage(ENABLE, 1, null);
+			} 
+			handlenable就是ENABLE的消息处理函数：
+		4: private void handleEnable()
+			private void handleEnable() {
+				if (DEBUG) Log.d(TAG, "handleEnable");
+
+				boolean enabled = native_init();
+
+				if (enabled) {
+				    mSupportsXtra = native_supports_xtra();
+				    if (mSuplServerHost != null) {
+					native_set_agps_server(AGPS_TYPE_SUPL, mSuplServerHost, mSuplServerPort);
+				    }
+				    if (mC2KServerHost != null) {
+					native_set_agps_server(AGPS_TYPE_C2K, mC2KServerHost, mC2KServerPort);
+				    }
+				} else {
+				    synchronized (mLock) {
+					mEnabled = false;
+				    }
+				    Log.w(TAG, "Failed to enable location provider");
+				}
+			} 
+			可见这里就开始与native层通信了。
+			 native_init对应jni中的android_location_GpsLocationProvider_init函数，在该函数中调用了
+			 sGpsInterface->init(&sGpsCallbacks)，
+			 而 sGpsCallbacks定义如下
+		5:com_android_server_location_GpsLocationProvider.cpp
+				GpsCallbacks sGpsCallbacks = { 
+					sizeof(GpsCallbacks),
+					location_callback,
+					status_callback,
+					sv_status_callback,
+					nmea_callback,
+					set_capabilities_callback,
+					acquire_wakelock_callback,
+					release_wakelock_callback,
+					create_thread_callback,
+					request_utc_time_callback,
+				};
+				 这是将jni的一些函数作为参数传递到native c 空间中去，这样在native c中如果有可用数据将通过回调的方式调用到jni中的函数。简单的看一下 location_callback的定义
+		6:
+		static void location_callback(GpsLocation* location)  
+		{
+			JNIEnv* env = AndroidRuntime::getJNIEnv();
+			env->CallVoidMethod(mCallbacksObj, method_reportLocation, location->flags,
+			    (jdouble)location->latitude, (jdouble)location->longitude,
+			    (jdouble)location->altitude,
+			    (jfloat)location->speed, (jfloat)location->bearing,
+			    (jfloat)location->accuracy, (jlong)location->timestamp);
+			checkAndClearExceptionFromCallback(env, __FUNCTION__);
+		}
+		其中有定义：
+		 static jmethodID method_reportLocation;并且：
+		 method_reportLocation = env->GetMethodID(clazz, "reportLocation","(IDDDFFFJ)V"); 
+		 可见jni中的callback函数其实又回调掉了java空间（Framework）中的  reportLocation函数，这便是整个GPS框架的数据流向结构了。所有的数据都是通过回调的方式通知上层：
+		 nativeC通过回调通知JNI，JNI通过回调通知Framework。这应该是gps整个框架最重要的部分吧，理解了数据流向，其他的应该都简单了。
+
+
+
+
+

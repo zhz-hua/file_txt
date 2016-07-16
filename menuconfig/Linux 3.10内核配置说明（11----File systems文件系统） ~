@@ -1,0 +1,297 @@
+─────────────────────────────────────────────── 
+ <*> Second extended fs support                 
+ [*]   Ext2 extended attributes                 
+ [*]     Ext2 POSIX Access Control Lists        
+ [*]     Ext2 Security Labels                                                                                           
+ [ ]   Ext2 execute in place support                                                                                    
+ <*> Ext3 journalling file system support                                                                               
+ [*]   Default to 'data=ordered' in ext3                                                                                
+ [*]   Ext3 extended attributes                                                                                         
+ [*]     Ext3 POSIX Access Control Lists                                                                                
+ [*]     Ext3 Security Labels                                                                                           
+ <*> The Extended 4 (ext4) filesystem                                                                                   
+ [*]   Ext4 POSIX Access Control Lists                                       
+ [*]   Ext4 Security Labels                                                  
+ [ ]   EXT4 debugging support                                                
+ [ ] JBD (ext3) debugging support                                            
+ [ ] JBD2 (ext4) debugging support                                           
+ < > Reiserfs support                                                        
+ < > JFS filesystem support                                                  
+ < > XFS filesystem support                                                  
+ < > GFS2 file system support                                                
+ < > OCFS2 file system support                                               
+ < > Btrfs filesystem support                                                
+ < > NILFS2 file system support                                              
+ [*] Enable POSIX file locking API                                           
+ [*] Dnotify support                                                         
+ [*] Inotify support for userspace                                           
+ [ ] Filesystem wide access notification                                     
+ [*] Quota support                                                           
+ [*] Report quota messages through netlink interface                         
+ [ ] Print quota warnings to console (OBSOLETE)                              
+ [ ] Additional quota sanity checks                                          
+ < > Old quota format support                                                
+ < > Quota format vfsv0 and vfsv1 support                                    
+ <*> Kernel automounter version 4 support (also supports v3)                 
+ <*> FUSE (Filesystem in Userspace) support                                  
+ < >   Character device in Userspace support                                 
+     Caches  --->                                                            
+     CD-ROM/DVD Filesystems  --->                                            
+     DOS/FAT/NT Filesystems  --->                                            
+     Pseudo filesystems  --->                                                
+ [*] Miscellaneous filesystems  --->                                         
+ [*] Network File Systems  --->                                              
+-*- Native language support  --->                                            
+< > Distributed Lock Manager (DLM)  --->     
+
+Second extended fs support
+	Ext2文件系统是Linux的标准文件系统,擅长处理稀疏文件
+
+Ext2 extended attributes
+	Ext2文件系统扩展属性(与inode关联的name:value对)支持
+
+Ext2 POSIX Access Control Lists
+	POSIX ACL(访问控制列表)支持,可以更精细的针对每个用户进行访问控制,需要外部库和程序的支持
+
+Ext2 Security Labels
+	安全标签允许选择使用不同的安全模型实现(如SELinux)的访问控制模型,如果你没有使用需要扩展属性的安全模型就别选
+
+Ext2 execute in place support
+	程序在写入存储介质时就已经分配好运行时的地址,因此不需要载入内存即可在芯片内执行,一般仅在嵌入式系统上才有这种设备
+
+Ext3 journalling file system support
+	Ext3性能平庸,使用journal日志模式时数据完整性非常好(但怪异的是此时多线程并发读写速度却最快)
+
+Ext3 extended attributes
+`Ext3文件系统扩展属性(与inode关联的name:value对)支持
+
+Ext3 POSIX Access Control Lists
+	POSIX ACL(访问控制列表)支持,可以更精细的针对每个用户进行访问控制,需要外部库和程序的支持
+
+Ext3 Security Labels
+	安全标签允许选择使用不同的安全模型实现(如SELinux)的访问控制模型,如果你没有使用需要扩展属性的安全模型就别选
+
+Ext4dev/ext4 extended fs support
+	尚处于开发状态的Ext4
+
+JBD (ext3) debugging support
+	仅供开发者使用
+
+JBD2 (ext4dev/ext4) debugging support
+	仅供开发者使用
+
+Reiserfs support
+
+	性能几乎全面超越Ext2(处理稀疏文件比Ext2慢),小文件(小于4k)性能非常突出,创建和删除文件速度最快,处理大量目录和文件(5k-20k)时仍然非常迅速.
+	日志模式建议使用Ordered,追求极速可使用Writeback模式,追求安全可使用Journal模式.建议使用noatime,notail选项挂载分区以提高速度和避免bug.用于NFS和磁盘限额时需要额外的补丁
+
+Enable reiserfs debug mode
+	启用ReiserFS调试模式,仅供开发者使用
+
+Stats in /proc/fs/reiserfs
+	在/proc/fs/reiserfs文件中显示Reiserfs文件系统的状态,仅供开发者使用
+
+ReiserFS extended attributes
+	ReiserFS文件系统扩展属性(与inode关联的name:value对)支持
+
+ReiserFS POSIX Access Control Lists
+	POSIX ACL(访问控制列表)支持,可以更精细的针对每个用户进行访问控制,需要外部库和程序的支持
+
+ReiserFS Security Labels
+	安全标签允许选择使用不同的安全模型实现(如SELinux)的访问控制模型,如果你没有使用需要扩展属性的安全模型就别选了
+
+JFS filesystem support
+	IBM的JFS文件系统
+
+XFS filesystem support
+	碎片最少,多线程并发读写最佳,大文件(>64k)性能最佳,创建和删除文件速度较慢.由于XFS在内存中缓存尽可能多的数据且仅当内存不足时才会将数据刷到磁盘,所以应当仅在确保电力供应不会中断的情况下才使用XFS
+
+Quota support
+
+XFS的磁盘配额支持
+
+Security Label support
+
+扩展的安全标签支持.SElinux之类的安全系统会使用到这样的扩展安全属性
+
+POSIX ACL support
+
+POSIX ACL(访问控制列表)支持,可以更精细的针对每个用户进行访问控制,需要外部库和程序的支持
+
+Realtime support
+
+实时子卷是专门存储文件数据的卷,可以允许将日志与数据分开在不同的磁盘上
+
+GFS2 file system support
+
+一种用于集群的文件系统
+
+OCFS2 file system support
+
+一种用于集群的文件系统
+
+Minix fs support
+
+老古董文件系统
+
+ROM file system support
+
+用于嵌入式系统的内存文件系统的支持
+
+Inotify file change notification support
+
+新式的文件系统的变化通知机制,简洁而强大,用于代替老旧的Dnotify
+
+Inotify support for userspace
+
+用户空间的Inotify支持
+
+Quota support
+
+磁盘配额支持,限制某个用户或者某组用户的磁盘占用空间,Ext2/Ext3/Reiserfs都支持它
+
+Old quota format support
+
+老式的配额格式支持
+
+Quota format v2 support
+
+新的v2格式允许使用32位的UID/GID
+
+Dnotify support
+
+旧式的基于目录的文件变化的通知机制(新机制是Inotify),目前仍然有一些程序依赖它
+
+Kernel automounter support
+
+内核自动加载远程文件系统(v3,就算选也不选这个旧的)
+
+Kernel automounter version 4 support (also supports v3)
+
+新的(v4)的内核自动加载远程文件系统的支持,也支持v3
+
+Filesystem in Userspace support
+
+FUSE允许在用户空间实现一个文件系统,如果你打算开发一个自己的文件系统或者使用一个基于FUSE的文件系统就选吧
+
+CD-ROM/DVD Filesystems
+
+CD-ROM/DVD文件系统
+
+ISO 9660 CDROM file system support
+
+CD-ROM的标准文件系统
+
+Microsoft Joliet CDROM extensions
+
+Microsoft对ISO 9660文件系统的Joliet扩展,允许在文件名中使用Unicode字符,也允许长文件名
+
+Transparent decompression extension
+
+Linux对ISO 9660文件系统的扩展,允许将数据透明的压缩存储在CD上
+
+UDF file system support
+
+某些新式CD/DVD上的文件系统,很少见
+
+DOS/FAT/NT Filesystems
+
+DOS/Windows的文件系统
+
+MSDOS fs support
+
+古老的MSDOS文件系统
+
+VFAT (Windows-95) fs support
+
+从Win95开始使用的VFAT文件系统
+
+Default codepage for FAT
+
+默认代码页
+
+Default iocharset for FAT
+
+默认字符集
+
+NTFS file system support
+
+从WinNT开始使用的NTFS文件系统
+
+NTFS debugging support
+
+仅供调试使用
+
+NTFS write support
+
+NTFS写入支持
+
+Pseudo filesystems
+
+伪文件系统
+
+/proc file system support
+
+显示系统状态的虚拟文件系统(irq设置,内存使用,加载的设备驱动器,网络状态等),许多程序依赖于它
+
+/proc/kcore support
+
+系统物理内存的映象
+
+/proc/vmcore support
+
+以ELF格式转储的已崩溃内核镜像,仅供调试使用
+
+Sysctl support (/proc/sys)
+
+显示各种不同的内核参数,并让root用户能交互地更改其中的某些内容
+
+sysfs file system support
+
+导出内核内部对象及其属性和对象之间的相互关系的文件系统,它把连接在系统上的设备和总线以及驱动程序等组织成为一个分级的文件,内核启动时依靠它挂载根分区,禁用sysfs后必须在内核引导参数中使用设备号指定根分区
+
+Virtual memory file system support (former shm fs)
+
+tmpfs文件系统(以前叫shm[共享内存]文件系统)支持
+
+Tmpfs POSIX Access Control Lists
+
+POSIX ACL(访问控制列表)支持,可以更精细的针对每个用户进行访问控制,需要外部库和程序的支持
+
+HugeTLB file system support
+
+大多数现代计算机体系结构提供对多种内存页面大小的支持(比如IA-32结构支持4K和4M(PAE模式为2M)两种页面).TLB(Translation Lookaside Buffer)是虚拟地址到物理地址的翻译缓冲区,这种缓冲区在处理器上是很宝贵的,操作系统总是尝试将有限的TLB资源发挥到极致.特别是能够轻松获得若干G内存的时候(>4G),这种优化就显得尤为关键.只有开启此选项之后才能提供hugepage支持.
+
+Userspace-driven configuration filesystem
+
+configfs是用户空间驱动的文件系统,提供与sysfs相反的功能
+
+Miscellaneous filesystems
+
+非主流的杂项文件系统
+
+Network File Systems
+
+网络文件系统
+
+Partition Types
+
+高级磁盘分区类型,不确定可以全不选
+
+Native Language Support
+
+本地语言支持.如果你仅仅使用几种主流的Linux文件系统(ext2/3/4,Reiserfs,JFS,XFS),就不需要这个东西.但是如果你需要使用FAT/NTFS分区的话,就需要这个东西了.
+
+Base native language support
+
+如果你启用了本地语言支持,那么这个必选
+
+Default NLS Option
+
+默认本地语言,建议使用UTF-8
+
+{此处省略的部分请按需选择,一般至少需要CP437,ASCII,ISO-8859-1}
+
+Distributed Lock Manager
+
+通用的分布式锁管理器,不明白就不选 

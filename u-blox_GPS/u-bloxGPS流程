@@ -1,0 +1,87 @@
+
+一：ubx_moduleIf.cpp
+	HAL  HAL_MODULE_INFO_SYM
+	open: CGpsIf::hwModuleOpen  打开gps.default.ko 模块
+
+	init:                           CGpsIf::init, 初始化函数，
+		s_mainControlThread = s_myIf.m_callbacks.create_thread_cb("gps thread", ubx_thread, &s_controlThreadInfo); 
+		创建线程 ubx_thread
+二：gps_thread.cpp
+	void ubx_thread(void *pThreadData)  初始化相关函数，建结构，读串口，解析，并处理数据
+		updateTimeLastValid=checkRecvInitReq(pState, rfds, maxFd,sinceLastNmeaMs>sinceLastUbxMs?sinceLastNmeaMs:sinceLastUbxMs);
+			connectRecv=connectReceiver(pState, rfds, maxFd);  
+				if (!s_ser.openSerial(pUbxGps->getSerialDevice(), pUbxGps->getBaudRateDefault(), 1))  //开串口
+三：ubx_serial.cpp
+	bool CSerialPort::openSerial(const char * pTty, int ttybaud, int blocksize)     
+
+	typedef struct RegisterInfo_s
+	{
+		CProtocol* pProtocol;
+		struct RegisterInfo_s* pNext;
+	} RegisterInfo;
+
+	class CProtocol
+	{
+	public:
+		typedef enum
+		{
+			UNKNOWN		= -1,
+			UBX			=  0,
+			NMEA		=  1
+		} PROTOCOL_t;
+
+		CProtocol(void) {}
+		virtual ~CProtocol(void) {}
+
+	public:
+		virtual int Parse(const unsigned char* pBuffer, int iSize) = 0;
+		virtual void Process(unsigned char* pBuffer, int iSize, CDatabase* pDatabase) = 0;
+		virtual PROTOCOL_t GetType(void) = 0;
+	};
+
+	CProtocol* pProtocol;
+ 	while (parser.Parse(pProtocol, pMsg, iMsg))  解析  pMsg数据  iMsg大小
+
+四：parserbuffer.cpp
+	 bool CParserBuffer::Parse(CProtocol* &pProtocol, unsigned char* &pData, int &iSize)
+	protocolnmea.h 解析
+
+
+五：UbxMsg.cpp
+	pUbxGps->onNewMsg(pMsg, (unsigned int) iMsg); 
+
+pProtocol->Process(pMsg, iMsg, pDatabase);
+六：protocolnmea.cpp 
+	void CProtocolNMEA::Process(unsigned char* pBuffer, int iSize, CDatabase* pDatabase)
+		pDatabase->Process(CDatabase::MSG_NMEA_GBS, pBuffer, iSize, ProcessGBS)
+
+
+
+七：database.cpp
+
+	int CDatabase::Process(MSG_t type, unsigned char * pBuffer, int iSize, PARSE_FUNC_t func)
+	{
+		if(func==NULL || pBuffer==NULL || iSize<=0)
+		{
+			return -1;
+		}
+		int result=1;
+		this->beforeProcessing(type);
+		if(m_epochBegin)
+		{
+			result=0;
+			func(pBuffer, iSize, this);
+			this->afterProcessing(type);
+		}
+		return result;
+	}
+
+
+八：
+int CDatabase::Process(MSG_t type, unsigned char * pBuffer, int iSize, PARSE_FUNC_t func)
+	this->afterProcessing(type)
+		afterProcessing(m_epochEnd);
+			Commit(true)
+				void CDatabase::CompleteTimestamp(void)
+
+

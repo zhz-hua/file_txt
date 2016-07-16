@@ -1,0 +1,33 @@
+http://blog.csdn.net/yixuaning/article/details/43236129
+
+
+ DDR Stress Test Tool 提供了两种用途。首先，它可以用来对校准DDR3，以便于MMDC PHY delay settings和PCB配对，来达到最佳的DRAM新能。整个过程是全自动的，因此客户可以在较短的时间内让他们的DDR3工作起来。
+另外，该工具可以运行内存压力测试，用来验证DDR3的功能和可靠性。压力测试可以用来验证硬件连接、MMDC寄存器参数和DDR3模式寄存器设置。测试最重要的目的是让客户验证DDR3在他们的自己的板子上运行稳定。
+
+Calibration
+在i.MX6处理器上，DDR3需要4个校准过程，这些校准过程微调MMDC PHY等待寄存器校正会在DDR Stress Test Tool键入DDR3配置。首先，校准测试会提示DRAM频率。i.MX6Q和i.MX6D的默认值是528MHz,i.MX6DL、i.MX6S和i.MX6SL的默认值是400MHz。这是BSP使用的DRAM频率。按'y'来继续执行校正过程。这里输入'n'会有一个选项来选择特定的频率。它仅仅是用来调试。DRAM频率选择结束后，这个工具会开始校正。
+
+Write Leveling Calibration
+这是第一个校正，用来微调从i.MX6 processor输出的DRAM clock和write DQS 之间的delay，按'y'来继续执行校正过程。如果board已经校正并且校正结果已经和融入脚本，按'n'跳过校正。
+在按'y'开始校正以后，你需要输入DDR3 Mode Register MR1的值，MR1的值可以在初始化脚本的下列行中找到。The value 是等号后的两个最高有效字节，i.e. 0x0004 on this example.
+setmem /32 0x021b001c = 0x00048031 // MMDC0_MDSCR, MR1 write, CS0
+The value必须是和DDR初始化脚本中的是同一个。否则，下面测试结果将无效，因为The Value是用来恢复 DDR3的MR1的value，当退出write leveling模式。
+
+Read DQS Gating Calibration
+第二个校正过程是DQS gating calibration。它用来微调读DQS gating，让它可以准确的捕获读DQS信号。校正程序调整DQS gating delay 在4/256始终周期找有效的DQS delay window。按'y'/'n'
+
+中间操作类似，不再翻译
+
+Calibration Results
+After finishing all the calibration process, the calibration results are summarized and as shown below. ​The tool will proceed to run the DRAM stress test with the delay registers updated with these calibration results.
+However, it is very important that these results should be recorded down and the DRAM initialization script should be updated accordingly. When porting the MMDC parameters to the firmware, the delay registers must be programmed according to the updated script. Otherwise, the DDR3 may not be able to run stably on the firmware.
+
+总的来说，大概操作过程如下：
+
+    使用Freescale提供的Aid工具(Excel)根据自己板子的选料及设计，生成.inc文件，这部分Freescale会帮忙做好，只需要将设计资料提供给AE
+    使用DDR Stress Test Tool来在自己的板子上校正生成的参数
+    根据测试结果，修正自己的.inc文件并进行压力测试
+    将inc文件中数据添加到u-boot的flash_header.s。
+
+参考资料：https://community.freescale.com/docs/DOC-96412
+

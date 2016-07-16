@@ -1,0 +1,62 @@
+
+# This is a FSL Android Reference Design platform based on i.MX6Q SABRESD board                  
+# It will inherit from FSL core product which in turn inherit from Google generic
+ 
+ $(call inherit-product, device/fsl/imx6/imx6.mk)		//导入imx6.mk中的变量添加进来
+ $(call inherit-product-if-exists,vendor/google/products/gms.mk) //指把gms.mk(gms.mk要存在)中的变量添加进来
+/*在Makefile规则中，通配符会被自动展开。但在变量的定义和函数引用时，通配符将失效。这种情况下如果需要通配符有效，
+就需要使用函数“wildcard”，它的用法是：$(wildcard PATTERN...) 。在Makefile中，它被展开为已经存在的、使用空格分开的、
+匹配此模式的所有文件列表。如果不存在任何符合此模式的文件，函数会忽略模式字符并返回空
+*/
+ ifneq ($(wildcard device/fsl/sabresd_6dq/fstab_nand.freescale),)
+ $(shell touch device/fsl/sabresd_6dq/fstab_nand.freescale)
+ endif
+ 
+ ifneq ($(wildcard device/fsl/sabresd_6dq/fstab.freescale),)
+ $(shell touch device/fsl/sabresd_6dq/fstab.freescale)
+ endif
+ 
+ # Overrides
+ PRODUCT_NAME := sabresd_6dq  // 产品名 该产品名要和编译项中产品名一致
+ PRODUCT_DEVICE := sabresd_6dq	//产品对应的设备名 该名字要和产品设备主板配置文件（BoardConfig.mk）所在目录名一致
+ 
+ PRODUCT_COPY_FILES += \		// #指定拷贝内容：源——>目标
+     device/fsl/sabresd_6dq/required_hardware.xml:system/etc/permissions/required_hardware.xml \
+     device/fsl/sabresd_6dq/init.rc:root/init.freescale.rc \
+     device/fsl/sabresd_6dq/gpsreset.sh:system/etc/gpsreset.sh \
+     device/fsl/sabresd_6dq/audio_policy.conf:system/etc/audio_policy.conf \
+     device/fsl/sabresd_6dq/audio_effects.conf:system/vendor/etc/audio_effects.conf
+ 
+ PRODUCT_COPY_FILES +=   \
+     external/linux-firmware-imx/firmware/vpu/vpu_fw_imx6d.bin:system/lib/firmware/vpu/vpu_fw_imx6    d.bin  \
+     external/linux-firmware-imx/firmware/vpu/vpu_fw_imx6q.bin:system/lib/firmware/vpu/vpu_fw_imx6    q.bin
+ 
+ # GPU files
+ 
+ DEVICE_PACKAGE_OVERLAYS := device/fsl/sabresd_6dq/overlay	#指定目录下的资源替换系统的资源
+ 
+ PRODUCT_CHARACTERISTICS := tablet		 #产品特性——平板
+ 
+ PRODUCT_AAPT_CONFIG += xlarge large tvdpi hdpi		#编译的APP
+ 
+ PRODUCT_COPY_FILES += \		// #指定拷贝内容：源——>目标
+     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
+     frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
+     frameworks/native/data/etc/android.hardware.wifi.direct.xml:system/etc/permissions/android.hadware.wifi.direct.xml \
+     frameworks/native/data/etc/android.hardware.sensor.light.xml:system/etc/permissions/android.hardware.sensor.light.xml \
+     frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
+     frameworks/native/data/etc/android.hardware.faketouch.xml:system/etc/permissions/android.hardware.faketouch.xml \
+     frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:system/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
+     frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
+     frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \
+     frameworks/native/data/etc/android.hardware.usb.accessory.xml:system/etc/permissions/android.hardware.usb.accessory.xml \
+     frameworks/native/data/etc/android.hardware.bluetooth_le.xml:system/etc/permissions/android.hardware.bluetooth_le.xml \
+     frameworks/native/data/etc/android.hardware.consumerir.xml:system/etc/permissions/android.hardware.consumerir.xml
+ 
+ # for PDK build, include only when the dir exists
+ # too early to use $(TARGET_BUILD_PDK)
+ ifneq ($(wildcard packages/wallpapers/LivePicker),)
+ PRODUCT_COPY_FILES += \
+     packages/wallpapers/LivePicker/android.software.live_wallpaper.xml:system/etc/permissions/android.software.live_wallpaper.xml
+ endif
+

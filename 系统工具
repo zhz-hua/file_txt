@@ -1,0 +1,10 @@
+stability.apk  		测试android系统稳定性
+grabserial工具		http://elinux.org/Grabserial
+			git clone https://github.com/tbird20d/grabserial.git 
+			这里是uboot的快速启动的patch，你搞一下了先
+u-center_GPS.apk 	测试GPS的工具
+Boot char for Android    开机进程耗时统计图  bootchart 使用说明及代码分析  
+			http://blog.csdn.net/andyhuabing/article/details/23669007
+			busybox tar -czf bootchart.tgz header proc_stat.log proc_ps.log proc_diskstats.log kernel_pacct 
+			sudo apt-get install bootchart
+			java -jar /usr/share/bootchart/bootchart.jar /path/to/bootchart.tgz

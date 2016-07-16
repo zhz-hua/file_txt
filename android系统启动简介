@@ -1,0 +1,565 @@
+Android 入门 - 系统启动简介，有需要的朋友可以参考下。
+
+
+
+本文将简单分析设备从开机至最终的锁屏界面显示的过程。开机后，先是执行引导程序(Bootloader)，再由引导程序加载Linux内核(Kernel)，再由内核加载Android系统及应用，
+引导和内核启动是非常快的，而Android系统的启动过程较慢，启动界面的主要时间都在动画展现上。主要分析以下几个过程（Android 4.4 Ki
+1、系统启动
+
+    系统引导（bootloader），源码位于：安卓源码路径/bootable/*。系统引导分三种模式：fastboot，recovery，normal：
+
+    fastboot模式：用于工厂模式的刷机。在关机状态下，按返回+开机 键进入此模式：
+
+    recovery模式：用于工程模式的刷机。按 home+开机 键进入此模式；
+    normal模式：正常开机。
+
+    内核启动（Linux Kernel），源码位置：内核源码路径/kernel/*。内核由bootloader加载启动。
+    Android启动，源码位置：安卓源码路径/system/core/init/init.c。此进程由内核启动，除了一些必要的初始化外，最重要的是执行init.rc脚本中配置的服务和命令。这里的服务指的是底层服务，如：adb等。init.rc位置：out/target/product/generic/root/，打包时会放在Android系统的根目录。
+
+
+2、虚拟机启动
+我们都知道，Android的应用程序是用Java开发的，需要JavaVM运行环境，那么Java虚拟机是什么时候启动的呢？
+
+init.rc脚本文件中定义了很多服务（service）。其中最为重要的服务有两个：servicemanager,zygote。其中zygote是所有Java应用的孵化器。我们来看看zygote在init.rc中的定义
+
+...
+service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server
+  class main
+  socket zygote stream 660 root system
+  onrestart write /sys/android_power/request_state wake
+  onrestart write /sys/power/state on
+  onrestart restart media
+  onrestart restart netd
+...
+
+
+可以看到：zygote其实启动的是app_process进程。app_process的源码位于：frameworks/base/cmds/app_process/app_main.cpp。源码如下：
+
+...
+int main(int argc, char* const argv[])
+{
+...
+    runtime.mParentDir = parentDir;
+
+    if (zygote) {
+        runtime.start("com.android.internal.os.ZygoteInit",
+                startSystemServer ? "start-system-server" : "");
+    } else if (className) {
+        // Remainder of args get passed to startup class main()
+        runtime.mClassName = className;
+        runtime.mArgC = argc - i;
+        runtime.mArgV = argv + i;
+        runtime.start("com.android.internal.os.RuntimeInit",
+                application ? "application" : "tool");
+    } else {
+        fprintf(stderr, "Error: no class name or --zygote supplied.\n");
+        app_usage();
+        LOG_ALWAYS_FATAL("app_process: no class name or --zygote supplied.");
+        return 10;
+    }
+}
+
+
+runtime是基于AndroidRunTime（源码：frameworks/base/core/jni/AndroidRuntime.cpp）派生类的实例，我们来看看AndroidRunTime.start函数：
+
+void AndroidRuntime::start(const char* className, const char* options)
+{
+...
+    /* start the virtual machine */
+    JniInvocation jni_invocation;
+    jni_invocation.Init(NULL);
+    JNIEnv* env;
+    if (startVm(&mJavaVM, &env) != 0) {
+        return;
+    }
+    onVmCreated(env);
+...
+    /*
+     * Start VM.  This thread becomes the main thread of the VM, and will
+     * not return until the VM exits.
+     */
+    char* slashClassName = toSlashClassName(className);
+    jclass startClass = env->FindClass(slashClassName);
+    if (startClass == NULL) {
+        ALOGE("JavaVM unable to locate class '%s'\n", slashClassName);
+        /* keep going */
+    } else {
+        jmethodID startMeth = env->GetStaticMethodID(startClass, "main",
+            "([Ljava/lang/String;)V");
+        if (startMeth == NULL) {
+            ALOGE("JavaVM unable to find main() in '%s'\n", className);
+            /* keep going */
+        } else {
+            env->CallStaticVoidMethod(startClass, startMeth, strArray);
+
+#if 0
+            if (env->ExceptionCheck())
+                threadExitUncaughtException(env);
+#endif
+        }
+    }
+    free(slashClassName);
+
+    ALOGD("Shutting down VM\n");
+    if (mJavaVM->DetachCurrentThread() != JNI_OK)
+        ALOGW("Warning: unable to detach main thread\n");
+    if (mJavaVM->DestroyJavaVM() != 0)
+        ALOGW("Warning: VM did not shut down cleanly\n");
+}
+
+
+可以看到，start的主要作用就是启动Android运行环境，即：启动JavaVM，并加载入口类（com.android.internal.os.ZygoteInit）。
+
+
+3、ZygoteInit启动
+
+此类源于位于：frameworks/base/core/java/com/android/internal/os/ZygoteInit.java
+frameworks/base/core/java/com/android/internal/os/ZygoteInit.java。这样就来到了Java程序员们的熟悉世界了。main函数如下：
+
+...
+    public static void main(String argv[]) {
+        try {
+            // Start profiling the zygote initialization.
+            SamplingProfilerIntegration.start();
+
+            registerZygoteSocket();
+            EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_START,
+                SystemClock.uptimeMillis());
+            preload();
+            EventLog.writeEvent(LOG_BOOT_PROGRESS_PRELOAD_END,
+                SystemClock.uptimeMillis());
+
+            // Finish profiling the zygote initialization.
+            SamplingProfilerIntegration.writeZygoteSnapshot();
+
+            // Do an initial gc to clean up after startup
+            gc();
+
+            // Disable tracing so that forked processes do not inherit stale tracing tags from
+            // Zygote.
+            Trace.setTracingEnabled(false);
+
+            // If requested, start system server directly from Zygote
+            if (argv.length != 2) {
+                throw new RuntimeException(argv[0] + USAGE_STRING);
+            }
+			if (argv[1].equals("start-system-server")) {
+                startSystemServer();
+            } else if (!argv[1].equals("")) {
+                throw new RuntimeException(argv[0] + USAGE_STRING);
+            }
+            Log.i(TAG, "Accepting command socket connections");
+
+            runSelectLoop();
+
+            closeServerSocket();
+        } catch (MethodAndArgsCaller caller) {
+            caller.run();
+        } catch (RuntimeException ex) {
+            Log.e(TAG, "Zygote died with exception", ex);
+            closeServerSocket();
+            throw ex;
+        }
+    }
+...
+
+
+ZygoteInit的流程很简单：
+
+
+    注册zygote socket
+    如果指定了"start-system-server"参数，则会执行startSystemServer()
+    无限循环，监听并处理zygote socket的消息
+
+
+zygote socket服务器建立后，zygote要接收来处客户端的请求，fork所有的Java进程。那么，SystemServer其实是zygote自己fork的第一个进程。
+
+
+4、SystemServer启动
+
+看看ZygoteInit.startSystemServer()的代码：
+
+private static boolean startSystemServer()
+            throws MethodAndArgsCaller, RuntimeException {
+...
+    String args[] = {
+        "--setuid=1000",
+        "--setgid=1000",
+        "--setgroups=1001,1002,1003,1004,1005,1006,1007,1008,1009,1010,1018,1032,3001,3002,3003,3006,3007",
+        "--capabilities=" + capabilities + "," + capabilities,
+        "--runtime-init",
+        "--nice-name=system_server",
+        "com.android.server.SystemServer",
+    };
+    ZygoteConnection.Arguments parsedArgs = null;
+
+    int pid;
+
+    try {
+        parsedArgs = new ZygoteConnection.Arguments(args);
+        ZygoteConnection.applyDebuggerSystemProperty(parsedArgs);
+        ZygoteConnection.applyInvokeWithSystemProperty(parsedArgs);
+
+        /* Request to fork the system server process */
+        pid = Zygote.forkSystemServer(
+                parsedArgs.uid, parsedArgs.gid,
+                parsedArgs.gids,
+                parsedArgs.debugFlags,
+                null,
+                parsedArgs.permittedCapabilities,
+                parsedArgs.effectiveCapabilities);
+    } catch (IllegalArgumentException ex) {
+        throw new RuntimeException(ex);
+    }
+
+    /* For child process */
+    if (pid == 0) {
+        handleSystemServerProcess(parsedArgs);
+    }
+
+    return true;
+}
+
+
+
+startSystemServer主要做了以下两件事：
+
+
+    forkSystemServer()，fork出一个名为“system_server”的进程，该动作是通过一个JNI的本地化接口完成的:
+
+    public static int forkSystemServer(int uid, int gid, int[] gids, int debugFlags,
+            int[][] rlimits, long permittedCapabilities, long effectiveCapabilities) {
+        preFork();
+        int pid = nativeForkSystemServer(
+                uid, gid, gids, debugFlags, rlimits, permittedCapabilities, effectiveCapabilities);
+        postFork();
+        return pid;
+    }
+
+
+    那么nativeForkSystemServer函数在哪里呢？nativeForkSystemServer是一个JNI调用，源代码位于：art/runtime/native/dalvik_system_Zygote.cc。
+
+    static jint Zygote_nativeForkSystemServer(JNIEnv* env, jclass, uid_t uid, gid_t gid, jintArray gids,
+                                              jint debug_flags, jobjectArray rlimits,
+                                              jlong permittedCapabilities, jlong effectiveCapabilities) {
+      pid_t pid = ForkAndSpecializeCommon(env, uid, gid, gids,
+                                          debug_flags, rlimits,
+                                          permittedCapabilities, effectiveCapabilities,
+                                          MOUNT_EXTERNAL_NONE, NULL, NULL, true);
+      if (pid > 0) {
+          // The zygote process checks whether the child process has died or not.
+          LOG(INFO) << "System server process " << pid << " has been created";
+          gSystemServerPid = pid;
+          // There is a slight window that the system server process has crashed
+          // but it went unnoticed because we haven't published its pid yet. So
+          // we recheck here just to make sure that all is well.
+          int status;
+          if (waitpid(pid, &status, WNOHANG) == pid) {
+              LOG(FATAL) << "System server process " << pid << " has died. Restarting Zygote!";
+          }
+      }
+      return pid;
+    }
+
+
+    这里不再往下分析forkAndSpecializeCommon函数了，他的作用就是fork一个进程。
+    handleSystemServerProcess()，初始化子进程：
+
+    private static void handleSystemServerProcess(
+            ZygoteConnection.Arguments parsedArgs)
+            throws ZygoteInit.MethodAndArgsCaller {
+
+        closeServerSocket();
+
+        // set umask to 0077 so new files and directories will default to owner-only permissions.
+        Libcore.os.umask(S_IRWXG | S_IRWXO);
+
+        if (parsedArgs.niceName != null) {
+            Process.setArgV0(parsedArgs.niceName);
+        }
+
+        if (parsedArgs.invokeWith != null) {
+            WrapperInit.execApplication(parsedArgs.invokeWith,
+                    parsedArgs.niceName, parsedArgs.targetSdkVersion,
+                    null, parsedArgs.remainingArgs);
+        } else {
+            /*
+             * Pass the remaining arguments to SystemServer.
+             */
+            RuntimeInit.zygoteInit(parsedArgs.targetSdkVersion, parsedArgs.remainingArgs);
+        }
+
+        /* should never reach here */
+    }
+
+
+    RuntimeInit.zygoteInit():
+
+    public static final void zygoteInit(int targetSdkVersion, String[] argv)
+            throws ZygoteInit.MethodAndArgsCaller {
+        if (DEBUG) Slog.d(TAG, "RuntimeInit: Starting application from zygote");
+    	// 重定向 System.out 和 System.err 到 Android 日志.
+        redirectLogStreams();
+    	// 初始化TimeZone,userAgent等
+        commonInit();
+        // 孵化器初始化，JNI调用frameworks/base/core/jni/AndroidRuntime.cpp中的本地函数com_android_internal_os_RuntimeInit_nativeZygoteInit()，
+        // 最终调用的是当前的AppRuntime.onZygoteInit()函数，启动线程池
+        nativeZygoteInit();
+    	// 应用初始化，执行argv指向的类，即：com.android.server.SystemServer
+        applicationInit(targetSdkVersion, argv);
+    }
+
+
+    做相应的初始化后，会调用applicationInit，启动com.android.server.SystemServer。
+
+    private static void applicationInit(int targetSdkVersion, String[] argv)
+            throws ZygoteInit.MethodAndArgsCaller {
+        // If the application calls System.exit(), terminate the process
+        // immediately without running any shutdown hooks.  It is not possible to
+        // shutdown an Android application gracefully.  Among other things, the
+        // Android runtime shutdown hooks close the Binder driver, which can cause
+        // leftover running threads to crash before the process actually exits.
+        nativeSetExitWithoutCleanup(true);
+
+        // We want to be fairly aggressive about heap utilization, to avoid
+        // holding on to a lot of memory that isn't needed.
+        VMRuntime.getRuntime().setTargetHeapUtilization(0.75f);
+        VMRuntime.getRuntime().setTargetSdkVersion(targetSdkVersion);
+
+        final Arguments args;
+        try {
+            args = new Arguments(argv);
+        } catch (IllegalArgumentException ex) {
+            Slog.e(TAG, ex.getMessage());
+            // let the process exit
+            return;
+        }
+
+        // Remaining arguments are passed to the start class's static main
+        invokeStaticMain(args.startClass, args.startArgs);
+    }
+
+
+    invokeStaticMain实例化com.android.server.SystemServer，并执行SystemServer.main()函数。
+
+
+
+SystemServer的Java类位置：frameworks/base/services/java/com/android/server/SystemServer.java。main函数：
+
+public static void main(String[] args) {
+
+        /*
+         * In case the runtime switched since last boot (such as when
+         * the old runtime was removed in an OTA), set the system
+         * property so that it is in sync. We can't do this in
+         * libnativehelper's JniInvocation::Init code where we already
+         * had to fallback to a different runtime because it is
+         * running as root and we need to be the system user to set
+         * the property. http://b/11463182          */
+        SystemProperties.set("persist.sys.dalvik.vm.lib",
+                             VMRuntime.getRuntime().vmLibrary());
+
+        if (System.currentTimeMillis() < EARLIEST_SUPPORTED_TIME) {
+            // If a device's clock is before 1970 (before 0), a lot of
+            // APIs crash dealing with negative numbers, notably
+            // java.io.File#setLastModified, so instead we fake it and
+            // hope that time from cell towers or NTP fixes it
+            // shortly.
+            Slog.w(TAG, "System clock is before 1970; setting to 1970.");
+            SystemClock.setCurrentTimeMillis(EARLIEST_SUPPORTED_TIME);
+        }
+
+        if (SamplingProfilerIntegration.isEnabled()) {
+            SamplingProfilerIntegration.start();
+            timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    SamplingProfilerIntegration.writeSnapshot("system_server", null);
+                }
+            }, SNAPSHOT_INTERVAL, SNAPSHOT_INTERVAL);
+        }
+
+        // Mmmmmm... more memory!
+        dalvik.system.VMRuntime.getRuntime().clearGrowthLimit();
+
+        // The system server has to run all of the time, so it needs to be
+        // as efficient as possible with its memory usage.
+        VMRuntime.getRuntime().setTargetHeapUtilization(0.8f);
+
+        Environment.setUserRequired(true);
+        // 装入本地服务库，JNI
+        System.loadLibrary("android_servers");
+
+        Slog.i(TAG, "Entered the Android system server!");
+
+        // Initialize native services.
+        nativeInit();
+
+        // This used to be its own separate thread, but now it is
+        // just the loop we run on the main thread.
+        ServerThread thr = new ServerThread();
+        thr.initAndLoop();
+    }
+
+
+通过ServerThread.initAndLoop()函数中会启动许多的服务，包含与UI相关的最重要的两个：WindowManager，ActivityManager。initAndLoop()函数启动这些服务后，会调用服务的systemReady()函数，表示系统就绪。
+
+这就启动了SystemServer。
+
+
+5. Launcher启动
+SystemServer启动后，会启动各个服务，启动后，会调用各服务systemReady()，各个服务的systemReady()的作用不同，具体可看各服务的源码。Android的系统界面基本都是由一些Activity组成，在Android系统里，Activity全部放在ActivityStack里管理。而ActivityStack是由ActivityManagerService（以下简称ams，源码位置：frameworks/base/services/java/com/android/server/am/ActivityManagerService.java）内部管理的，具体步骤：
+
+
+    ams.systemReady(): 查看Android 4.4的ams的systemReady()函数最后的代码：
+
+    public void systemReady(final Runnable goingCallback) {
+        ...
+        if (goingCallback != null) goingCallback.run();
+        ...    
+        synchronized (this) {
+            ... 
+            // 此处恢复所有的顶层Activities
+            mStackSupervisor.resumeTopActivitiesLocked();
+            sendUserSwitchBroadcastsLocked(-1, mCurrentUserId);
+        }
+    }
+
+
+    ActivityStackSupervisor.resumeTopActivitiesLocked()：
+
+    boolean resumeTopActivitiesLocked() {
+    	// 跳转至下面的函数
+        return resumeTopActivitiesLocked(null, null, null);
+    }
+
+    boolean resumeTopActivitiesLocked(ActivityStack targetStack, ActivityRecord target,Bundle targetOptions) {
+        if (targetStack == null) {
+            targetStack = getFocusedStack();
+        }
+        boolean result = false;
+        for (int stackNdx = mStacks.size() - 1; stackNdx >= 0; --stackNdx) {
+            final ActivityStack stack = mStacks.get(stackNdx);
+            if (isFrontStack(stack)) {
+               // 恢复最顶层的Activity
+               if (stack == targetStack) {
+                    result = stack.resumeTopActivityLocked(target, targetOptions);
+                } else {
+                    stack.resumeTopActivityLocked(null);
+                }
+            }
+        }
+        return result;
+    }
+
+
+    ActivityStack.resumeTopActivityLocked()：
+
+    final boolean resumeTopActivityLocked(ActivityRecord prev, Bundle options) {
+        ...
+        // Find the first activity that is not finishing.
+        ActivityRecord next = topRunningActivityLocked(null);
+        ...
+        if (next == null) {
+            // There are no more activities!  Let's just start up the
+            // Launcher...
+            ActivityOptions.abort(options);
+            if (DEBUG_STATES) Slog.d(TAG, "resumeTopActivityLocked: No more activities go home");
+            if (DEBUG_STACK) mStackSupervisor.validateTopActivitiesLocked();
+            return mStackSupervisor.resumeHomeActivity(prev);
+        }
+        ...
+    }
+
+
+    如果没有Activity，则启动Launcher，可见mStackSupervisor.resumeHomeActivity(prev)会启动Launcher。
+    ActivityStackSupervisor.resumeHomeActivity():
+
+    boolean resumeHomeActivity(ActivityRecord prev) {
+    		// 将Home移至顶层
+            moveHomeToTop();
+            if (prev != null) {
+                prev.task.mOnTopOfHome = false;
+            }
+            ActivityRecord r = mHomeStack.topRunningActivityLocked(null);
+            if (r != null && r.isHomeActivity()) {
+            	//如果有Home Activity，则跳转至resumeTopActivitiesLocked，恢复主屏幕
+                mService.setFocusedActivityLocked(r);
+                return resumeTopActivitiesLocked(mHomeStack, prev, null);
+            }
+            // 如果没有Home Activity运行，则启动Home Activity。
+            return mService.startHomeActivityLocked(mCurrentUser);
+        }
+
+
+    ams.startHomeActivityLocked():
+
+    boolean startHomeActivityLocked(int userId) {
+            if (mHeadless) {
+            	// 无人安装模式？
+                // Added because none of the other calls to ensureBootCompleted seem to fire
+                // when running headless.
+                ensureBootCompleted();
+                return false;
+            }
+
+            if (mFactoryTest == SystemServer.FACTORY_TEST_LOW_LEVEL
+                    && mTopAction == null) {
+                // 工厂底层测试模式？
+                // We are running in factory test mode, but unable to find
+                // the factory test app, so just sit around displaying the
+                // error message and don't try to start anything.
+                return false;
+            }
+            // 下面为正常启动模式
+            Intent intent = getHomeIntent();
+            ActivityInfo aInfo =
+                resolveActivityInfo(intent, STOCK_PM_FLAGS, userId);
+            if (aInfo != null) {
+                intent.setComponent(new ComponentName(
+                        aInfo.applicationInfo.packageName, aInfo.name));
+                // Don't do this if the home app is currently being
+                // instrumented.
+                aInfo = new ActivityInfo(aInfo);
+                aInfo.applicationInfo = getAppInfoForUser(aInfo.applicationInfo, userId);
+                ProcessRecord app = getProcessRecordLocked(aInfo.processName,
+                        aInfo.applicationInfo.uid, true);
+                if (app == null || app.instrumentationClass == null) {
+                    intent.setFlags(intent.getFlags() | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    // 启动主屏幕
+                    mStackSupervisor.startHomeActivity(intent, aInfo);
+                }
+            }
+
+            return true;
+        }
+
+
+    ams.startHomeActivityLocked()，是较为关键的函数，函数的前面是非正常的启动模式，如：无人安装模式？，工厂底层测试？所以直接返回了，下面一段为正常的启动模式，最终会调用mStackSupervisor.startHomeActivity启动主屏幕。
+
+    这就是相对较为正常的启动一个Android的Activity流程了，先通过getHomeIntent()，找到主屏幕对应的Ident，再启动这个Ident对应的Activity。查看getHomeIntent()函数：
+
+    Intent getHomeIntent() {
+            Intent intent = new Intent(mTopAction, mTopData != null ? Uri.parse(mTopData) : null);
+            intent.setComponent(mTopComponent);
+            if (mFactoryTest != SystemServer.FACTORY_TEST_LOW_LEVEL) {
+                intent.addCategory(Intent.CATEGORY_HOME);
+            }
+            return intent;
+        }
+
+
+    由上面代码可以看出，启动的是Intent.CATEGORY_HOME的Activity，即主屏幕。
+
+    所以，我们如果要定制自己的Launcher，并在开机显示，可以直接修改startHomeActivityLocked()来实现。
+    ActivityStackSupervisor.startHomeActivity():
+
+    void startHomeActivity(Intent intent, ActivityInfo aInfo) {
+            moveHomeToTop();
+            startActivityLocked(null, intent, null, aInfo, null, null, 0, 0, 0, null, 0,
+                    null, false, null);
+        }
+
+
+    这个函数就相对简单，将主屏幕移动顶端，然后，调用startActivityLocked启动主屏幕，参数实际上是在startHomeActivityLocked()里面设置的。startActivityLocked()函数是一定典型的应用启动流程，就不在这里详细分析了，本文主要是介绍系统启动过程。

@@ -1,0 +1,73 @@
+
+============================================
+        DDR Stress Test (2.4.0) 
+        Build: Dec 11 2015, 11:13:32
+        Freescale Semiconductor, Inc.
+============================================
+
+============================================
+        Chip ID
+CHIP ID = i.MX6 Solo/DualLite (0x61)
+Internal Revision = TO1.2
+============================================
+
+============================================
+        Boot Configuration
+SRC_SBMR1(0x020d8004) = 0x00000000
+SRC_SBMR2(0x020d801c) = 0x20000001
+============================================
+
+ARM Clock set to 800MHz
+
+============================================
+        DDR configuration
+BOOT_CFG3[5-4]: 0x00, Single DDR channel.
+DDR type is DDR3 
+Data width: 64, bank num: 8
+Row size: 14, col size: 10
+Chip select CSD0 is used 
+Density per chip select: 1024MB 
+============================================
+
+
+DDR Stress Test Iteration 1
+Current Tempareture: 54
+============================================
+
+DDR Freq: 396 MHz
+t0.1: data is addr test
+t0: memcpy10 SSN x64 test
+t1: memcpy8 SSN x64 test
+t2: byte-wise SSN x64 test
+t3: memcpy11 random pattern test
+t4: IRAM_to_DDRv2 test
+t5: IRAM_to_DDRv1 test
+t6: read noise walking ones and zeros test
+
+DDR Freq: 413 MHz
+t0.1: data is addr test
+t0: memcpy10 SSN x64 test
+t1: memcpy8 SSN x64 test
+t2: byte-wise SSN x64 test
+t3: memcpy11 random pattern test
+t4: IRAM_to_DDRv2 test
+t5: IRAM_to_DDRv1 test
+t6: read noise walking ones and zeros test
+
+DDR Freq: 432 MHz
+t0.1: data is addr test
+t0: memcpy10 SSN x64 test
+t1: memcpy8 SSN x64 test
+t2: byte-wise SSN x64 test
+t3: memcpy11 random pattern test
+t4: IRAM_to_DDRv2 test
+t5: IRAM_to_DDRv1 test
+t6: read noise walking ones and zeros test
+
+DDR Freq: 452 MHz
+t0.1: data is addr test
+Address of failure: 0x105cf9a0
+Data was: 0x105cf920
+But pattern  should match address 
+Error: failed to run stress test!!!
+

@@ -1,0 +1,4 @@
+　将static void fb_flashcursor(void *private)   和 static void fbcon_cursor(struct vc_data *vc, int mode) 里的内容注释掉,使之变成空函数
+
+static void fb_flashcursor(struct work_struct *work)
+

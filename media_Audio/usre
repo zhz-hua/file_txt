@@ -1,0 +1,51 @@
+MediaPlayer在播放音频时，在framework层还是会创建AudioTrack，把解码后的PCM数流传递给AudioTrack，最后由AudioFlinger进行混音，传递音频给硬件播放出来。利用AudioTrack播放只是跳过Mediaplayer的解码部分而已。Mediaplayer的解码核心部分是基于OpenCORE 来实现的，支持通用的音视频和图像格式，codec使用的是OpenMAX接口来进行扩展。因此使用audiotrack播放mp3文件的话，要自己加入一个音频解码器，如libmad。否则只能播放PCM数据，如大多数WAV格式的音频文件。
+
+http://www.360doc.com/content/14/0414/10/97538_368733041.shtml
+
+http://www.cnblogs.com/wanqieddy/archive/2012/07/27/2611435.html  音频
+
+http://www.2cto.com/kf/201410/342659.html
+
+frameworks/base/media/java/android/media/AudioTrack.java
+
+
+frameworks/base/core/jni/android_media_AudioTrack.cpp
+
+frameworks/av/media/libmedia/AudioTrack.cpp
+
+http://blog.csdn.net/adits/article/details/8242146  音频讲解
+
+./frameworks/av/services/audioflinger/AudioFlinger.cpp  hw_get_module_by_class
+
+./hardware/libhardware_legacy/include/hardware_legacy/AudioHardwareInterface.h
+
+
+
+./hardware/libhardware/include/hardware/audio.h
+./hardware/libhardware/include/hardware/audio.h   #define AUDIO_HARDWARE_MODULE_ID "audio" 
+
+hardware/libhardware/hardware.c
+
+编码解码
+
+使用这个类可以很强轻松地将音频数据在Android系统上播放出来，下面贴出我自己写的源码：
+    AudioTrack audio = new AudioTrack(
+                           AudioManager.STREAM_MUSIC, 		// 指定在流的类型
+                           32000, 				// 设置音频数据的采样率 32k，如果是44.1k就是44100
+                           AudioFormat.CHANNEL_OUT_STEREO, 	// 设置输出声道为双声道立体声，而CHANNEL_OUT_MONO类型是单声道
+                           AudioFormat.ENCODING_PCM_16BIT, 	// 设置音频数据块是8位还是16位，这里设置为16位。好像现在绝大多数的音频都是16位的了
+                           AudioTrack.MODE_STREAM 		// 设置模式类型，在这里设置为流类型，另外一种MODE_STATIC貌似没有什么效果
+                       );
+    audio.play(); 					// 启动音频设备，下面就可以真正开始音频数据的播放了
+    // 打开mp3文件，读取数据，解码等操作省略 ...
+    byte[] buffer = new buffer[4096];
+    int count;
+    while(true)
+    {
+        // 最关键的是将解码后的数据，从缓冲区写入到AudioTrack对象中
+        audio.write(buffer, 0, 4096);
+        if(文件结束) break;
+    }
+    // 最后别忘了关闭并释放资源
+    audio.stop();
+    audio.release();

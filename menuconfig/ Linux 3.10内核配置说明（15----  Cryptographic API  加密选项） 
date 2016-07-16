@@ -1,0 +1,198 @@
+      --- Cryptographic API                                                                                                    
+      *** Crypto core or helper ***                            
+-*-   Cryptographic algorithm manager                          
+<*>   Userspace cryptographic algorithm configuration          
+[*]   Disable run-time self tests                              
+-*-   GF(2^128) multiplication functions                       
+-*-   Null algorithms                                          
+< >   Parallel crypto engine                                   
+< >   Software async crypto daemon                             
+-*-   Authenc support                                          
+< >   Testing module                                           
+      *** Authenticated Encryption with Associated Data ***    
+<*>   CCM support                                              
+<*>   GCM/GMAC support                                         
+-*-   Sequence Number IV Generator                             
+      *** Block modes ***                                      
+-*-   CBC support                                              
+-*-   CTR support                                              
+<*>   CTS support                                              
+-*-   ECB support                                              
+<*>   LRW support                                              
+< >   PCBC support                                             
+<*>   XTS support                                              
+      *** Hash modes ***                                       
+< >   CMAC support                                             
+-*-   HMAC support                                             
+< >   XCBC support                                             
+< >   VMAC support                                             
+      *** Digest ***                                           
+-*-   CRC32c CRC algorithm                                     
+< >   CRC32 CRC algorithm                                      
+-*-   GHASH digest algorithm                                   
+<*>   MD4 digest algorithm                                     
+-*-   MD5 digest algorithm                                     
+<*>   Michael MIC keyed digest algorithm                       
+<*>   RIPEMD-128 digest algorithm                              
+<*>   RIPEMD-160 digest algorithm                              
+<*>   RIPEMD-256 digest algorithm                              
+<*>   RIPEMD-320 digest algorithm                              
+-*-   SHA1 digest algorithm                                    
+< >   SHA1 digest algorithm (ARM-asm)                          
+-*-   SHA224 and SHA256 digest algorithm     
+<*>   RIPEMD-320 digest algorithm                                                                                                                                                                                    
+-*-   SHA1 digest algorithm                                    
+< >   SHA1 digest algorithm (ARM-asm)                          
+-*-   SHA224 and SHA256 digest algorithm                       
+<*>   SHA384 and SHA512 digest algorithms                      
+<*>   Tiger digest algorithms                                  
+<*>   Whirlpool digest algorithms                              
+      *** Ciphers ***                                          
+-*-   AES cipher algorithms                                    
+< >   AES cipher algorithms (ARM-asm)                          
+< >   Anubis cipher algorithm                                  
+-*-   ARC4 cipher algorithm                                    
+<*>   Blowfish cipher algorithm                                
+<*>   Camellia cipher algorithms                               
+< >   CAST5 (CAST-128) cipher algorithm                        
+< >   CAST6 (CAST-256) cipher algorithm                        
+-*-   DES and Triple DES EDE cipher algorithms                 
+< >   FCrypt cipher algorithm                                  
+< >   Khazad cipher algorithm                                  
+< >   Salsa20 stream cipher algorithm                          
+< >   SEED cipher algorithm                                    
+< >   Serpent cipher algorithm                                 
+< >   TEA, XTEA and XETA cipher algorithms                     
+<*>   Twofish cipher algorithm                                 
+      *** Compression ***                                      
+-*-   Deflate compression algorithm                            
+< >   Zlib compression algorithm                               
+-*-   LZO compression algorithm                                
+      *** Random Number Generation ***                         
+< >   Pseudo Random Number Generation for Cryptographic modules
+< >   User-space interface for hash algorithms                 
+< >   User-space interface for symmetric key cipher algorithms 
+[ ]   Hardware crypto devices  --->                            
+< >   Asymmetric (public-key cryptographic) key type  ---> 
+
+提供核心的加密API支持.这里的加密算法被广泛的应用于驱动程序通信协议等机制中.子选项可以全不选,内核中若有其他部分依赖它,会自动选上
+
+Cryptographic algorithm manager
+
+创建加密模版实例,必须要选
+
+HMAC support
+
+为IPSec所必须,可为PPPoE提供压缩支持
+
+Null algorithms
+
+NULL加密算法(什么也不做),用于IPsec协议的封装安全载荷模块(ESP)
+
+MD4 digest algorithm
+
+老旧的摘要算法,已经过时
+
+MD5 digest algorithm
+
+主流摘要算法,128位(已被中国山东大学王小云攻破,可以快速找到碰撞)
+
+SHA1 digest algorithm
+
+主流摘要算法,160位(已被中国山东大学王小云攻破,可以快速找到碰撞),速度与MD5相当
+
+SHA256 digest algorithm
+
+更好的摘要算法,256位,速度较SHA1稍慢
+
+SHA384 and SHA512 digest algorithms
+
+更好的摘要算法,384/512位,速度大约只有SHA1的40-50%
+
+Whirlpool digest algorithms
+
+最安全的摘要算法,512位,已被列入ISO标准,目前最新版本为3.0(2003年发布)
+
+Tiger digest algorithms
+
+号称最快的摘要算法,192位,专门为64位CPU进行了优化
+
+ECB support
+
+电子密码本,最简单的加密方法
+
+CBC support
+
+密码块链,IPSec需要使用它
+
+DES and Triple DES EDE cipher algorithms
+
+老迈的(DES)和尚佳的(Triple DES)对称加密算法
+
+Blowfish cipher algorithm
+
+又老又慢的对称加密算法
+
+Twofish cipher algorithm
+
+很强的对称加密算法,使用较广
+
+Twofish cipher algorithms (i586)
+
+很强的对称加密算法,使用较广(针对i586的版本)
+
+Serpent cipher algorithm
+
+很强的对称加密算法
+
+AES cipher algorithms
+
+最佳的对称加密算法(Rijndael),128/192/256位,强度最高,快速且节省内存
+
+AES cipher algorithms (i586)
+
+最佳的对称加密算法(Rijndael),128/192/256位,强度最高,快速且节省内存(针对i586的版本)
+
+CAST5 (CAST-128) cipher algorithm
+
+对称加密算法
+
+CAST6 (CAST-256) cipher algorithm
+
+对称加密算法
+
+TEA, XTEA and XETA cipher algorithms
+
+较弱的对称加密算法
+
+ARC4 cipher algorithm
+
+脆弱的流对称加密算法
+
+Khazad cipher algorithm
+
+对称加密算法
+
+Anubis cipher algorithm
+
+对称加密算法
+
+Deflate compression algorithm
+
+压缩算法,当在IPSec中使用IPCOMP协议时才需要
+
+Michael MIC keyed digest algorithm
+
+摘要算法,仅仅用于校验iSCSI设备传输的数据,因为算法本身比较脆弱
+
+CRC32c CRC algorithm
+
+摘要算法,可用于校验iSCSI设备传输的数据
+
+Testing module
+
+快速且丑陋的测试模块
+
+Hardware crypto devices
+
+仅有VIA C7系列处理器支持硬件加密(VIA PadLock高级加密引擎    

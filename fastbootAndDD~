@@ -1,0 +1,42 @@
+用串口或者adb启动fastboot服务
+reboot fastboot
+
+fresscale 的fastboot工具在./out/host/linux-x86/bin/fastboot 目录下
+./out/host/linux-x86/bin/fastboot flash bootloader bootable/bootloader/uboot-imx/u-boot.imx
+
+
+Download the U-Boot image:
+# sudo dd if=u-boot.imx of=/dev/sdx bs=1K seek=1; sync
+Download the boot image:
+# sudo dd if=boot.img of=/dev/sdx1; sync
+Download the Android system root image:
+# sudo dd if=system.img of=/dev/sdx5; sync
+Download the Android recovery image:
+# sudo dd if=recovery.img of=/dev/sdx2; sync
+
+擦除分区命令:
+$ fastboot erase system #檫除 system 分区
+烧写分区命令:
+$ fastboot flash system system.img #把 system.img 烧写到 system 分区
+1. Power on the board with USB OTG connected.
+2. Press any key to enter the U-Boot shell.
+3. Select the correct device to do fastboot image download by command: SD/MMC card
+U-Boot > setenv fastboot_dev mmc3
+U-Boot > fastboot
+use fastboot The size of images downloaded by fastboot must be < 320 MB.
+ Run the following commands to flash the SD or eMMC:
+
+
+$fastboot flash bootloader images\u-boot-no-padding.bin
+$fastboot flash boot images\boot.img
+$fastboot flash system images\system.img
+$fastboot flash recovery images\recovery.img
+$fastboot reboot
+
+4. Run the following commands to flash NAND
+$fastboot flash boot images\boot.img
+$fastboot flash android_root images\android_root.img
+$fastboot flash recovery images\recovery.img
+$fastboot	reboot
+
+fastboot命令

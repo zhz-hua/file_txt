@@ -1,0 +1,93 @@
+
+firmware/u-boot-imx6q-%board%_mfg.imx
+firmware/zImage
+firmware/zImage-imx6q-%board%.dtb
+
+files/%board%/u-boot-imx6q.imx" ifdev="MX6Q"
+files/%board%/boot-imx6q.img" ifdev="MX6Q
+files/%board%/recovery-imx6q.img" ifdev="MX6Q
+files/%board%/system.img
+
+
+
+
+MFGTools配置文件介绍
+
+1、UICfg.ini
+
+内容为：
+
+[UICfg]
+
+PortMgrDlg=1     //表示同时支持升级的最大设备数，按需求调整
+
+ 
+
+2、cfg.ini
+
+内容为：
+
+[profiles]      
+
+chip = Linux    //目标平台，对应 Profiles/Linux 目录 ，可根据自己需求定义profile
+
+ 
+
+[platform]
+
+board = SabreSD   //预留，暂时没什么实际作用
+
+ 
+
+[LIST]
+
+name = SDCard   // Profiles\Linux\OS Firmware\ucl2.xml  里面目标操作列表的名字，可按照自己的需求创建不同列表， <LISTname="SDCard" desc="Choose SD Card as media">    
+
+ 
+
+[variable]   // Profiles\Linux\OS Firmware\ucl2.xml，name里面的list会引用到的环境变量
+
+board = sabresd   //引用模式是  %board%。要跟平台的名字一样，不然会导致load dtb的时候出错。
+
+mmc = 0         //引用模式是  %mmc%。
+
+ 
+
+3、ucl2.xml
+
+升级时候的操作文件，MFGtools会根据文件里面 list的内容进行相应的升级。文件以
+
+<CMD state="BootStrap"type="jump" > Jumping to OS image. </CMD>
+
+为界限，可以分为上阶段跟下阶段，上阶段是把“媒介镜像”烧录到ddr里面并跑起来，下阶段是烧录“file”文件夹里面的文件到emmc里面。对于第二阶段，关注以下注释：
+
+<!-- create partition -->
+
+<!-- burn uboot -->
+
+<!-- burn uImage -->
+
+<!-- burn dtb -->
+
+<!-- burn rootfs -->
+
+注释下的内容严格规定了MFGTools的烧录过程，分区-->烧写uboot-->烧写uImage-->烧写dtb-->烧写rootfs。
+
+认真看就很容易看懂。imx_v7_mfg_defconfig
+/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
+export CROSS_COMPILE=~/workspace/ivi-android-4.4.3/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
+make zImage LOADADDR=0x12000000
+make uImage LOADADDR=0x10008000
+媒介镜像的制作
+
+媒介镜像注意关注在uImage，因为“媒介uboot”在编译yocto的时候已经打包好了，具体是“build/tmp/deploy/images/$MACHINE/u-boot-$MACHINE.imx”文件，直接拿来使用就好。“dtb”文件也使用编译好的就可以了，没什么特殊要求。uImage有所要求，但freescale也帮我们铺好路了，看到“arch/arm/configs/imx_v7_mfg_defconfig”配置文件，使用此配置文件编译出来的uImage就是“媒介uImage”。然后把这些媒介的image放到MFGTools的目录下“Profiles\Linux\OSFirmware\firmware”里面即可，可能不同版本的MFGTools路径有所区别。
+
+对比imx_v7_mfg_defconfig与其他config文件不一样的地方就是：CONFIG_FSL_UTP。对于的内核代码在“drivers/usb/gadget/f_mas_stotage.c”里面，具体的作用也就是接收并处理来自OTG的image，script和command。
+
+CONFIG_USB_MASS_STORAGE=y
+CONFIG_FSL_UTP=y
+
+
+
+
+

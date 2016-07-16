@@ -1,0 +1,1 @@
+cmd_/home/zhanhuazhong/module2/built-in.o :=  rm -f /home/zhanhuazhong/module2/built-in.o; /home/zhanhuazhong/workspace/ivi-android-4.4.3-eng/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-ar rcsD /home/zhanhuazhong/module2/built-in.o

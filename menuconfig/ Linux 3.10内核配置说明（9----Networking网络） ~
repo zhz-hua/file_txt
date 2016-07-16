@@ -1,0 +1,576 @@
+───────────────────────────────────────────────────────
+--- Networking support                                 
+      Networking options  --->                         
+[ ]   Amateur Radio support  --->                      
+<*>   CAN bus subsystem support  --->                  
+< >   IrDA (infrared) subsystem support  --->          
+<*>   Bluetooth subsystem support  --->                
+< >   RxRPC session sockets                            
+-*-   Wireless  --->                                   
+< >   WiMAX Wireless Broadband support  --->           
+<*>   RF switch subsystem support  --->                
+< >   Plan 9 Resource Sharing Support (9P2000)  --->   
+< >   CAIF support  --->                               
+< >   Ceph core library                                
+< >   NFC subsystem support  ---
+───────────────────────────────────────────────────────
+
+
+
+
+[ ]   Amateur Radio support  ---> 
+
+	业余无线电支持
+<*>   CAN bus subsystem support  --->  
+	CAN子线系统支持
+	 --- CAN bus subsystem support                                   
+	<*>   Raw CAN Protocol (raw access with CAN-ID filtering)        
+	<*>   Broadcast Manager CAN Protocol (with content filtering)    
+	<*>   CAN Gateway/Router (with netlink configuration)            
+	      CAN Device Drivers  --->   
+IrDA (infrared) subsystem support  ---> 
+	红外线支持,比如无线鼠标或无线键盘	
+	 --- IrDA (infrared) subsystem support          
+	       *** IrDA protocols ***                   
+	 < >   IrLAN protocol (NEW)                     
+	 < >   IrNET protocol (NEW)                     
+	 < >   IrCOMM protocol (NEW)                    
+	 [ ]   Ultra (connectionless) protocol (NEW)    
+	       *** IrDA options ***                     
+	 [ ]   Cache last LSAP (NEW)                    
+	 [ ]   Fast RRs (low latency) (NEW)             
+	 [ ]   Debug information (NEW)                  
+	       Infrared-port device drivers  ---> 
+<*>   Bluetooth subsystem support  ---> 
+	蓝牙支持	
+	--- Bluetooth subsystem support      
+	<*>   RFCOMM protocol support        
+	[*]     RFCOMM TTY support           
+	<*>   BNEP protocol support          
+	[*]     Multicast filter support     
+	[*]     Protocol filter support      
+	<*>   HIDP protocol support          
+	      Bluetooth device drivers  ---> 
+                                     
+
+Bluetooth subsystem support
+
+
+
+网络选项
+
+Network packet debugging
+
+在调试不合格的包时加上额外的附加信息,但在遇到Dos攻击时你可能会被日志淹没
+
+Packet socket
+
+这种Socket可以让应用程序(比如tcpdump,iptables)直接与网络设备通讯,而不通过内核中的其它中介协议
+
+Packet socket: mmapped IO
+
+让Packet socket驱动程序使用IO映射机制以使连接速度更快
+
+Unix domain sockets
+
+一种仅运行于本机上的效率高于TCP/IP的Socket,简称Unix socket.许多程序都使用它在操作系统内部进行进程间通信(IPC),比如X Window和syslog
+
+Transformation user configuration interface
+
+为IPsec(可在ip层加密)之类的工具提供XFRM用户配置接口支持
+
+Transformation sub policy support
+
+XFRM子策略支持,仅供开发者使用
+
+PF_KEY sockets
+
+用于可信任的密钥管理程序和操作系统内核内部的密钥管理进行通信,IPsec依赖于它
+
+TCP/IP networking
+
+TCP/IP协议当然要选
+
+IP: multicasting
+
+群组广播,似乎与网格计算有关,仅在使用MBONE的时候才需要
+
+IP: advanced router
+
+高级路由,如果想做一个路由器就选吧
+
+IP: policy routing
+
+策略路由
+
+IP: equal cost multipath
+
+用于路由的基于目的地址的负载均衡
+
+IP: verbose route monitoring
+
+显示冗余的路由监控信息
+
+IP: kernel level autoconfiguration
+
+在内核启动时自动配置ip地址/路由表等,需要从网络启动的无盘工作站才需要这个东西
+
+IP: tunneling
+
+IP隧道,将一个IP报文封装在另一个IP报文内的技术
+
+IP: GRE tunnels over IP
+
+基于IP的GRE(通用路由封装)隧道
+
+IP: multicast routing
+
+多重传播路由
+
+IP: ARP daemon support
+
+这东西尚处于试验阶段就已经被废弃了
+
+IP: TCP syncookie support
+
+抵抗SYN flood攻击的好东西,要启用它必须同时启用/proc文件系统和"Sysctl support",然后在系统启动并挂载了/proc之后执行"echo 1 >/proc/sys/net/ipv4/tcp_syncookies"命令
+
+IP: AH transformation
+
+IPsec验证头(AH)实现了数据发送方的验证处理,可确保数据既对于未经验证的站点不可用也不能在路由过程中更改
+
+IP: ESP transformation
+
+IPsec封闭安全负载(ESP)实现了发送方的验证处理和数据加密处理,用以确保数据不会被拦截/查看或复制
+
+IP: IPComp transformation
+
+IPComp(IP静荷载压缩协议),用于支持IPsec
+
+IP: IPsec transport mode
+
+IPsec传输模式,常用于对等通信,用以提供内网安全.数据包经过了加密但IP头没有加密,因此任何标准设备或软件都可查看和使用IP头
+
+IP: IPsec tunnel mode
+
+IPsec隧道模式,用于提供外网安全(包括虚拟专用网络).整个数据包(数据头和负载)都已经过加密处理且分配有新的ESP头/IP头和验证尾,从而能够隐藏受保护站点的拓扑结构
+
+IP: IPsec BEET mode
+
+IPsec BEET模式
+
+INET: socket monitoring interface
+
+socket监视接口,一些Linux本地工具(如:包含ss的iproute2)需要使用它
+
+TCP: advanced congestion control
+
+高级拥塞控制,如果没有特殊需求(比如无线网络)就别选了,内核会自动将默认的拥塞控制设为"Cubic"并将"Reno"作为候补
+
+IP: Virtual Server Configuration
+
+IP虚拟服务器允许你基于多台物理机器构建一台高性能的虚拟服务器,不玩集群就别选了
+
+The IPv6 protocol
+
+你要是需要IPv6就选吧
+
+NetLabel subsystem support
+
+NetLabel子系统为诸如CIPSO与RIPSO之类能够在分组信息上添加标签的协议提供支持,如果你看不懂就别选了
+
+Security Marking
+
+对网络包进行安全标记,类似于nfmark,但主要是为安全目的而设计,如果你不明白的话就别选
+
+Network packet filtering (replaces ipchains)
+
+Netfilter可以对数据包进行过滤和修改,可以作为防火墙("packet filter"或"proxy-based")或网关(NAT)或代理(proxy)或网桥使用.选中此选项后必须将"Fast switching"关闭,否则将前功尽弃
+
+Network packet filtering debugging
+
+仅供开发者调试Netfilter使用
+
+Bridged IP/ARP packets filtering
+
+如果你希望使用一个针对桥接的防火墙就打开它
+
+Core Netfilter Configuration
+
+核心Netfilter配置(当包流过Chain时如果match某个规则那么将由该规则的target来处理,否则将由同一个Chain中的下一个规则进行匹配,若不match所有规则那么最终将由该Chain的policy进行处理)
+
+Netfilter netlink interface
+
+允许Netfilter在与用户空间通信时使用新的netlink接口.netlink Socket是Linux用户态与内核态交流的主要方法之一,且越来越被重视.
+
+Netfilter NFQUEUE over NFNETLINK interface
+
+通过NFNETLINK接口对包进行排队
+
+Netfilter LOG over NFNETLINK interface
+
+通过NFNETLINK接口对包记录.该选项废弃了ipt_ULOG和ebg_ulog机制,并打算在将来废弃基于syslog的ipt_LOG和ip6t_LOG模块
+
+Layer 3 Independent Connection tracking
+
+独立于第三层的链接跟踪,通过广义化的ip_conntrack支持其它非IP协议的第三层协议
+
+Netfilter Xtables support
+
+如果你打算使用ip_tables,ip6_tables,arp_tables之一就必须选上
+
+"CLASSIFY" target support
+
+允许为包设置优先级,一些排队规则(atm,cbq,dsmark,pfifo_fast,htb,prio)需要使用它
+
+"CONNMARK" target support
+
+类似于"MARK",但影响的是连接标记的值
+
+"DSCP" target support
+
+允许对ip包头部的DSCP(Differentiated Services Codepoint)字段进行修改,该字段常用于Qos
+
+"MARK" target support
+
+允许对包进行标记(通常配合ip命令使用),这样就可以改变路由策略或者被其它子系统用来改变其行为
+
+"NFQUEUE" target Support
+
+用于替代老旧的QUEUE(iptables内建的target之一),因为NFQUEUE能支持最多65535个队列,而QUEUE只能支持一个
+
+"NOTRACK" target support
+
+允许规则指定哪些包不进入链接跟踪/NAT子系统
+
+"SECMARK" target support
+
+允许对包进行安全标记,用于安全子系统
+
+"CONNSECMARK" target support
+
+针对链接进行安全标记,同时还会将连接上的标记还原到包上(如果链接中的包尚未进行安全标记),通常与SECMARK target联合使用
+
+"comment" match support
+
+允许你在iptables规则集中加入注释
+
+"connbytes" per-connection counter match support
+
+允许针对单个连接内部每个方向(进/出)匹配已经传送的字节数/包数
+
+"connmark" connection mark match support
+
+允许针对每个会话匹配先前由"CONNMARK"设置的标记值
+
+"conntrack" connection tracking match support
+
+连接跟踪匹配,是"state"的超集,它允许额外的链接跟踪信息,在需要设置一些复杂的规则(比如网关)时很有用
+
+"DCCP" protocol match support
+
+DCCP是打算取代UDP的新传输协议,它在UDP的基础上增加了流控和拥塞控制机制,面向实时业务
+
+"DSCP" match support
+
+允许对IP包头的DSCP字段进行匹配
+
+"ESP" match support
+
+允许对IPSec包中的ESP头进行匹配,使用IPsec的话就选上吧
+
+"helper" match support
+
+加载特定协议的连接跟踪辅助模块,由该模块过滤所跟踪的连接类型的包,比如ip_conntrack_ftp模块
+
+"length" match support
+
+允许对包的长度进行匹配
+
+"limit" match support
+
+允许根据包的进出速率进行规则匹配,常和"LOG target"配合使用以抵抗某些Dos攻击
+
+"mac" address match support
+
+允许根据以太网的MAC进行匹配,常用于无线网络环境
+
+"mark" match support
+
+允许对先前由"MARK"标记的特定标记值进行匹配
+
+IPsec "policy" match support
+
+使用IPsec就选上吧
+
+Multiple port match support
+
+允许对TCP或UDP包同时匹配多个端口(通常情况下只能匹配一个端口)
+
+"physdev" match support
+
+允许对到达的或将要离开的物理桥端口进行匹配
+
+"pkttype" packet type match support
+
+允许对封包目的地址类别(广播/群播/直播)进行匹配
+
+"quota" match support
+
+允许对总字节数的限额值进行匹配
+
+"realm" match support
+
+允许对iptables中的路由子系统中的realm值进行匹配
+
+"sctp" protocol match support
+
+流控制传输协议(SCTP),十年以后也许能够普及的东西
+
+"state" match support
+
+这是对包进行分类的有力工具,它允许利用连接跟踪信息对连接中处于特定状态的包进行匹配
+
+"statistic" match support
+
+允许根据一个给定的百分率对包进行周期性的或随机性的匹配
+
+sring" match support
+
+允许根据包所承载的数据中包含的特定字符串进行匹配
+
+ 
+
+Connection tracking (required for masq/NAT)
+
+链接跟踪.可用于报文伪装或地址转换,也可用于增强包过滤能力
+
+Connection tracking flow accounting
+
+允许针对每个连接记录已经传送的字节/包数,常用于connbytes match
+
+Connection mark tracking support
+
+允许对连接进行标记,与针对单独的包进行标记的不同之处在于它是针对连接流的.CONNMARK target和connmark match需要它的支持
+
+Connection tracking security mark support
+
+允许对连接进行安全标记,通常这些标记包(SECMARK)复制到其所属连接(CONNSECMARK),再从连接复制到其关联的包(SECMARK)
+
+Connection tracking events
+
+连接跟踪事件支持.如果启用这个选项,连接跟踪代码将提供一个notifier链,它可以被其它内核代码用来获知连接跟踪状态的改变
+
+Connection tracking netlink interface
+
+支持基于netlink的用户空间接口
+
+SCTP protocol connection tracking support
+
+SCTP是IP网面向多媒体通信的新一代的流控制传输协议
+
+FTP protocol support
+
+FTP协议
+
+IRC protocol support
+
+IRC协议是一种用来实时聊天协议,用过mIRC的人应当不陌生
+
+NetBIOS name service protocol support
+
+NetBIOS名字服务协议
+
+TFTP protocol support
+
+TFTP是基于UDP的比FTP简单的文件传输协议
+
+Amanda backup protocol support
+
+Amanda备份协议
+
+PPTP protocol support
+
+点对点隧道协议(PPTP)是一种支持多协议虚拟专用网络的网络技术,ADSL用户对它应该很熟悉
+
+H.323 protocol support
+
+ITU-T提出的用于IP电话的协议
+
+SIP protocol support
+
+IETE提出的用于IP电话的协议
+
+IP Userspace queueing via NETLINK
+
+已废弃
+
+IP tables support (required for filtering/masq/NAT)
+
+要用iptables就肯定要选上
+
+IP range match support
+
+允许对ip地址的范围进行匹配
+
+TOS match support
+
+允许对ip包头的TOS(Type Of Service)字段进行匹配
+
+recent match support
+
+可以创建一个或多个刚刚使用过的ip地址列表,然后根据这些列表进行匹配
+
+ECN match support
+
+允许对TCP/IP包头的ECN(Explicit Congestion Notification)字段进行匹配.ECN是一种显式拥塞通知技术,它不但要求路由器支持而且要求端到端主机的支持,其基本思想是当路由器发生早期拥塞时不是丢弃包而是尽量对包进行标记,接收方接到带有ECN提示的包时,通知发送方网络即将发生拥塞,也就是它通过对包的标记提示TCP源即将发生拥塞,从而引发拥塞避免算法
+
+AH match support
+
+允许对IPSec包头的AH字段进行匹配
+
+TTL match support
+
+允许对ip包头的TTL(生存期)字段进行匹配
+
+Owner match support
+
+允许对本地生成的包按照其宿主(user,group,process,session)进行匹配
+
+address type match support
+
+允许对地址类型(单播,本地,广播)进行匹配
+
+hashlimit match support
+
+是limit的升级,它基于你选择的ip地址与/或端口动态的创建以limit为桶(bucket)的哈希表.它可以创建诸如"为每个特定的目标IP分配10kpps"或"允许每个特定的源IP分配500pps"之类的规则
+
+Packet filtering
+
+定义filter表以允许对包进行过滤
+
+REJECT target support
+
+允许返回一个ICMP错误而不是简单的丢弃包
+
+LOG target support
+
+允许将符合条件的包头信息通过syslog进行记录
+
+ULOG target support
+
+透过netlink socket将符合条件的封包交给用户空间的ulogd守护进程.反对使用该选项,因为它已经被NETFILTER_NETLINK_LOG代替
+
+TCPMSS target support
+
+允许修改TCP包头中的MSS(最大分段长度)选项值
+
+Full NAT
+
+允许进行伪装/端口转发以及其它的NAT功能,仅在你需要使用iptables中的nat表时才需要选择
+
+Packet mangling
+
+在iptables中启用mangle表以便对包进行各种修改,常用于改变包的路由
+
+raw table support (required for NOTRACK/TRACE)
+
+在iptables中添加一个'raw'表,该表在netfilter框架中非常靠前,并在PREROUTING和OUTPUT链上有钩子,从而可以对收到的数据包在连接跟踪前进行处理
+
+ARP tables support
+
+ARP表支持.只有在局域网中才有ARP欺骗问题,另外路由器也会遭到ARP欺骗
+
+ARP packet filtering
+
+ARP包过滤.对于进入和离开本地的ARP包定义一个filter表,在桥接的情况下还可以应用于被转发ARP包
+
+ARP payload mangling
+
+允许对ARP包的荷载部分进行修改,比如修改源和目标物理地址
+
+IPv6: Netfilter Configuration
+
+针对IPv6的Netfilter配置,需要的话可以参考前面IPv4的Netfilter配置进行选择
+
+DECnet: Netfilter Configuration
+
+针对DECnet的Netfilter配置
+
+Bridge: Netfilter Configuration
+
+针对桥接的Netfilter配置
+
+DCCP Configuration
+
+数据报拥塞控制协议在UDP的基础上增加了流控和拥塞控制机制,使数据报协议能够更好地用于流媒体业务的传输
+
+SCTP Configuration
+
+流控制传输协议是一种新兴的传输层协议.TCP协议一次只能连接一个IP地址而在SCTP协议一次可以连接多个IP地址且可以自动平衡网络负载,一旦某一个IP地址失效会自动将网络负载转移到其他IP地址上
+
+TIPC Configuration
+
+透明内部进程间通信协议,以共享内存为基础实现任务和资源的调度,专门用于内部集群通信
+
+Asynchronous Transfer Mode (ATM)
+
+异步传输模式(ATM)支持
+
+802.1d Ethernet Bridging
+
+802.1d以太网桥
+
+802.1Q VLAN Support
+
+802.1Q虚拟局域网
+
+DECnet Support
+
+DECnet是一种很生僻的协议
+
+ANSI/IEEE 802.2 LLC type 2 Support
+
+看不懂可以不选
+
+The IPX protocol
+
+IPX协议
+
+Appletalk protocol support
+
+与Mac机器通信的协议
+
+CCITT X.25 Packet Layer
+
+大约没人需要这东西
+
+LAPB Data Link Driver
+
+大约没人需要这东西
+
+Acorn Econet/AUN protocols
+
+一种被Acorn计算机使用的又老又慢的协议
+
+WAN router
+
+广域网路由
+
+QoS and/or fair queueing
+
+如果你需要Qos或公平队列就选吧
+
+Network testing
+
+网络测试,仅供调试使用
+
+
+
+
+Generic IEEE 802.11 Networking Stack
+
+通用无线局域网(IEEE 802.11系列协议)支持
+
+版权声明：本文为博主原创文章，未经博主允许不得转载。
+

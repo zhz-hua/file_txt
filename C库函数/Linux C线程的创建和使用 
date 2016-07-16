@@ -1,0 +1,50 @@
+2 简单的多线程编程
+　　Linux系统下的多线程遵循POSIX线程接口，称为pthread。编写Linux下的多线程程序，需要使用头文件pthread.h，连接时需要使用库libpthread.a。顺便说一下，Linux下pthread的实现是通过系统调用clone（）来实现的。clone（）是Linux所特有的系统调用，它的使用方式类似fork，关于clone（）的详细情况，有兴趣的读者可以去查看有关文档说明。下面我们展示一个最简单的多线程程序example1.c。
+
+/* example.c*/
+#include
+#include
+void thread(void)
+{
+	int i;
+	for(i=0;i<3;i++)
+	printf("This is a pthread.\n");
+}
+
+int main(void)
+{
+	pthread_t id;
+	int i,ret;
+	ret=pthread_create(&id,NULL,(void *) thread,NULL);  //创建线程
+	if(ret!=0){
+		printf ("Create pthread error!\n");
+		exit (1);
+	}
+	for(i=0;i<3;i++)
+		printf("This is the main process.\n");
+	pthread_join(id,NULL);				//启动线程
+	return (0);
+}
+
+我们编译此程序：
+gcc example1.c -lpthread -o example1
+运行example1，我们得到如下结果：
+This is the main process.
+This is a pthread.
+This is the main process.
+This is the main process.
+This is a pthread.
+This is a pthread.
+再次运行，我们可能得到如下结果：
+This is a pthread.
+This is the main process.
+This is a pthread.
+This is the main process.
+This is a pthread.
+This is the main process.
+extern int pthread_create __P ((pthread_t *__thread, __const pthread_attr_t *__attr,void *(*__start_routine) (void *), void *__arg));
+第一个参数为指向线程标识符的指针，第二个参数用来设置线程属性，第三个参数是线程运行函数的起始地址 最后一个参数是运行函数的参数。
+函数pthread_join用来等待一个线程的结束。函数原型为：
+　　extern int pthread_join __P ((pthread_t __th, void **__thread_return));
+　　第一个参数为被等待的线程标识符，第二个参数为一个用户定义的指针，它可以用来存储被等待线程的返回值。这个函数是一个线程阻塞的函数，调用它的函数将一直等待到被等待的线程结束为止，当函数返回时，被等待线程的资源被收回。一个线程的结束有两种途径，一种是象我们上面的例子一样，函数结束了，调用它的线程也就结束了；另一种方式是通过函数pthread_exit来实现。它的函数原型为：
+　　extern void pthread_exit __P ((void *__retval)) __attribute__ ((__noreturn__))

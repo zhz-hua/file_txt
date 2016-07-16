@@ -1,0 +1,206 @@
+基础知识
+	"EHCI"驱动程序设计成为实现新的高速 USB 2.0 协议的芯片提供支持，EHCI已经包含了UHCI和OHCI，
+	但目前就我个人的测试，单独加EHCI是不行的，通常我的做法是根据主板类型加载UHCI或OHCI后，再加载EHCI这样才可以支持USB2.0设备）
+	旦用新的已启用 USB 的内核重新引导后，
+	若/proc/bus/usb下没有相应USB设备信息，应输入以下命令将 USB 设备文件系统手动挂装到 /proc/bus/usb：
+
+	# mount -t usbdevfs none /proc/bus/usb
+
+	为了在系统引导时自动挂装 USB 设备文件系统，请将下面一行添加到 /etc/fstab 中的 /proc 挂装行之后：
+	none /proc/bus/usb usbdevfs defaults 0 0
+	
+	ISP116X HCD support
+		ISP1160/ISP1161主机USB控制器,是符合USB2.0全速规范的单片主机控制器和设备控制器,支持OHCI标准
+	USB verbose debug messages
+		仅供调试使用
+	USB device filesystem
+		在/proc/bus/usb里列出当前连接的usb设备(mount -t usbfs none /proc/bus/usb),这样用户空间的程序就可以直接访问这些USB设备,基本上你要使用USB设备的话就必须选中此项
+	USB Mass Storage support
+		USB存储设备(U盘,USB硬盘,USB软盘,USB CD-ROM,USB磁带,memory sticks,数码相机,读卡器等等).该选项依赖于'SCSI device support',且大部分情况下还依赖于'SCSI disk support'(比如U盘或USB硬盘) 
+	USB Mass Storage verbose debug
+		仅供调试使用
+	USB Monitor
+
+		usb流量监控,一般没必要选它
+	USB Gadget Support
+		android的device
+
+一：USB调试 采用OTG口的时候要注意
+	由于D50开发板USB HOST的vbus是是ARM口直接供电的，因此，不需要regulator控制；调试的时候要外界5V，ID口悬空接高电平，
+	而USB OTG的vbus是通过GPIO7_1端子控制开关芯片来供电的，因此，需要添加对应的regulator控制，  同时ID口接低电平，
+
+	（1）：设备（device）模式
+		  硬件连接 ：ID口接3.3v高电平，vbus主机供电，设备自身可以不用供电
+		  加载驱动有 USB Gadget support android composite
+	（1）：主机（host）模式
+		  硬件连接 ：ID口接低电平，vbus口自己供电，接5V电源，
+		  加载驱动有EHCI HCD(USB2.0),以及chipldea highspeed dual rde controller
+二：调试
+
+	（1）如何查看内核中的printk输出： dmesg  grabserial
+	    再配合管道命令，   只输出dmesg命令的前20行日志 dmesg |head -20   ，   
+		只输出dmesg命令最后20行日志 dmesg |tail
+	    通过这个命令，我们可以看到内中的printk输出的内容，这是很有用的一个
+	    工具。
+		dmesg | grep -i sda  grep 命令 的‘-i’选项表示忽略大小写
+	清空dmesg缓冲区日志 dmesg -c
+	实时监控dmesg日志输出 watch "dmesg | tail -20"
+
+	（2）的USB抓包工具：usb_mon
+	 	其实，Ubuntu下已经内置了USB抓包工具---USB_MON 
+		其实 make menuconfigdev/block/ 时候会让我们选择的】
+		使用方法如下：
+		    # mount -t debugfs none /sys/kernel/debug
+		    # modprobe usbmon
+		查看当前的USB device：
+			 # cat  /sys/kernel/debug/usb/devices
+			 如何看懂上面的输出？  Documentation/usb/usbmon.txt
+
+	（3）cat kmsg logcat 
+		查看打印信息
+	（4）uptime  
+		查看信息时间
+
+	（5） # cat  /sys/kernel/debug/usb/usbmon/1u
+		开始监听 Bus01上的全部USB数据包。
+	     # cat  /sys/kernel/debug/usb/usbmon/0u
+		想开始监听 全部 Bus 上的全部USB数据包：
+	（6）ls dev/block/
+			查看块设备文件
+		如 ls dev/block/
+			sda1
+		则可以用 mount -t vfat /dev/block/sda1 /mnt/sdcard 进行挂载
+		然后可以ls /mnt/sdcard 查看sda1的内容
+	（7）设备在 /dev/block/sda?
+	（8）自动挂载在 storage/udisk  /mnt/media_rw/udisk
+
+三  ：USB-OTG DST配置
+	&usbotg {
+		vbus-supply = <&reg_usb_otg_vbus>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_usbotg_2>;
+		disable-over-current;
+		status = "okay";
+	};
+	
+	regulators {
+		compatible = "simple-bus";
+
+		reg_usb_otg_vbus: usb_otg_vbus{                          
+                                                                                                                                       
+			compatible = "regulator-fixed";
+			regulator-name = "usb_otg_vbus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			gpio = <&gpio7 1 0>;	/*VBUS的电压调节器配置，用来控制电压，注意复用，如有复用怎 IOX也需要配置为通用I/0口 */
+			enable-active-high;
+		};
+	}
+
+	usbotg {
+
+		pinctrl_usbotg_2: usbotggrp-2 {                                                         
+			fsl,pins = <
+			MX6QDL_PAD_ENET_RX_ER__USB_OTG_ID 0x17059		/*ID口使能*/
+			>;
+		};
+	}
+
+	usbotg: usb@02184000 {
+	    compatible = "fsl,imx6q-usb", "fsl,imx27-usb";
+	    reg = <0x02184000 0x200>;
+	    interrupts = <0 43 0x04>;
+	    clocks = <&clks 162>;
+	    fsl,usbphy = <&usbphy1>;
+	    fsl,usbmisc = <&usbmisc 0>;
+	    fsl,anatop = <&anatop>;
+	    status = "disabled";
+	};
+
+
+	usbphy1: usbphy@020c9000 {                                                                                                                                                                  
+	     compatible = "fsl,imx6q-usbphy", "fsl,imx23-usbphy";
+	     reg = <0x020c9000 0x1000>;
+	     interrupts = <0 44 0x04>;
+	     clocks = <&clks 182>;
+	     fsl,anatop = <&anatop>;
+	 };
+
+
+	usbmisc: usbmisc: usbmisc@02184800 {
+	    #index-cells = <1>;
+	    compatible = "fsl,imx6q-usbmisc";
+	    reg = <0x02184800 0x200>;
+	    clocks = <&clks 162>;
+	};
+
+	 
+	anatop: anatop@020c8000 {
+	   compatible = "fsl,imx6q-anatop", "syscon", "simple-bus";
+	   reg = <0x020c8000 0x1000>;
+	   interrupts = <0 49 0x04 0 54 0x04 0 127 0x04>;
+
+	   regulator-1p1@110 {
+	       compatible = "fsl,anatop-regulator";
+	       regulator-name = "vdd1p1";
+	       regulator-min-microvolt = <800000>;
+	       regulator-max-microvolt = <1375000>;
+	       regulator-always-on;
+	       anatop-reg-offset = <0x110>;
+	       anatop-vol-bit-shift = <8>;
+	       anatop-vol-bit-width = <5>;
+	       anatop-min-bit-val = <4>;
+	       anatop-min-voltage = <800000>;
+	       anatop-max-voltage = <1375000>;
+	   };
+
+
+
+四：自动挂载
+	u 盘会当成 usb storage 在 Settings Storage 里面显示
+	内核需支持 usb host，需支持 FUSE 文件系统，在 FS 选项里面配置即可（CONFIG_FUSE_FS=y）
+
+	源码在/system/vold/main.cpp
+	（1）配置 init.<board>.rc
+		在./out/target/product/sabresd_6dq/root/init.freescale.rc
+		device/fsl/sabresd_6dq/init.rc
+   		# See storage config details at http://source.android.com/tech/storage/
+
+		mkdir /storage/udisk0 0000 system system  
+		mkdir /mnt/media_rw/udisk0 0700 media_rw media_rw 
+
+		service fuse_udisk0 /system/bin/sdcard -u 1023 -g 1023 -w 1023 -d /mnt/media_rw/udisk0 /storage/udisk0  
+		    class late_start  
+		    disabled  
+
+	（2）配置 fstab.<board>
+	 	./fsl/sabresd_6dq/fstab.freescale
+
+		/block/sda      /mnt/media_rw/udisk0  vfat  defaults  voldmanaged=udisk0:auto  
+
+	（3）配置 overlay
+		device/fsl/sabresd_6dq/overlay/frameworks/base/core/res/res/xml/storage_list.xml	
+		<storage android:mountPoint="/storage/udisk"
+		     android:storageDescription="@string/storage_usb"
+		     android:primary="false"
+		     android:removable="true" />
+五：解析
+	Vold 解析 fstab 文件	
+	在 Android 4.4 中， Vold 会解析 system/vold/main.cpp 文件
+	static int process_config(VolumeManager *vm)
+	{
+		...
+		property_get("ro.hardware", propbuf, "");  
+		snprintf(fstab_filename, sizeof(fstab_filename), FSTAB_PREFIX"%s", propbuf);  
+
+		fstab = fs_mgr_read_fstab(fstab_filename);  
+		if (!fstab) {  
+		 SLOGE("failed to open %s\n", fstab_filename);  
+		 return -1;  
+		}
+		...  
+	}
+
+
+
+

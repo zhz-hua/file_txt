@@ -1,0 +1,108 @@
+make: invalid option -- '.'
+make: invalid option -- '/'
+Usage: make [options] [target] ...
+Options:
+  -b, -m                      Ignored for compatibility.
+  -B, --always-make           Unconditionally make all targets. 强制重新编译
+  -C DIRECTORY, --directory=DIRECTORY
+                              Change to DIRECTORY before doing anything.
+  -d                          Print lots of debugging information.
+  --debug[=FLAGS]             Print various types of debugging information.
+  -e, --environment-overrides
+                              Environment variables override makefiles.
+  -f FILE, --file=FILE, --makefile=FILE
+                              Read FILE as a makefile.
+  -h, --help                  Print this message and exit.
+  -i, --ignore-errors         Ignore errors from commands.
+  -I DIRECTORY, --include-dir=DIRECTORY
+                              Search DIRECTORY for included makefiles.
+  -j [N], --jobs[=N]          Allow N jobs at once; infinite jobs with no arg.
+  -k, --keep-going            Keep going when some targets can't be made.
+  -l [N], --load-average[=N], --max-load[=N]
+                              Don't start multiple jobs unless load is below N.
+  -L, --check-symlink-times   Use the latest mtime between symlinks and target.
+  -n, --just-print, --dry-run, --recon
+                              Don't actually run any commands; just print them.
+  -o FILE, --old-file=FILE, --assume-old=FILE
+                              Consider FILE to be very old and don't remake it.
+  -p, --print-data-base       Print make's internal database.
+  -q, --question              Run no commands; exit status says if up to date.
+  -r, --no-builtin-rules      Disable the built-in implicit rules.
+  -R, --no-builtin-variables  Disable the built-in variable settings.
+  -s, --silent, --quiet       Don't echo commands.
+  -S, --no-keep-going, --stop
+                              Turns off -k.
+  -t, --touch                 Touch targets instead of remaking them.
+  -v, --version               Print the version number of make and exit.
+  -w, --print-directory       Print the current directory.
+  --no-print-directory        Turn off -w, even if it was turned on implicitly.
+  -W FILE, --what-if=FILE, --new-file=FILE, --assume-new=FILE
+                              Consider FILE to be infinitely new.
+  --warn-undefined-variables  Warn when an undefined variable is referenced.
+
+$ source  mydroid/build/envsetup.sh
+$mmm   mydroid/modkoid
+
+	ivi-android-4.4.3-eng/frameworks/base/services/java 目录下有android.mk文件，在此目录下mm 就可以了。
+	我们可以使用mmm来编译指定目录的模块，如编译联系人：
+		mmm packages/apps/Contacts/ 
+		或cd 至packages/apps/Contacts/
+			使用mm命令，可以使用make snod重新生成system.img
+			/frameworks/base/services/java# mm
+				然后回到根目录下 make snod生成的system.img文件比起sdk里面的system.img要小得多，加载到模拟器也是可以运行的，正在研究这个原
+修改了ivi-android-4.4.3/frameworks/base/services/java/com/android/server/net/NetworkPolicyManagerService.java的文件有下面2中单独编译的方式
+一 进入目录编译
+	ivi-android-4.4.3-eng/frameworks/base/services/java$ mm -B
+	ivi-android-4.4.3-eng/frameworks/base/services/java$ mm
+		Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/classes-jarjar.jar
+		Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/emma_out/lib/classes-jarjar.jar
+		Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/classes.jar
+		Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/noproguard.classes.jar
+		target Dex: services
+		Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/classes.dex
+		target Jar: services (out/target/common/obj/JAVA_LIBRARIES/services_intermediates/javalib.jar)
+		Install: out/target/product/m41s_6dl_rev01/system/framework/services.jar
+		make: Leaving directory `/home/zhanhuazhong/workspace/ivi-android-4.4.3-eng'
+		只要兑换 system/frameworks/services.jar就可以了
+
+
+
+二 相对编译
+zhanhuazhong@ubuntu-rd:~/workspace/ivi-android-4.4.3-eng$ mmm -B frameworks/base/services/java/ 
+zhanhuazhong@ubuntu-rd:~/workspace/ivi-android-4.4.3-eng$ mmm frameworks/base/services/java/   
+	============================================
+	PLATFORM_VERSION_CODENAME=REL
+	PLATFORM_VERSION=4.4.3
+	TARGET_PRODUCT=m41s_6dl_rev01
+	TARGET_BUILD_VARIANT=eng
+	TARGET_BUILD_TYPE=release
+	TARGET_BUILD_APPS=
+	TARGET_ARCH=arm
+	TARGET_ARCH_VARIANT=armv7-a-neon
+	TARGET_CPU_VARIANT=cortex-a9
+	HOST_ARCH=x86
+	HOST_OS=linux
+	HOST_OS_EXTRA=Linux-3.13.0-32-generic-x86_64-with-Ubuntu-12.04-precise
+	HOST_BUILD_TYPE=release
+	BUILD_ID=2.0.0-rc2
+	OUT_DIR=out
+	============================================
+	No private recovery resources for TARGET_DEVICE m41s_6dl_rev01
+	make: Entering directory `/home/zhanhuazhong/workspace/ivi-android-4.4.3-eng'
+	logtags: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/src/com/android/server/EventLogTags.java <= frameworks/base/services/java/com/android/server/EventLogTags.logtags
+	logtags: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/src/com/android/server/am/EventLogTags.java <= frameworks/base/services/java/com/android/server/am/EventLogTags.logtags
+	target Java: services (out/target/common/obj/JAVA_LIBRARIES/services_intermediates/classes)
+	...
+	Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/classes-jarjar.jar
+	Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/emma_out/lib/classes-jarjar.jar
+	Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/classes.jar
+	Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/noproguard.classes.jar
+	target Dex: services
+	Copying: out/target/common/obj/JAVA_LIBRARIES/services_intermediates/classes.dex
+	target Jar: services (out/target/common/obj/JAVA_LIBRARIES/services_intermediates/javalib.jar)
+	Install: out/target/product/m41s_6dl_rev01/system/framework/services.jar
+	make: Leaving directory `/home/zhanhuazhong/workspace/ivi-android-4.4.3-eng'
+
+
+
+

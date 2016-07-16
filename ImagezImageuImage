@@ -1,0 +1,15 @@
+make Image uImage与zImage的区别 2013-04-15 21:11:23
+
+分类： LINUX
+
+内核编译（make）之后会生成两个文件，一个Image，一个zImage，其中Image为内核映像文件，而zImage为内核的一种映像压缩文件，Image大约为4M，而zImage不到2M。
+
+    那么uImage又是什么的？它是uboot专用的映像文件，它是在zImage之前加上一个长度为64字节的“头”，说明这个内核的版本、加载位置、生成时间、大小等信息；其0x40之后与zImage没区别。
+
+     如 何生成uImage文件？首先在uboot的/tools目录下寻找mkimage文件，把其copy到系统/usr/local/bin目录下，这样就 完成制作工具。然后在内核目录下运行make uImage，如果成功，便可以在arch/arm/boot/目录下发现uImage文件，其大小比 zImage多64个字节。
+
+其实就是一个自动跟手动的区别,有了uImage头部的描述,u-boot就知道对应Image的信息,如果没有头部则需要自己手动去搞那些参数。
+
+U-boot的U是“通用”的意思。
+
+zImage 是ARM Linux常用的一种压缩映像文件，uImage是U-boot专用的映像文件，它是在zImage之前加上一个长度为0x40的“头”，说明 这个映像文件的类型、加载位置、生成时间、大小等信息。换句话说，如果直接从uImage的0x40位置开始执行，zImage和uImage没有任何区 别。另外，Linux2.4内核不支持uImage，Linux2.6内核加入了很多对嵌入式系统的支持，但是uImage的生成也需要设置

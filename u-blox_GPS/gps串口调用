@@ -1,0 +1,123 @@
+u-blox
+logcat |grep u-blox
+http://blog.chinaunix.net/uid-26215986-id-3743534.html
+CGpsIf::init
+注册回调函数,JNI传下来的回调函数
+创建 gps服务线程 ubx_thread
+
+ubx_moduleIf
+CGpsIf::init--ubx_thread---(checkRecvInitReq-- connectReceiver---s_ser.openSerial开设备设置波特率)
+
+s_mainControlThread = s_myIf.m_callbacks.create_thread_cb("gps thread", , &s_controlThreadInfo);
+
+获取配置 （析够函数）
+注册回调函数，JNI传下来的回调函数
+
+初始化，
+开启线程
+
+
+
+
+ubxgpsstate.cpp
+ 	m_pSerialDevice         =strdup( cfg.get("SERIAL_DEVICE",         SERPORT_DEFAULT) );
+hal/ubxgpsstate.h
+ 	const char* getSerialDevice(void) const { return m_pSerialDevice; };
+gps_thread.cpp
+
+static bool connectReceiver(const ControlThreadInfo* pState, fd_set& rfds, int& rMaxFd)
+{
+    bool result=false;   
+    CUbxGpsState* pUbxGps = CUbxGpsState::getInstance(); 
+    
+    UBX_LOG(LCAT_VERBOSE, "Open/Reopen the serial port");
+    /* try to open/reopen the serial port for the GPS listener */
+    if (!s_ser.openSerial(pUbxGps->getSerialDevice(), pUbxGps->getBaudRateDefault(), 1))
+    {
+        // Device not present (unplugged)
+        CGpsIf::gpsStatus(GPS_STATUS_ENGINE_OFF);
+        UBX_LOG(LCAT_ERROR, "Failing to reopen the serial port");
+    }
+    else
+    {
+        result=true;
+        // Serial port opened/reopened - Baud rate needs to be set
+        s_ser.fdSet(rfds, rMaxFd);     
+  
+        pUbxGps = CUbxGpsState::getInstance(); 
+        UBX_LOG(LCAT_VERBOSE, "Init receiver ");
+        pUbxGps->lock();
+        pUbxGps->init(&s_ser);
+        pUbxGps->unlock();
+        
+        // Report appropriate status   
+        changeSessionStatus(pState);   
+
+        // Restart receiver if required
+        if (pState->gpsState == GPS_STARTED)
+        {
+            UBX_LOG(LCAT_VERBOSE, "Start receiver ");
+            // reconfigure the baud rate   
+            usleep(200000);
+            pUbxGps->lock();
+            pUbxGps->turnRecv(CUbxGpsState::ON);
+            pUbxGps->unlock();
+        }
+    }
+    return result;
+}
+
+CSerialPort::openSerial(const char * pTty, int ttybaud, int blocksize)
+
+   //UBXSERLOG("CSerialPort::openSerial: pTty = %s, ttybaud = %d, blocksize = %d", pTty, ttybaud, blocksize);
+
+   closeSerial(); // Make sure the serial interface is closed
+   m_i2c = ( strncmp(pTty, "/dev/i2c", 8) == 0 );
+   m_fd = open(pTty, (m_i2c ? 0 : O_NOCTTY)                                                                                                                                                             
+             | O_RDWR
+ifdef O_EXLOCK                 /* for Linux */
+             | O_EXLOCK
+endif
+       );
+   if (m_fd < 0)
+   {
+       UBX_LOG(LCAT_ERROR, "Cannot open %s port %s, return %d: '%s'", m_i2c?"i2c":"serial", pTty, m_fd, strerror(errno));
+       return false;
+   }
+
+if (settermios(ttybaud, blocksize) == -1)
+         {
+             UBX_LOG(LCAT_ERROR, "Cannot invoke settermios");
+             close (m_fd);
+             m_fd = -1;
+             return false;
+         }
+ #ifdef BIDIRECTIONAL
+         tcflush(m_fd, TCIOFLUSH);
+ #else
+         tcflush(m_fd, TCIFLUSH);
+ #endif
+         fcntl(m_fd, F_SETFL, 0);
+ 
+ #if defined serial_icounter_struct
+         /* Initialize the error counters */
+         if (!ioctl(m_fd,TIOCGICOUNT, &einfo))
+         {
+             /* Nothing to do... */
+         }
+         else
+         {
+             /* error, cannot read the error counters */
+             UBX_LOG(LCAT_WARNING, "unable to read error counters!!!");
+         }
+ #endif
+     }
+ 
+     UBX_LOG(LCAT_VERBOSE, "Serial port opened, fd = %d", m_fd);
+ 
+     return true;
+ }
+
+
+
+

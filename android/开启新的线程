@@ -1,0 +1,42 @@
+new Thread(new Runnable(){
+public void run() { 
+    try {
+        if (mountServiceF != null) mountServiceF.systemReady();
+    } catch (Throwable e) {
+        reportWtf("making Mount Service ready", e);
+    }                             
+     try {
+        if (wallpaperF != null) wallpaperF.systemRunning();
+    } catch (Throwable e) {
+        reportWtf("Notifying WallpaperService running", e);
+    }
+    if(!delayLoadingF) {
+        try {
+            if (networkStatsF != null) networkStatsF.systemReady();
+        } catch (Throwable e) {
+            reportWtf("making Network Stats Service ready", e);
+        }
+        try {
+            if (dockF != null) dockF.systemReady();
+        } catch (Throwable e) {
+            reportWtf("making Dock Service ready", e);
+        }                                                                                         
+    }                                           	
+}	
+}).start();
+
+
+
+    构造函数不抛异常的话永远都返回新的实例好不好？
+    new Thread().start();就相当于Thread t = new Thread();t.start();
+首先new Thread(sth)调用的是Thread类的一个构造函数, sth可能是一个线程的名字，或者Runnable对象. 当new完以后肯定是可以调用自身的start方法的
+
+0
+
+    通过查看源代码,你可以看到Thread.start()最后调用了一个本地方法private native void start0(),这个的实现在虚拟机里,
+虚拟机通过调用操作系统等底层库来实现线程并行...大致是这样...线程有若干个状态,大概是准备运行(可以运行但没有运行),
+正在运行,暂停,结束或者异常后退出,暂停中的可以被唤醒到准备运行状态,Thread.start()就是告诉虚拟机此线程可以准备运行了,
+
+即达到运行前的基本条件.具体此线程什么时候运行就没法确定了。。。CPU资源什么的
+
+http://t.cn/RqZvBE7

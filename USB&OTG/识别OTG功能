@@ -1,0 +1,74 @@
+android/kernel_imx/drivers/usb/phy/phy-fsl-usb.c 
+ndroid/kernel_imx/drivers/usb/gadget/imx_udc.c 
+http://blog.chinaunix.net/uid-18764283-id-2820541.html
+
+
+android/kernel_imx/drivers/usb/chipidea/otg.c
+enum ci_role ci_otg_role(struct ci_hdrc *ci)                                                                                                                              
+ {   
+ #if 0
+     enum ci_role role = hw_read_otgsc(ci, OTGSC_ID)                                                                                                                       
+         ? CI_ROLE_GADGET
+         : CI_ROLE_HOST;
+ #else
+     enum ci_role role = CI_ROLE_GADGET;                                                                                                                                   
+ #endif
+     return role;    
+ }
+
+/*                                                                                                                                                                                                       
+ * Interrupt handler.  OTG/host/peripheral share the same int line.                                                                                                      
+ * OTG driver clears OTGSC interrupts and leaves USB interrupts                                                                                                          
+ * intact.  It needs to have knowledge of some USB interrupts                                                                                                            
+ * such as port change.                                                                                                                                                  
+该函数就是判断ID的高低，也就是自己做主设备还是从设备 */                                                                                                                                                                      
+irqreturn_t fsl_otg_isr(int irq, void *dev_id)                                                                                                                           
+{                                                                                                                                                                        
+    struct otg_fsm *fsm = &((struct fsl_otg *)dev_id)->fsm;                                                                                                              
+    struct usb_otg *otg = ((struct fsl_otg *)dev_id)->phy.otg;                                                                                                           
+    u32 otg_int_src, otg_sc;                                                                                                                                             
+                                                                                                                                                                         
+    otg_sc = fsl_readl(&usb_dr_regs->otgsc);                                                                                                                             
+    otg_int_src = otg_sc & OTGSC_INTSTS_MASK & (otg_sc >> 8);                                                                                                            
+                                                                                                                                                                         
+    /* Only clear otg interrupts */                                                                                                                                      
+    fsl_writel(otg_sc, &usb_dr_regs->otgsc);                                                                                                                             
+   
+		/*FIXME: ID change not generate when init to 0 */                                                                                                                                                                                                                                                                                                                              
+    fsm->id = (otg_sc & OTGSC_STS_USB_ID) ? 1 : 0;                                                                                                                       
+    otg->default_a = (fsm->id == 0);                                                                                                                                     
+                                                                                                                                                                         
+    /* process OTG interrupts */                                                                                                                                         
+    if (otg_int_src) {                                                                                                                                                   
+        if (otg_int_src & OTGSC_INTSTS_USB_ID) {                                                                                                                         
+            fsm->id = (otg_sc & OTGSC_STS_USB_ID) ? 1 : 0;                                                                                                               
+            otg->default_a = (fsm->id == 0);                                                                                                                             
+            /* clear conn information */                                                                                                                                 
+            if (fsm->id)                                                                                                                                                 
+                fsm->b_conn = 0;                                                                                                                                         
+            else                                                                                                                                                         
+                fsm->a_conn = 0;                                                                                                                                         
+                                                                                                                                                                         
+            if (otg->host)                                                                                                                                               
+                otg->host->is_b_host = fsm->id;                                                                                                                          
+            if (otg->gadget)                                                                                                                                             
+                otg->gadget->is_a_peripheral = !fsm->id;                                                                                                                 
+            VDBG("ID int (ID is %d)\n", fsm->id);                                                                                                                        
+                                                                                                                                                                         
+            if (fsm->id) {  /* switch to gadget */                                                                                                                       
+                schedule_delayed_work(                                                                                                                                   
+                    &((struct fsl_otg *)dev_id)->otg_event,                                                                                                              
+                    100);                                                                                                                                                
+            } else {    /* switch to host */                                                                                                                             
+                cancel_delayed_work(&                                                                                                                                    
+                            ((struct fsl_otg *)dev_id)->                                                                                                                 
+                            otg_event);                                                                                                                                  
+                fsl_otg_start_gadget(fsm, 0);                                                                                                                            
+                otg_drv_vbus(fsm, 1);                                                                                                                                    
+                fsl_otg_start_host(fsm, 1);                                                                                                                              
+            }                                                                                                                                                            
+            return IRQ_HANDLED;                                                                                                                                          
+        }                                                                                                                                                                
+    }                                                                                                                                                                    
+    return IRQ_NONE;                                                                                                                                                     
+}       

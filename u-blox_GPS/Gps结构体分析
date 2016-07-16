@@ -1,0 +1,90 @@
+GPS接收机常识：
+1. 坐标 (coordinate)
+　　有2维、3维两种坐标表示，当GPS能够收到4颗及以上卫星的信号时，它能计算出本地的3维坐标：经度、纬度、高度，若只能收到3颗卫星的信号，它只能计算出2维坐标：经度和纬度，这时它可能还会显示高度数据，但这数据是无效的。大部分GPS不仅能以经/纬度(Lat/Long) 的方式，显示坐标，而且还可以用 UTM(Universal TransverseMercator) 等坐标系统显示坐标但我们一般还是使用 LAT/LONG 系统，这主要是由你所使用的地图的坐标系统决定的。
+2. 航点 (Landmark or Waypoint)
+　　GPS内存中保存的一个点的坐标值。在有GPS信号时，你可以存储成一个易认的名字，还可以给它选定一个图标。航点是GPS数据核心，它是构成“航线”的基础。标记航点是GPS主要功能之一，但是你也可以从地图上读出一个地点的坐标，手工或通过计算机接口输入GPS，成为一个航点。一个航点可以将来用于GOTO功能的目标，也可以选进一条航线 Route，作为一个支点。一般 GPS 能记录500个或以上的航点。
+      3. 航线 (ROUTE)
+　　航线是GPS内存中存储的一组数据，包括一个起点和一个终点的坐标，还可以包括若干中间点的坐标，每两个坐标点之间的线段叫一条"腿"(leg) 。常见 GPS 能存储20条线路，每条线路30条"腿"。各坐标点可以从现有航点中选择，或是手工/计算机输入数值，输入的路点同时做为一个航点 (Waypoint/Landmark) 保存。
+4. 前进方向 (Heading)
+　　GPS没有指北针的功能，静止不动时它是不知道方向的。但是一旦动了起来，它就能知道自己的运动方向。GPS每隔一秒更新一次当前地点信息，每一点的坐标和上一点的坐标一比较，就可以知道前进的方向 。
+      5. 导向 (Bearing)
+　　导向功能在以下条件下起作用：
+　　1.) 以设定"走向"(GOTO) 目标。"走向"目标的设定可以按"GOTO"键，然后从列表中选择一个航点。以后"导向"功能将导向此航点
+　　 2.) 目前有活跃航线 (Activity route)。活跃航线一般在设置 -> 航线菜单下设定。如果目前有活动航线，那么"导向"的点是航线中第一个路点，每到达一个路点后，自动指到下一个路点。
+6. 日出日落时间 (Sun set/raise time)
+　　大多数GPS能够显示当地的日出、日落时间，这在计划出发 / 宿营时间时是有用的。这个时间是 GPS 根据当地经度和日期计算得到的，是指平原地区的日出、日落时间，在山区因为有山脊遮挡，日照时间根据情况要早晚各少半个小时以上。GPS的时间是从卫星信号得到的格林尼制时间，在设置 (setup) 菜单里可以设置本地的时间偏移，对中国来说，应设+8小时，此值只与时间的显示有关。
+7. 航迹 (Plot trail)
+　 GPS每秒更新一次坐标信息，所以可以记载自己的运动轨迹。一般GPS能记录1024个以上足迹点，在一个专用页面上，以可调比例尺显示移动轨迹。足迹点的采样有自动和定时两种方式自动采样由 GPS 自动决定足迹点的采样方式，一般是只记录方向转折点，长距离直线行走时不记点；定时采样可以规定采样时间间隔，比如30秒、一分钟、 5 分钟或其他时间，每隔这么长时间记一个足迹点。
+
+GPGSV：可见卫星信息
+GPGLL：地理定位信息
+GPRMC：推荐最小定位信息
+GPVTG：地面速度信息
+GPGGA：GPS定位信息
+GPGSA：当前卫星信息
+ $GPRMC,<1>,<2>,<3>,<4>,<5>,<6>,<7>,<8>,<9>,<10>,<11>,<12>*hh
+
+<1> UTC时间，hhmmss(时分秒)格式
+<2> 定位状态，A=有效定位，V=无效定位
+<3> 纬度ddmm.mmmm(度分)格式(前面的0也将被传输)
+<4> 纬度半球N(北半球)或S(南半球)
+<5> 经度dddmm.mmmm(度分)格式(前面的0也将被传输)
+<6> 经度半球E(东经)或W(西经)
+<7> 地面速率(000.0~999.9节，前面的0也将被传输)
+<8> 地面航向(000.0~359.9度，以真北为参考基准，前面的0也将被传输)
+<9> UTC日期，ddmmyy(日月年)格式
+<10> 磁偏角(000.0~180.0度，前面的0也将被传输)
+<11> 磁偏角方向，E(东)或W(西)
+<12> 模式指示(仅NMEA0183 3.00版本输出，A=自主定位，D=差分，E=估算，N=数据无效)
+ a)    结构体信息
+typedef struct {
+    size_t size;
+    uint16_t flags;//标志位
+    double latitude;//纬度
+    double longitude; //经度
+    double altitude; //高度信息
+    float speed; //速度
+    float bearing; //方向
+    float accuracy; //精确度
+    GpsUtcTime timestamp; //时间戳
+} GpsLocation;//表示GPS定位信息
+typedef struct {
+    size_t size;
+    GpsStatusValue status;
+} GpsStatus;//状态信息，有以下几种状态
+
+typedef uint16_t GpsStatusValue;
+#define GPS_STATUS_NONE 0//未知状态
+#define GPS_STATUS_SESSION_BEGIN 1 //已经开始导航
+#define GPS_STATUS_SESSION_END 2//停止导航
+#define GPS_STATUS_ENGINE_ON 3//已经通电但没有导航
+#define GPS_STATUS_ENGINE_OFF 4//没有通电状态
+
+typedef struct {
+    size_t size;
+    int (*init)( GpsCallbacks* callbacks );//初始化GPS，设置回调函数GpsCallbacks
+    int (*start)( void ); //开始导航
+    int (*stop)( void ); //停止导航
+    void (*cleanup)( void ); //关闭接口
+    int (*inject_time)(GpsUtcTime time, int64_t timeReference, //置入当前时间
+                         int uncertainty);
+    int (*inject_location)(double latitude, double longitude, float accuracy); //置入未知信息
+    void (*delete_aiding_data)(GpsAidingData flags); //删除帮助数据
+    int (*set_position_mode)(GpsPositionMode mode, int fix_frequency); //位置模式
+    const void* (*get_extension)(const char* name);
+} GpsInterface; //很重要
+
+typedef struct {
+    size_t size;
+    gps_location_callback location_cb;//位置信息回调
+    gps_status_callback status_cb; //状态信息回调
+    gps_sv_status_callback sv_status_cb; //SV信息状态回调
+    gps_nmea_callback nmea_cb; //NMEA数据回调
+    gps_set_capabilities set_capabilities_cb;
+    gps_acquire_wakelock acquire_wakelock_cb;//申请锁回调
+    gps_release_wakelock release_wakelock_cb;//释放锁回调
+    gps_create_thread create_thread_cb;//创建线程回调
+} GpsCallbacks;
+
+
+ 

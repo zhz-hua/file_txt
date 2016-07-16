@@ -1,0 +1,127 @@
+http://my.oschina.net/youranhongcha/blog/469028?utm_source=tuicool  android init 解析
+定义service：service <name> <parthname> [ <argument> ]*。pathname代表启动service时用到的命令
+service <name> <pathname> [<arguments>]*
+ <option>
+ <option>
+  ......
+小节只有起始标记，却没有明确的结束标记，也就是说，是用“后一个小节”的起始来结束“前一个小节”的。 
+
+service zygote /system/bin/app_process -Xzygote /system/bin --zygote --start-system-server                                                                                                               
+     class main
+     socket zygote stream 660 root system
+     onrestart write /sys/android_power/request_state wake
+     onrestart write /sys/power/state on
+     onrestart restart media
+     onrestart restart netd
+
+
+
+该行脚本的含义如下： “service”指明要启动一个系统服务，“zygote”是该服务的名称，
+		/system/bin/app_process”是该服务的可执行文件路径。
+		-Xzygote /system/bin”是可执行文件的工作目录，
+		--zygote --start-system-server”是提供给可执行文件的参数。 
+
+想要弄清这里究竟发生了什么，我们还需要查看 app_process 的源码。该源码位于：frameworks/base/cmds/app_process/app_main.cpp 中。 在 app_main.cpp 中，
+判断由于参数同时包含了“— zygote”和“--start-system-server”，因此启动 com.android.internal.os.ZygoteInit 类，并传递“start-system-server”作为其 main 函数的参数。 
+而在 ZygoteInit.java（frameworks/base/core/java/com/android/internal/os）中，判断如果参数为“start-system-server”则调用 startSystemServer 方法来启动系统服务。
+启动的方法是 fork 一个新的进程，然后在其中加载 com.android.server.SystemServer 类。 在
+
+
+因此，在系统启动完成之后，这些系统服务也逐个的被启动并注册在 ServiceManager 中了。
+既然所有系统都是注册在 ServiceManager 中的，有些读者可能要问，可不可以不使用代理，直接通过 ServiceManager 来获取系统服务对象，然后调用呢？
+答案是否定的。 在 Android 中，将公开的 API 和非公开的 API 做了划分。所有非公开的 API 在开发应用程序的 SDK 中是无法使用的，
+而 ServiceManager 就是属于非公开的 API。所以对于应用程序开发人员，根本无法接触到 ServiceManager 类。
+
+怎么理解类
+    理解该类的主要作用
+    分析类中的主要字段
+    理解类的构造方法以及初始化过程
+    理解类中的主要业务逻辑方法
+    分析类中的其他成员：例如内部类
+    分析与这个类紧密相关的其他类 
+
+
+
+    init.rc中的service
+
+ 按照service的class来分的话，可以分为两大类：class core和class main.
+class core中包含如下service：
+
+    ueventd /sbin/ueventd # 处理内核的uevent消息
+    console /system/bin/sh # 控制台服务
+    adbd /sbin/adbd # adb调试的服务端
+    servicemanager /system/bin/servicemanager # 管理服务的服务，被管理的服务通常是供应用程序使用的
+    vold /system/bin/vold # 管理存储设备
+
+class main的service包括：
+
+    netd /system/bin/netd # 网络管理器
+    debuggerd /system/bin/debuggerd # 可以在logcat中输出调试信息
+    ril-deamon /system/bin/rild # 打电话的服务
+    surfaceflinger /system/bin/surfacefliger # 合成framebuffer的服务
+    zygote /system/bin/app_process # 孵化java应用进程的服务
+    drm /system/bin/drmserver # DRM服务，frameworks/base/drm
+    media /system/bin/mediaserver # 多媒体服务
+    bootanim /system/bin/bootanimation # 开机动画服务
+    dbus /system/bin/dbus-daemon # 用于进程间通讯的服务
+    bluetoothd /system/bin/bluetoothd # 蓝牙
+    installd /system/bin/installd # apk安装的服务
+    flash_recovery /system/etc/install-recovery.sh # recover recovery分区
+    racoon /system/bin/racoon # key management daemon
+    mtpd /system/bin/mtpd # MTP(Media Transfer Protocol) daemon
+    keystore /system/bin/keystore # 应用签名
+    dumpstate /system/bin/dumpstate # 性能测试工具
+
+ 3.2解析
+
+在init进程的main()函数里，会调用init_parse_config_file("/init.rc")一句来解析init.rc脚本。init_parse_config_file()的代码如下：
+【system/core/init/Init_parser.c】
+	
+int init_parse_config_file(const char *fn)
+{
+    char *data;
+    data = read_file(fn, 0);
+    if (!data) return -1;
+ 
+    parse_config(fn, data);
+    DUMP();
+    return 0;
+}
+
+先用read_file()把脚本内容读入一块内存，而后调用parse_config()解析这块内存。
+
+parse_config()的代码截选如下：
+
+	
+static void parse_config(const char *fn, char *s)
+{
+    . . . . . .
+    for (;;) {
+        switch (next_token(&state)) {
+        . . . . . .
+        case T_NEWLINE:   // 遇到折行
+            state.line++;
+            if (nargs) {
+                int kw = lookup_keyword(args[0]);
+                if (kw_is(kw, SECTION)) {
+                    state.parse_line(&state, 0, 0);  // 不同section的parse_line也不同噢
+                    parse_new_section(&state, kw, nargs, args);
+                } else {
+                    state.parse_line(&state, nargs, args);
+                }
+                nargs = 0;
+            }
+            break;
+        . . . . . .
+    . . . . . .
+}
+
+它在逐行分析init.rc脚本，判断每一行的第一个参数是什么类型的，如果是action或service类型的，就表示要创建一个新的section节点了，此时它会设置一下解析后续行的解析函数，也就是给state->parse_line赋值啦。针对service类型，解析后续行的函数是parse_line_service()，而针对action类型，解析后续行的函数则是parse_line_action()。
+
+这么看来，parse_config()里有3个地方值得我们注意：
+
+    lookup_keyword()和kw_is()
+    parse_new_section()
+    state.parse_line()
+
+

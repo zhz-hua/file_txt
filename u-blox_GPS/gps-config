@@ -1,0 +1,130 @@
+http://blog.csdn.net/tianruxishui/article/details/37526705  北斗
+
+ framework\base\services\java\com\android\server\systemServer.java
+
+framework\services\java\com\android\server\LocationManagerService.java
+
+frameworks\base\services\java\com\android\server\location\GpsLocationProvider.java
+
+/framework/base/services/jni/com_android_server_location_GpsLocationProvider.cpp 
+
+
+frameworks/base/location/java/android 	包含提供给应用开发的 API
+frameworks/base/services/java/com/android/server 	包含 LocationManagerService.java
+frameworks/base/core/java/android/os 	包含 ServiceManager.java
+frameworks/base/core/java/android/app 	包含 ContextImpl.java
+system/core/rootdir 	包含 init.rc
+frameworks/base/services/java/com/
+android/server/location 	包含 LocationManagerService.java
+frameworks/base/services/jni 	包含 com_android_server_location_
+GpsLocationProvider.cpp
+hardware/libhardware/include/hardware 	包含了 HAL 层的接口
+
+
+adb shell settings put global captive_portal_detection_enabled 0  加速GPS
+
+1.Android HAL原理
+	 Application-----location sevices ----GNSS driver intorface ----control(parser/datebase supl AGNSS)---
+	 ---vart driver---u-blox gnss recevier
+
+2.配备通讯口，USB UART DDC（I2C）
+
+3.源码移植
+	a.代码要copy到指定位置“hardware/u-blox/gps”
+	b. apply patch:
+
+	  patch文件在源码的patch目录下，区分了不同的android版本。
+	c. 设置SUPL的支持（设置）
+	那其实简单的disable掉还不行，因为还要好多编译错误，所以后来我就没有修改了，
+	直接enable，如果要disable，要在Android.mk里面修改两个地方
+
+	d. 修改 u-blox.conf 
+		# Device to be used by the driver
+		SERIAL_DEVICE                   /dev/ttymxc4
+
+		# The baud rate that should be used to communicate with the receiver and at                                               
+		# which the receiver will output the NMEA messages.
+		BAUDRATE                        115200
+
+		# The default baud rate the receiver is configured to after start-up. The 
+		# HAL interface will configure itself to this baud rate and send a command
+		# to the receiver to switch to the baud rate assigned to the BAUDRATE keyword
+		BAUDRATE_DEF                    9600
+
+		# The generation of the receiver attached to the host device. The default
+		# is 7. (E.g. when using a MAX-7Q, the value for this field should be
+		# set to '7'. For a LEO-M8N the value should be set to '8')
+		# This will, beside other, define if AssistNow Legacy or AssistNow MGA is
+		# used (if enabled).
+		RECEIVER_GENERATION             7    //？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？？
+	
+		说明
+		BAUDRATE_DEF这个是gps reciever的默认波特率，这个波特率会被configure文件里BAUDRATE变量重新设置，BAUDRATE是最终的波特率
+		SERIAL_DEVICE ：这个是串口的设备名，ttymxc4。串口的打开在ubx_serial.cpp的openSerial里面，
+		有的时候要查看下/dev/ttymxcf4是否有可以读写属性，否则打开可能会失败。
+		RECEIVER_GENERATION：这个是gps reciever的版本，我们是7c，所以要写成7.
+	e. 设置文件自动拷贝
+	    (需要全编译。并烧入system.img)
+	      obj/lib/hw/gps.default.so要拷贝到/system/lib/hw/gps.default.so， 这个系统会自动拷贝，不用考虑，makefile的自动脚步会做到。
+
+	      拷贝gps.conf and u-blox.conf 到<target rootfs folder>/system/etc，这里 的rootfs就是指目标机器的目录，我们的项目是sabresd_6dq，所以是
+
+	      拷贝到out/target/product/sabresd_6dq/system/etc/下，自动拷贝也要借助mk文件的帮忙，可以使用PRODUCT_COPY_FILES这个宏，但是据说不能写在Android.mk文件里面，会报错，
+	      我写在了vim ./device/fsl/imx6/imx6.mk文件里面
+		RODUCT_COPY_FILES := \  
+				device/ti/panda/gpio-keys.kl:system/usr/keylayout/gpio-keys.kl \  
+			    frameworks/native/data/etc/android.hardware.usb.host.xml:system/etc/permissions/android.hardware.usb.host.xml \  
+			    frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \  
+			+   hardware/u-blox/gps/gps.conf:system/etc/gps.conf \  
+			+   hardware/u-blox/gps/u-blox.conf:system/etc/u-blox.conf 
+		(单独编译)
+	       cd /android/hardwre/u-blox/gps
+		mm -B
+	        把 hardware/u-blox/gps/gps.conf拷贝到system/etc/gps.conf
+  		 hardware/u-blox/gps/u-blox.conf拷贝到system/etc/u-blox.conf
+		/out/target/product/sabresd_6dq/obj/lib/gps.default.so
+		把gps.default.so 拷贝到/system/lib/hw/gps.default.so 
+		reboot the device or Kills the zygote process
+
+
+	f.关掉默认的imx6GPS
+
+		查看/system/lib/hw目录，发现了如下两个gps so
+		gps.SABRESD.so
+		gps.defualt.so
+		第一个其实就是athr_gps的so，查看模块的Android.mk可以看到名字，第二个才是ublox的so。
+
+		而且android的加载模块的方式是优先加载带开发板类型的模块，比如gps.BAORDTYPE.so，都没有最后才加载defualt的so，所以这里并没有加载gps.defualt.so。
+		查看源码目录：hardware/imx/libgps
+		 ./fsl/sabresd_6dq/BoardConfig.mk:USE_ATHR_GPS_HARDWARE := false
+	g. 有电源控制的要加载电源控制口
+		在模块的readme里面看到可以支持电源管理，但是要有gpio连接，而且要修改如下的函数，这个还没有做，先放在这里：
+		Two functions within the file ubxgpsstate.cpp
+		bool CUbxGpsState::powerOn(void)
+		void CUbxGpsState::powerOff(void
+	H.linux/i2c-dev.h
+
+4.测试.
+	有有源电线拿到室外测试
+	a. pc端工具u-center：
+
+	    在系统驱动没有调试好之前，如果想测试串口和gps硬件，可以使用pc端工具u-center，usb连接引出的串口线，来调试uart的数据是否正确，但是在没有发送修改波特率之前，ublox的uart口的默认波特率是9600，这个要注意下。
+	b. 手机端apk u-center
+
+	     在没有adb之前我使用了编译的方法，把apk文件安装在了系统上。
+
+	     把apk文件放rootfs的app目录下：
+
+	     out/target/product/sabresd_6dq/system/app/u-center.apk
+
+2 
+||     BOARD_BLUETOOTH_BDROID_  43 USE_U_BLOX_GPS_HARDWARE = true 
+||     USE_ION_ALLOCATOR        44 ifeq ($(USE_U_BLOX_GPS_HARDWARE),true) 
+||     USE_GPU_ALLOCATOR        45     device/fsl/m41_6dl/u-blox/gps.conf:system/etc/gps.conf \
+||     IMX_CAMERA_HAL_V2        46     device/fsl/m41_6dl/u-blox/u-blox.conf:system/etc/u-blox.conf
+||     IMX6_CONSUMER_IR_HAL     47 endif
+
+
+
+
+	 

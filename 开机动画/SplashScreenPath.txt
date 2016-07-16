@@ -1,0 +1,152 @@
+commit f3055cc46151a19de6dbe9acf9bde03f5e5735ee
+Author: Clive Liu <liuxusheng@auto-link.com.cn>
+Date:   Mon Jan 18 16:23:58 2016 +0800
+
+    修复kernel logo 至 bootanimation之间出现闪屏（降低发生几率）
+
+diff --git a/frameworks/base/cmds/bootanimation/BootAnimation.cpp b/frameworks/base/cmds/bootanimation/BootAnimation.cpp
+index ad4e4c8..0a5722c 100644
+--- a/frameworks/base/cmds/bootanimation/BootAnimation.cpp
++++ b/frameworks/base/cmds/bootanimation/BootAnimation.cpp
+@@ -12,6 +12,10 @@
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
++ *
++ * 修改记录:
++ * 日期         修改人          描述
++ * 2016/01/14   刘旭升          修复kernel logo 至 bootanimation之间出现闪屏（降低发生几率）
+  */
+ 
+ #define LOG_TAG "BootAnimation"
+@@ -318,7 +322,7 @@ bool BootAnimation::android()
+ {
+     initTexture(&mAndroid[0], mAssets, "images/android-logo-mask.png");
+     initTexture(&mAndroid[1], mAssets, "images/android-logo-shine.png");
+-
++/*
+     // clear screen
+     glShadeModel(GL_FLAT);
+     glDisable(GL_DITHER);
+@@ -326,7 +330,7 @@ bool BootAnimation::android()
+     glClearColor(0,0,0,1);
+     glClear(GL_COLOR_BUFFER_BIT);
+     eglSwapBuffers(mDisplay, mSurface);
+-
++*/
+     glEnable(GL_TEXTURE_2D);
+     glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+ 
+@@ -467,7 +471,7 @@ bool BootAnimation::movie()
+             }
+         }
+     }
+-
++/*
+     // clear screen
+     glShadeModel(GL_FLAT);
+     glDisable(GL_DITHER);
+@@ -477,7 +481,7 @@ bool BootAnimation::movie()
+     glClear(GL_COLOR_BUFFER_BIT);
+ 
+     eglSwapBuffers(mDisplay, mSurface);
+-
++*/
+     glBindTexture(GL_TEXTURE_2D, 0);
+     glEnable(GL_TEXTURE_2D);
+     glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+diff --git a/hardware/imx/mx6/libgralloc_wrapper/framebuffer.cpp b/hardware/imx/mx6/libgralloc_wrapper/framebuffer.cpp
+index 6c0fc05..5de9dd0 100755
+--- a/hardware/imx/mx6/libgralloc_wrapper/framebuffer.cpp
++++ b/hardware/imx/mx6/libgralloc_wrapper/framebuffer.cpp
+@@ -13,6 +13,10 @@
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
++ *
++ * 修改记录:
++ * 日期         修改人          描述
++ * 2016/01/14   刘旭升          修复kernel logo 至 bootanimation之间出现闪屏（降低发生几率）
+  */
+ 
+ #include <sys/mman.h>
+@@ -467,7 +471,8 @@ int Display::initialize(int fb)
+     }
+     mFramebuffer->base = intptr_t(vaddr);
+     mFramebuffer->phys = intptr_t(finfo.smem_start);
+-    memset(vaddr, 0, fbSize);
++    // kernel logo -> android bootanimation, no splash screen.
++    //memset(vaddr, 0, fbSize);
+ 
+     return 0;
+ }
+diff --git a/kernel_imx/arch/arm/boot/dts/imx6dl-m41s.dts b/kernel_imx/arch/arm/boot/dts/imx6dl-m41s.dts
+index dee1828..8a9d2df 100755
+--- a/kernel_imx/arch/arm/boot/dts/imx6dl-m41s.dts
++++ b/kernel_imx/arch/arm/boot/dts/imx6dl-m41s.dts
+@@ -13,6 +13,7 @@
+  * 2015/12/16   陈辉            添加BT IIS声卡配置
+  * 2015/12/29   陈辉            将usbotg强制设置成host模式
+  * 2016/1/7     陈辉            将usbotg设置成otg模式
++ * 2016/01/14   刘旭升          修复kernel logo 至 bootanimation之间出现闪屏（降低发生几率）
+  */
+ 
+ /dts-v1/;
+@@ -198,15 +199,15 @@
+ 		display-timings {
+ 			native-mode = <&auo1024x768>;
+ 			auo1024x768: g104xvn01 {
+-				clock-frequency = <51400000>;
++				clock-frequency = <52271520>;
+ 				hactive = <1024>;
+ 				vactive = <600>;
+ 				hback-porch = <217>;
+ 				hfront-porch = <43>;
+ 				vback-porch = <17>;
+ 				vfront-porch = <11>;
+-				hsync-len = <60>;
+-				vsync-len = <10>;
++				hsync-len = <40>;
++				vsync-len = <30>;
+ 			};
+ 		};
+ 	};
+diff --git a/kernel_imx/drivers/video/fbmem.c b/kernel_imx/drivers/video/fbmem.c
+index 938a9ab..0d4762b 100644
+--- a/kernel_imx/drivers/video/fbmem.c
++++ b/kernel_imx/drivers/video/fbmem.c
+@@ -9,6 +9,10 @@
+  * This file is subject to the terms and conditions of the GNU General Public
+  * License.  See the file COPYING in the main directory of this archive
+  * for more details.
++ *
++ * 修改记录:
++ * 日期         修改人          描述
++ * 2016/01/14   刘旭升          修复kernel logo 至 bootanimation之间出现闪屏（降低发生几率）
+  */
+ 
+ #include <linux/module.h>
+@@ -32,6 +36,7 @@
+ #include <linux/device.h>
+ #include <linux/efi.h>
+ #include <linux/fb.h>
++#include <linux/delay.h>
+ 
+ #include <asm/fb.h>
+ 
+@@ -1091,6 +1096,15 @@ static long do_fb_ioctl(struct fb_info *info, unsigned int cmd,
+ 	void __user *argp = (void __user *)arg;
+ 	long ret = 0;
+ 
++    // Temporary programme: Add a proper amount of delay for
++    // reducing the occurrence of splash screen. (Only for the first 15 times)
++    // TODO: Continue to find out the real reason.
++    static int call_times = 0;
++    if (unlikely(call_times < 15)) {
++        msleep(10);
++        ++call_times;
++    }
++
+ 	switch (cmd) {
+ 	case FBIOGET_VSCREENINFO:
+ 		if (!lock_fb_info(info))

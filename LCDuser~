@@ -1,0 +1,134 @@
+ldb.c  	mxc_dispdrv.c 	mxc_lcdif.c
+mxc_ipuv3_fb.c
+
+
+1）找到drivers/video/mxc/ldb.c的fb_videomode数组变量，它定义了屏幕的相关参数，fb_videomode结构体的定义在include/linux/fb.h中：
+
+	struct fb_videomode {
+		const char *name;	 /* 名字 */
+		u32 refresh;		 /* 刷新频率 */
+		u32 xres;			 //行像素
+		u32 yres;			 //列像素
+		u32 pixclock;		 //时钟频率，单位ps，14430
+		u32 left_margin;	 // HBPD(horizontal back porch)：80
+		u32 right_margin;	 // HFPD(horizontal front porth)：48
+		u32 upper_margin;	 // VBPD(vertical back porch),15
+		u32 lower_margin;	 // VFBD(vertical front porch),2
+		u32 hsync_len;		 // HSPW(horizontal sync pulse width)：32
+		u32 vsync_len;		 // VSPW(vertical sync pulse width)：47
+		u32 sync;
+		u32 vmode;
+		u32 flag;
+	};
+2）修改drivers/video/mxc/ldb.c的fb_videomode数组变量，使它的参数适应LP101WX1的屏幕参数。
+	static struct fb_videomode ldb_modedb[] = {
+		#if 0
+		{
+		 "LDB-XGA", 60, 1024, 768, 15385,
+		 220, 40,
+		 21, 7,
+		 60, 10,
+		 0,
+		 FB_VMODE_NONINTERLACED,
+		 FB_MODE_IS_DETAILED,},
+		 #endif
+		 //add by tonny@2012-06-04 13:43
+		 {
+		 "LDB-XGA", 60, 1280, 800, 14430,
+		 80, 48,
+		 15, 2,
+		 32, 47,
+		 0,
+		 FB_VMODE_NONINTERLACED,
+		 FB_MODE_IS_DETAILED,},
+		{
+		 "LDB-1080P60", 60, 1920, 1080, 7692,
+		 100, 40,
+		 30, 3,
+		 10, 2,
+		 0,
+		 FB_VMODE_NONINTERLACED,
+		 FB_MODE_IS_DETAILED,},
+	};
+
+	名称：LDB-XGA
+	刷新频率：60
+	分辨率：1280*800
+	时钟：10^12/69300000 = 14430
+	sync：0
+	vmode：FB_VMODE_NONINTERLACED
+	flag：FB_MODE_IS_DETAILED
+
+2）设在启动参数
+	进入u-boot，在u-boot命令行中设置启动参数为：
+	setenv bootargs console=ttymxc0,115200 androidboot.console=ttymxc0 vmalloc=400M init=/init video=mxcfb0:dev=ldb,LDB-XGA, if=RGB666,bpp=16 video=mxcfb1:off video=mxcfb2:off fbmem=10M
+	saveenv
+
+setenv bootargs  console=ttymxc0,115200 init=/init video=mxcfb0:dev=ldb,bpp=32 video=mxcfb1:off video=mxcfb2:off video=mxcfb3:off vmalloc=400M androidboot.console=ttymxc0 consoleblank=0 androidboot.hardware=freescale cma=384M
+
+
+
+	video=mxcfb0:dev=ldb,LDB-XGA,if=RGB666,bpp=16video=mxcfb1:off video=mxcfb2
+
+	或
+
+	video=mxcfb0:dev=ldb, bpp=16 video=mxcfb1:off video=mxcfb2  
+
+
+	其中video = mxcfb0:dev=ldb,LDB-XGA表示选用fb0的ldb驱动
+	if=RGB666,bpp=16表示16位色彩
+	设置好后，用printenv查看一下启动参数
+	X6Q SABRELITE U-Boot > printenv
+	bootdelay=3
+	baudrate=115200
+	ipaddr=192.168.1.103
+	serverip=192.168.1.101
+	netmask=255.255.255.0
+	loadaddr=0x10800000
+	rd_loadaddr=0x11000000
+	netdev=eth0
+	ethprime=FEC0
+	bootcmd=booti mmc1
+	ethact=FEC0
+	bootargs=console=ttymxc0,115200 androidboot.console=ttymxc0 vmalloc=400M init=/init video=mxcfb0:dev=ldb,LDB-XGA, if=RGB666,bpp=16 video=mxcfb1:off video=mxcfb2:off fbmem=10M
+	stdin=serial
+	stdout=serial
+	stderr=serial
+
+	Environment size: 419/8188 bytes
+	MX6Q SABRELITE U-Boot > 
+
+
+5)Setting u-boot environment (starting from NFS)
+
+#setenv ipaddr 192.168.1.103
+
+#setenv serverip 192.168.1.102
+
+#setenv gateway 192.168.1.1
+
+#setenv ethaddr 00:04:9f:00:ea:d3
+
+#setenv nfsroot /opt/nfsroot
+
+#setenv bootargs_base 'setenv bootargs console=ttymxc0,115200'
+
+#setenv bootargs_android 'setenv bootargs ${bootargs} init=/init androidboot.console=ttymxc0 androidboot.hardware=freescale'
+
+#setenv bootargs_nfs 'setenv bootargs ${bootargs} ip=${ipaddr}:${serverip}:${gateway}:${netmask}::eth0 off root=/dev/nfs nfsroot=${serverip}:${nfsroot}'
+
+#setenv bootargs_disp 'setenv bootargs ${bootargs} video=mxcfb0:dev=ldb,bpp=32 video=mxcfb1:dev=hdmi,1920x1080M@60,if=RGB24,bpp=32 video=mxcfb2:dev=lcd,1440x900,bpp=32 fbmem=32M vmalloc=400M'
+
+#setenv bootcmd_net 'run bootargs_base bootargs_android bootargs_nfs bootargs_disp;tftpboot ${loadaddr} uImage;bootm'
+
+#run bootcmd_net
+
+setenv bootargs ${bootargs} video=mxcfb0:RGB24,1024x60M-24@60
+
+video=mxcdi0fb:RGB24,1024x768M-16@60
+video=mxcdi0fb:RGB24,1024x768M-24@60
+
+
+ 
+
+    I tested this porting on a customized board, It is OK ! Please try above steps !

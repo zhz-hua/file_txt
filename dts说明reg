@@ -1,0 +1,114 @@
+CPU
+下一步是描述CPU。一个名为“cpus”的container node为每个CPU添加了一个子节点。在此情况下此系统为源于ARM的双核Cortex A9系统。
+
+/ {
+    compatible = "acme,coyotes-revenge";
+
+    cpus {
+        cpu@0 {
+            compatible = "arm,cortex-a9";
+        };
+        cpu@1 {
+            compatible = "arm,cortex-a9";
+        };
+    };
+};
+了解compatible属性
+http://www.right.com.cn/forum/thread-146260-1-1.html
+树形结构中代表一个设备的每个节点都要求拥有compatible属性。Compatible是操作系统决定使用哪个设备驱动程序的关键。
+Compatible是字符串列表。列表中第一个字符串“<manufacturer>,<model>”指定了节点代表的确切的设备。以下字符串代表了其它设备。
+在每个cpu节点的兼容属性是字符串<manufacturer>,<model>，用以指定确切的cpu，就像是高级兼容属性一样。
+此后会向cpu节点添加更多的属性，但我们首先要谈的是一些基本概念
+CPU寻址
+每个可寻址设备都会得到一个reg，它是一个元组列表：reg = <address1 length1 [address2 length2] [address3 length3] ... >。每个元组代表设备的地址范围。每个address值是一个或多个被叫做cells的32bit整数的列表。类似的，长度值可以为cells列表或为空
+cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+        cpu@0 {
+           compatible = "arm,cortex-a9";
+            reg = <0>;
+        };
+        cpu@1 {
+            compatible = "arm,cortex-a9";
+            reg = <1>;
+        };
+    };
+
+
+在cpus节点，#address-cells被设置成了1，#size-cells被设置成了0。这是说子reg值是单独的uint32，它用无大小字段表示地址。在此情况下，这两个cpu分配到的地址为0和1。Cpu节点的#size-cells是0因为每个cpu只分配到了一个单独的地址。
+你仍然需要注意reg值班需要与节点名的值相匹配。按照惯例，如果一个节点有一个reg属性，那么这个节点名称必须包括unit-address,这是reg属性的第一个address值。
+内存映射设备
+与在cpu节点中单独的address值不同，内存映射设备被分配了一系列将要响应的地址。#size-cells用来表示在每个子reg元组中长度字段的大小。在以下示例中，每个address值为1 cell(32 bits),每个长度值也是1 cell,这在32 bit系统是比较典型的。64 bit设备也许会为#address-cells和#size-cells使用数值2，在device tree中获取64 bit addressing。
+/ {
+
+    #address-cells = <1>;
+
+    #size-cells = <1>;
+    ...
+
+    serial@101f0000 {
+
+        compatible = "arm,pl011";
+
+        reg = <0x101f0000 0x1000 >;
+
+    };
+
+    serial@101f2000 {
+
+        compatible = "arm,pl011";
+
+        reg = <0x101f2000 0x1000 >;
+
+    };
+
+
+    gpio@101f3000 {
+
+        compatible = "arm,pl061";
+
+        reg = <0x101f3000 0x1000
+
+               0x101f4000 0x0010>;
+    };
+
+    interrupt-controller@10140000 {
+
+        compatible = "arm,pl190";
+
+        reg = <0x10140000 0x1000 >;
+
+    };
+
+    spi@10115000 {
+
+        compatible = "arm,pl022";
+
+        reg = <0x10115000 0x1000 >;
+
+    };
+    ...
+};
+
+非内存映射设备
+
+处理器总线的其它设备为非内存映射设备。他们有地址范围，但不能被CPU直接寻址。母设备的驱动程序将代替CPU进行间接访问。
+以i2c设备为例，每个设备都分配了一个地址，但没有长度或范围与之相匹配。这与CPU地址分配很相似。
+
+I2c@1,0 {
+            compatible = "acme,a1234-i2c-bus";
+            #address-cells = <1>;
+            #size-cells = <0>;
+            reg = <1 0 0x1000>;
+            rtc@58 {
+                compatible = "maxim,ds1338";
+                reg = <58>;
+            };
+
+        };
+
+
+
+
+
+

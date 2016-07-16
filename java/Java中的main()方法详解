@@ -1,0 +1,104 @@
+Java中的main()方法详解
+ 
+在Java中，main()方法是Java应用程序的入口方法，也就是说，程序在运行的时候，第一个执行的方法就是main()方法，这个方法和其他的方法有很大的不同，比如方法的名字必须是main，方法必须是public static void 类型的，方法必须接收一个字符串数组的参数等等。
+ 
+在看Java中的main()方法之前，先看一个最简单的Java应用程序HelloWorld，我将通过这个例子说明Java类中main()方法的奥秘，程序的代码如下：
+ 
+/**
+* Java中的main()方法详解
+*/
+public class HelloWorld {
+    public static void main(String args[]) {
+        System.out.println("Hello World!");
+    }
+}
+ 
+一、先说类：
+ 
+HelloWorld 类中有main()方法，说明这是个java应用程序，通过JVM直接启动运行的程序。
+既然是类，java允许类不加public关键字约束，当然类的定义只能限制为public或者无限制关键字（默认的）。
+ 
+二、再说main()方法
+ 
+这个main()方法的声明为：public static void main(String args[])。必须这么定义，这是Java的规范。
+ 
+为什么要这么定义，和JVM的运行有关系。
+当一个类中有main()方法，执行命令“java 类名”则会启动虚拟机执行该类中的main方法。
+ 
+由于JVM在运行这个Java应用程序的时候，首先会调用main方法，调用时不实例化这个类的对象，而是通过类名直接调用因此需要是限制为public static。
+ 
+对于java中的main方法，jvm有限制，不能有返回值，因此返回值类型为void。
+main方法中还有一个输入参数，类型为String[]，这个也是java的规范，main()方法中必须有一个入参，类细必须String[]，至于字符串数组的名字，这个是可以自己设定的，根据习惯，这个字符串数组的名字一般和sun java规范范例中mian参数名保持一致，取名为args。
+ 
+因此，main()方法定义必须是：“public static void main(String 字符串数组参数名[])”。
+ 
+三、main()方法中可以throw Exception
+ 
+因此main()方法中可以抛出异常，main()方法上也可以声明抛出异常。
+ 
+比如，下面这个写法是正确的：
+public class TestMain {
+        public static void main(String[] args) throws Exception {
+                System.out.println("哈哈哈哈哈");
+                throw new Exception("");
+        }
+}
+ 
+运行结果：
+哈哈哈哈哈
+Exception in thread "main" java.lang.Exception:    
+  at maintest.TestMain.main(TestMain.java:11)
+  at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+  at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+  at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+  at java.lang.reflect.Method.invoke(Method.java:585)
+  at com.intellij.rt.execution.application.AppMain.main(AppMain.java:90)
+
+Process finished with exit code 1
+ 
+四、main()方法中字符串参数数组作用
+ 
+main()方法中字符串参数数组作用是接收命令行输入参数的，命令行的参数之间用空格隔开。
+ 
+下面给出一个例子，看看如何初始化和使用这个数组的。
+/**
+* 打印main方法中的输入参数
+*/
+public class TestMain {
+    public static void main(String args[]){
+        System.out.println("打印main方法中的输入参数！");
+        for(int i=0;i<args.length;i++){
+            System.out.println(args[i]);
+        }
+    }
+}
+ 
+执行方法和运行结果
+D:\Study\basetest\src>javac TestMain.java
+
+D:\Study\basetest\src>java TestMain 1 2 3
+打印main方法中的输入参数！
+1
+2
+3
+ 
+ 
+五、给出HelloWorld的另外一个版本
+ 
+/**
+* 变态版的HelloWorld.呵呵
+*/
+public class HelloWorld2 {
+    static {
+        System.out.println("Hello Wordld!");
+    }
+    public static void main(String args[]){
+        System.exit(0);
+    }
+}
+ 
+这个main()方法执行的内容就一句"System.exit(0);" ，目的是让程序正常结束。那“HelloWorld！”是从哪里打印的，秘密就是在static打印的，因为static代码块的内容会在main调用前调用。
+ 
+总结:
+main方法作为一个特殊的规范，与普通的方法有很大区别，限制很多，理解其原理需要学习JVM相关知识。是Java中学习中大障碍。这是我对main原理和使用的总结，欢迎各位在此讨论。
+ 

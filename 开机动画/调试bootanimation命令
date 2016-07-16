@@ -1,0 +1,5 @@
+bootanimation bootanim 
+
+1.4 查看动画 
+ 在终端中输入命令： 
+     adb shell---> cd /system/bin--->bootanimation 或者bootanimation shut  这样不用重启即可查看定制的动画，方便

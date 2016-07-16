@@ -1,0 +1,79 @@
+首先，什么是Runtime ？看看Wiki给的几种解释：      
+
+    Run time (program lifecycle phase), the period during which a computer program is executing
+    Runtime library, a program library designed to implement functions built into a programming language
+
+ 
+
+     我倾向这里指的是后者，看看更进一步的解释：
+
+     In computer programming, a runtime library is the API used by a compiler to invoke some of the behaviors of a runtime system. The runtime system implements the execution model and other fundamental behaviors of a programming language. The compiler inserts calls to the runtime library into the executable binary. During execution (run time) of that computer program, execution of those calls to the runtime library cause communication between the application and theruntime system. This often includes functions for input and output, or for memory management.
+
+     归纳起来的意思就是，Runtime 是支撑程序运行的基础库，它是与语言绑定在一起的。比如：
+
+    C Runtime：就是C standard lib, 也就是我们常说的libc。（有意思的是， Wiki会自动将“C runtime" 重定向到 "C Standard Library").
+    Java Runtime: 同样，Wiki将其重定向到” Java Virtual Machine", 这里当然包括Java 的支撑类库（.jar).
+    AndroidRuntime:  显而易见，就是为Android应用运行所需的运行时环境。这个环境包括以下东东：
+        Dalvik VM: Android的Java VM, 解释运行Dex格式Java程序。每个进程运行一个虚拟机（什么叫运行虚拟机？说白了，就是一些C代码，不停的去解释Dex格式的二进制码(Bytecode)，把它们转成机器码(Machine code)，然后执行，当然，现在大多数的Java 虚拟机都支持JIT，也就是说，bytecode可能在运行前就已经被转换成机器码，从而大大提高了性能。过去一个普遍的认识是Java 程序比C，C++等静态编译的语言慢，但随着JIT的介入和发展，这个已经完全是过去时了，JIT的动态性运行允许虚拟机根据运行时环境，优化机器码的生成，在某些情况下，Java甚至可以比C/C++跑得更快，同时又兼具平台无关的特性，这也是为什么Java如今如此流行的原因之一吧）。
+        Android的Java 类库, 大部分来自于 Apache Hamony, 开源的Java API 实现，如 java.lang, java.util, java.net. 但去除了AWT, Swing 等部件。
+        JNI: C和Java互调的接口。
+        Libc: Android也有很多C代码，自然少不了libc，注意的是，Android的libc叫 bionic C.
+
+
+
+      1，通过LogCat窗口发现一下错误提示信息：
+ 
+01-30 12:13:15.829: I/System.out(3043): waiting for debugger to settle...
+01-30 12:13:16.039: I/System.out(3043): debugger has settled (1342)
+01-30 12:13:21.570: D/AndroidRuntime(3043): Shutting down VM
+01-30 12:13:21.570: W/dalvikvm(3043): threadid=1: thread exiting with uncaught exception (group=0x40018578)
+01-30 12:13:21.640: E/AndroidRuntime(3043): FATAL EXCEPTION: main
+01-30 12:13:21.640: E/AndroidRuntime(3043): java.lang.RuntimeException: Unable to start activity ComponentInfo{loger.gps.any2go.com/loger.gps.any2go.com.GpsActivity}: java.lang.NullPointerException
+01-30 12:13:21.640: E/AndroidRuntime(3043): at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1651)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:1667)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at android.app.ActivityThread.access$1500(ActivityThread.java:117)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at android.app.ActivityThread$H.handleMessage(ActivityThread.java:935)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at android.os.Handler.dispatchMessage(Handler.java:99)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at android.os.Looper.loop(Looper.java:130)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at android.app.ActivityThread.main(ActivityThread.java:3687)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at java.lang.reflect.Method.invokeNative(Native Method)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at java.lang.reflect.Method.invoke(Method.java:507)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:867)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:625)
+01-30 12:13:21.640: E/AndroidRuntime(3043):
+at dalvik.system.NativeStart.main(Native Method)
+01-30 12:13:21.640: E/AndroidRuntime(3043): Caused by: java.lang.NullPointerException
+01-30 12:13:21.640: E/AndroidRuntime(3043): at loger.gps.any2go.com.GpsActivity.onCreate(GpsActivity.java:31)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1047)
+01-30 12:13:21.640: E/AndroidRuntime(3043): at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:1615)
+01-30 12:13:21.640: E/AndroidRuntime(3043): ... 11 more
+ 
+通过以上信息可以看出，LogCat已经帮我们定位了具体的问题所在，如第一行寒色所示，出现的是Main函数中出现一样， 而异常是NullPointerException，具体的发生在绿色背景的行，OnCreate函数中。GPSActive.java:31 行。
+ 
+ 
+这样我们就具体地发现了问题所在， 这个问题迷惑了我一个下午，而现在我重新看看，几分钟就发现了， 发表于此，以资共勉。
+
+摘自 slyzhang's Blog Home
+
+个人按下面顺序排查：
+
+1.
+
+在Manifest.xml中查看Activity的名字是否书写正确。
+
+2.
+
+在Manifest.xml确认Activity标签中的android:name属性的格式，例如我的activity的名字是helloworld，确认android:name=”.helloworld”（其中的点很重要）。
+
+3.
+
+如果有添加外部包的情况下，在工程根目录下建libs目录，然后将需要导入的外部包放入此目录内再add jars。
+
+4.
+
+如果上面都确保OK的情况下仍发生问题的话，clean工程->关闭eclipse->在命令行中重启adb（adb kill-server adbstart-server）->打开eclipse->编译启动。
+
+ 
+
+上面4步基本能解决问题。
+

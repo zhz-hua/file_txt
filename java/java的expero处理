@@ -1,0 +1,154 @@
+小结：
+
+try 块：用于捕获异常。其后可接零个或多个catch块，如果没有catch块，则必须跟一个finally块。
+catch 块：用于处理try捕获到的异常。
+finally 块：无论是否捕获或处理异常，finally块里的语句都会被执行。当在try块或catch块中遇到return语句时，finally语句块将在方法返回之前被执行。在以下4种特殊情况下，finally块不会被执行：
+1）在finally语句块中发生了异常。
+2）在前面的代码中用了System.exit()退出程序。
+3）程序所在的线程死亡。
+4）关闭CPU。
+
+
+3. try-catch-finally 规则(异常处理语句的语法规则）：
+
+1)  必须在 try 之后添加 catch 或 finally 块。try 块后可同时接 catch 和 finally 块，但至少有一个块。
+2) 必须遵循块顺序：若代码同时使用 catch 和 finally 块，则必须将 catch 块放在 try 块之后。
+3) catch 块与相应的异常类的类型相关。
+4) 一个 try 块可能有多个 catch 块。若如此，则执行第一个匹配块。即Java虚拟机会把实际抛出的异常对象依次和各个catch代码块声明的异常类型匹配，如果异常对象为某个异常类型或其子类的实例，就执行这个catch代码块，不会再执行其他的 catch代码块
+5) 可嵌套 try-catch-finally 结构。
+6) 在 try-catch-finally 结构中，可重新抛出异常。
+7) 除了下列情况，总将执行 finally 做为结束：JVM 过早终止（调用 System.exit(int)）；在 finally 块中抛出一个未处理的异常；计算机断电、失火、或遭遇病毒攻击。
+4. try、catch、finally语句块的执行顺序:
+
+1)当try没有捕获到异常时：try语句块中的语句逐一被执行，程序将跳过catch语句块，执行finally语句块和其后的语句；
+
+2)当try捕获到异常，catch语句块里没有处理此异常的情况：当try语句块里的某条语句出现异常时，而没有处理此异常的catch语句块时，此异常将会抛给JVM处理，finally语句块里的语句还是会被执行，但finally语句块后的语句不会被执行；
+
+3)当try捕获到异常，catch语句块里有处理此异常的情况：在try语句块中是按照顺序来执行的，当执行到某一条语句出现异常时，程序将跳到catch语句块，并与catch语句块逐一匹配，找到与之对应的处理程序，其他的catch语句块将不会被执行，而try语句块中，出现异常之后的语句也不会被执行，catch语句块执行完后，执行finally语句块里的语句，最后执行finally语句块后的语句；
+ 图示try、catch、finally语句块的执行：
+
+                                          图2  图示try、catch、finally语句块的执行
+
+4.2 抛出异常
+
+      任何Java代码都可以抛出异常，如：自己编写的代码、来自Java开发环境包中代码，或者Java运行时系统。无论是谁，都可以通过Java的throw语句抛出异常。从方法中抛出的任何异常都必须使用throws子句
+
+Throws抛出异常的规则：
+
+    1) 如果是不可查异常（unchecked exception），即Error、RuntimeException或它们的子类，那么可以不使用throws关键字来声明要抛出的异常，编译仍能顺利通过，但在运行时会被系统抛出。
+
+    2）必须声明方法可抛出的任何可查异常（checked exception）。即如果一个方法可能出现受可查异常，要么用try-catch语句捕获，要么用throws子句声明将它抛出，否则会导致编译错误
+
+    3)仅当抛出了异常，该方法的调用者才必须处理或者重新抛出该异常。当方法的调用者无力处理该异常的时候，应该继续抛出，而不是囫囵吞枣。
+
+    4）调用方法必须遵循任何可查异常的处理和声明规则。若覆盖一个方法，则不能声明与覆盖方法不同的异常。声明的任何异常必须是被覆盖方法所声明异常的同类或子类。
+
+    例如：
+
+[java] view plain copy
+print?在CODE上查看代码片派生到我的代码片
+
+    void method1() throws IOException{}  //合法    
+       
+    //编译错误，必须捕获或声明抛出IOException    
+    void method2(){    
+      method1();    
+    }    
+       
+    //合法，声明抛出IOException    
+    void method3()throws IOException {    
+      method1();    
+    }    
+       
+    //合法，声明抛出Exception，IOException是Exception的子类    
+    void method4()throws Exception {    
+      method1();    
+    }    
+       
+    //合法，捕获IOException    
+    void method5(){    
+     try{    
+        method1();    
+     }catch(IOException e){…}    
+    }    
+       
+    //编译错误，必须捕获或声明抛出Exception    
+    void method6(){    
+      try{    
+        method1();    
+      }catch(IOException e){throw new Exception();}    
+    }    
+       
+    //合法，声明抛出Exception    
+    void method7()throws Exception{    
+     try{    
+      method1();    
+     }catch(IOException e){throw new Exception();}    
+
+
+5.Java常见异常
+
+  
+
+在Java中提供了一些异常用来描述经常发生的错误，对于这些异常，有的需要程序员进行捕获处理或声明抛出，有的是由Java虚拟机自动进行捕获处理。Java中常见的异常类:
+
+1. runtimeException子类:
+
+        1、 java.lang.ArrayIndexOutOfBoundsException
+        数组索引越界异常。当对数组的索引值为负数或大于等于数组大小时抛出。
+        2、java.lang.ArithmeticException
+        算术条件异常。譬如：整数除零等。
+        3、java.lang.NullPointerException
+        空指针异常。当应用试图在要求使用对象的地方使用了null时，抛出该异常。譬如：调用null对象的实例方法、访问null对象的属性、计算null对象的长度、使用throw语句抛出null等等
+        4、java.lang.ClassNotFoundException
+        找不到类异常。当应用试图根据字符串形式的类名构造类，而在遍历CLASSPAH之后找不到对应名称的class文件时，抛出该异常。
+
+       5、java.lang.NegativeArraySizeException  数组长度为负异常
+
+       6、java.lang.ArrayStoreException 数组中包含不兼容的值抛出的异常
+
+       7、java.lang.SecurityException 安全性异常
+
+       8、java.lang.IllegalArgumentException 非法参数异常
+
+2.IOException
+
+    IOException：操作输入流和输出流时可能出现的异常。
+
+    EOFException   文件已结束异常
+
+    FileNotFoundException   文件未找到异常
+
+3. 其他
+
+    ClassCastException    类型转换异常类
+
+    ArrayStoreException  数组中包含不兼容的值抛出的异常
+
+    SQLException   操作数据库异常类
+
+    NoSuchFieldException   字段未找到异常
+
+    NoSuchMethodException   方法未找到抛出的异常
+
+    NumberFormatException    字符串转换为数字抛出的异常
+
+    StringIndexOutOfBoundsException 字符串索引超出范围抛出的异常
+
+    IllegalAccessException  不允许访问某类异常
+
+    InstantiationException  当应用程序试图使用Class类中的newInstance()方法创建一个类的实例，而指定的类对象无法被实例化时，抛出该异常
+
+   
+
+ 6.自定义异常
+
+使用Java内置的异常类可以描述在编程时出现的大部分异常情况。除此之外，用户还可以自定义异常。用户自定义异常类，只需继承Exception类即可。
+    在程序中使用自定义异常类，大体可分为以下几个步骤。
+（1）创建自定义异常类。
+（2）在方法中通过throw关键字抛出异常对象。
+（3）如果在当前抛出异常的方法中处理异常，可以使用try-catch语句捕获并处理；否则在方法的声明处通过throws关键字指明要抛出给方法调用者的异常，继续进行下一步操作。
+（4）在出现异常方法的调用者中捕获并处理异常。
+
+在上面的“使用throw抛出异常”例子已经提到了
+

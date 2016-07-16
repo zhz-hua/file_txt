@@ -1,0 +1,161 @@
+	http://wenku.baidu.com/view/8f1c161bc281e53a5802ff51.html  	wifi学习
+	http://blog.chinaunix.net/zt/1045/sdmmcsdio_1045048.shtml	mmc讲解 
+	http://blog.csdn.net/ylyuanlu/article/details/7711441  
+_WL_IDX
+
+1:NF3108 WLAN Driver Porting
+	$make ARCH=arm menuconfig
+	Networking support -> Wireless
+	CFG80211 and MAC80211:
+	Cryptographic API:
+	<*> CCM support
+
+
+2:Setup SDIO PINS/PADS  转换成dts配置
+	void mx6q_sabresd_pads_init_sdmmc(void)
+	{
+		...skip
+		/* SD3 FOR external WIFI Wilink8 SDK board */
+		EDM_SET_PAD(PAD_SD3_CLK__USDHC3_CLK_50MHZ);
+		EDM_SET_PAD(PAD_SD3_CMD__USDHC3_CMD_50MHZ);
+		EDM_SET_PAD(PAD_SD3_DAT0__USDHC3_DAT0_50MHZ);
+		EDM_SET_PAD(PAD_SD3_DAT1__USDHC3_DAT1_50MHZ);
+		EDM_SET_PAD(PAD_SD3_DAT2__USDHC3_DAT2_50MHZ);
+		EDM_SET_PAD(PAD_SD3_DAT3__USDHC3_DAT3_50MHZ);
+		EDM_SET_PAD(PAD_SD3_DAT4__USDHC3_DAT4_50MHZ);
+		EDM_SET_PAD(PAD_SD3_DAT5__USDHC3_DAT5_50MHZ);
+		EDM_SET_PAD(PAD_SD3_DAT6__USDHC3_DAT6_50MHZ);
+		EDM_SET_PAD(PAD_SD3_DAT7__USDHC3_DAT7_50MHZ);
+		/* SD4 USDHC4 FOR BOOT */
+		..skip
+	}
+3：insert SDIO host :	
+//SDIO-Wifi模块是基于SDIO接口的符合wifi无线网络标准的嵌入式模块，内置无线网络协议IEEE802.11协议栈以及TCP/IP协议栈，
+//能够实现用户主平台数据通过SDIO口到无线网络之间的转换。SDIO具有传输数据快，兼容SD、MMC接口等特点。
+//SDIO的驱动需要内核的MMC驱动
+	ATTENTION:
+	The MMC insert order decides the mmc index that WIFI WILINK8 SDIO used is 1. That
+	means our _WL_IDX define is 1 . The define will used at the following
+	(1) WiFi HAL Layer ,(2) the Kernel MMC Host driver and (3) init.rc .
+	If your MMC insert order is different with us. Please remember your MMC Index and
+	change the _WL_IDX define value when used .
+
+	static inline void mx6q_sabresd_init_sd(void)
+	{
+		mx6q_sabresd_pads_init_sdmmc();
+		//eMMC
+		imx6q_add_sdhci_usdhc_imx(3, &mx6q_sabresd_sd4_data);
+		//mmc0 : The insert order decides the mmc index as 0
+		//SD WIFI (external Wilink8 WIFI SDK board)
+		imx6q_add_sdhci_usdhc_imx(2, &mx6q_sabresd_sd3_data);
+		//mmc1: The insert order decides the mmc index as 1 => _WL_IDX is 1
+	}
+	//SD for WiFi Wilink8
+	static const struct esdhc_platform_data mx6q_sabresd_sd3_data __initconst = {
+		.cd_gpio = -EINVAL,
+		.wp_gpio = -EINVAL,
+		.keep_power_at_suspend = 1,
+		.support_8bit = 0,
+		.delay_line = 0,
+		.cd_type = ESDHC_CD_PERMANENT,
+		.always_present
+		= 1,
+	};
+	static void __init mx6_sabresd_board_init(void)
+	{
+		................. (skip)
+		mx6q_sabresd_init_sd();
+		................. (skip)
+		#ifdef NF_WLAN_PATCH
+		nFore_init_wifi_nf3108();
+		#endif //NF_WLAN_PATCH
+		#ifdef NF_BT_PATCH
+		nFore_init_bluetooth_nf3108();
+		#endif //NF_BT_PATCH
+		.................(skip)
+	}
+
+4：Initialize GPIO , WIFI power control and set wl12xx_platform_data:
+	#define NF3108_WL_EN IMX_GPIO_NR(3, 17)
+	#define NF3108_IRQ_WL IMX_GPIO_NR(3, 19)
+	#ifdef NF_WLAN_PATCH
+	int nf_set_wlan_power(int status)
+	{
+		if (status){
+			pr_info("[nFore] WiFi POWER ON \n");
+			gpio_set_value(NF3108_WL_EN, 1);
+			msleep(100);
+		} else {
+			pr_info("[nFore] WiFi POWER OFF \n");
+			gpio_set_value(NF3108_WL_EN, 0);
+			msleep(50);
+		}
+		return 0;
+	}
+	EXPORT_SYMBOL_GPL(nf_set_wlan_power);
+	#ifdef CONFIG_WL12XX_PLATFORM_DATA
+	static struct wl12xx_platform_data wlan_data __initdata = {
+		.irq
+		= gpio_to_irq(NF3108_IRQ_WL),
+		.board_ref_clock
+		= WL12XX_REFCLOCK_38_XTAL,
+		.board_tcxo_clock = 1,
+		.platform_quirks
+		= WL12XX_PLATFORM_QUIRK_EDGE_IRQ,
+	};
+	static __init void nFore_init_wifi_nf3108(void)
+	{
+		pr_info("[nFore] Init WiFi gpio NF3108_IRQ_WL / NF3108_WL_EN ");
+		mx6q_sabresd_pads_init_wifi_nf3108();
+		gpio_request(NF3108_WL_EN, "wlan_enable");
+		gpio_direction_output(NF3108_WL_EN, 1);
+		pr_info("[nFore] require WL_EN IMX_GPIO_NR(3, 17): %d", NF3108_WL_EN);
+		nf_set_wlan_power(1);
+		nf_set_wlan_power(0);
+		pr_info("[nFore] Set WiFi POWER OFF Intial ");
+		gpio_request(NF3108_IRQ_WL, "wlan_irq");
+		gpio_direction_input(NF3108_IRQ_WL);
+		pr_info("[nFore] require WL_IRQ IMX_GPIO_NR(3, 19): %d", NF3108_IRQ_WL);
+		gpio_free(NF3108_IRQ_WL);
+		/* Pass the wl12xx platform data information to the wl12xx driver */
+		pr_info("[nFore] Pass the wl12xx platform data to the wl12xx driver ");
+		if (wl12xx_set_platform_data(&wlan_data)) {
+			return;
+		}
+	}
+	#else //CONFIG_WL12XX_PLATFORM_DATA
+	static __init void nFore_init_wifi_nf3108(void)
+	{
+		//Do nothing
+	}
+	#endif //CONFIG_WL12XX_PLATFORM_DATA
+	#endif //NF_WLAN_PATCH
+5：Set _WL_IDX at Kernel MMC host driver :
+	Please directly use the source code that we provide at
+		/kernel_imx/drivers/mmc/host/sdhci.c
+		/kernel_imx/drivers/mmc/host/sdhci-esdhc-imx.c
+	And modify _WL_IDX if your wifi mmc interface not the same with us at the two files.
+	#define _WL_IDX 1 /*mmc1*/
+
+	Setup WIFI HAL layer for Wilink8 :
+	Please directly use the source code (three files) that we provide at
+		/hardware/libhardware_legacy/wifi .
+	If your wifi mmc interface ( _WL_IDX) is not the same with us .
+	Please help edit
+		/hardware/libhardware_legacy/wifi/wifi_nfore.c
+	Line 110:
+		#define WIFI_DRIVER_POWER_RESET
+		"echo 1 > /sys/class/mmc_host/mmc1/device/reset_power"
+	Change “mmc1” to your real WIFI MMC interface number.
+
+6：Edit your /device/fsl/imx6/etc/init.rc , add the lines:
+
+
+
+
+
+
+
+
+
+

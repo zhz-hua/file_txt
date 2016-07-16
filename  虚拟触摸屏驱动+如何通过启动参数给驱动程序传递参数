@@ -1,0 +1,120 @@
+ 该驱动可用于没有触摸屏的设备上，加上虚拟FrameBuffer驱动(vfb)就可以模拟触摸屏。比如在Android系统的移植中，系统要正常启动，就必须要有FrameBuffer驱动和声卡驱动，此二者可使用drivers/video/vfb.c和sound/drivers/dummy.c两个虚拟驱动代替，系统正常起来后，可使用加上虚拟触摸屏驱动，就可以使用android-vnc-server(http://code.google.com/p/android-vnc-server/)以启动VNC服务，然后使用VNC客户端将Android系统桌面显示到远端。配合虚拟触摸屏驱动，在远端就可以使用鼠标进行操作。
+   由于触摸屏的大小参数必须和FrameBuffer的参数一致，所以驱动实现了使用启动参数传递大小参数，以此可作为如何通过启动参数给驱动程序传递参数的示例，代码如下：
+
+    /*
+     * Virtual TouchScreen driver
+     *
+     * Copyright (C) 2011 Niu Tao <niutao0602@gmail.com>
+     *
+     * This file is subject to the terms and conditions of the GNU General Public
+     * License. See the file COPYING in the main directory of this archive for
+     * more details.
+     *
+     */
+
+    #include <linux/module.h>
+    #include <linux/kernel.h>
+    #include <linux/init.h>
+    #include <linux/errno.h>
+    #include <linux/delay.h>
+    #include <linux/ioport.h>
+    #include <linux/interrupt.h>
+    #include <linux/input.h>
+
+    #define DRIVER_DESC "Virtual TouchScreen"
+
+    static struct input_dev *vts_dev;
+
+    #define VTS_MIN_XC 0
+    #define VTS_MAX_XC 320
+    #define VTS_MIN_YC 0
+    #define VTS_MAX_YC 480
+
+    static int __initdata vts_max_xc = VTS_MAX_XC;
+    static int __initdata vts_max_yc = VTS_MAX_YC;
+
+    #ifndef MODULE
+    static int __initdata vts_use = 0;
+    /**
+     * parse options,format must be vts=widthxheigth
+     */
+    static int __init vts_setup(char *str)
+    {
+        char buf[64];
+        char *p;
+        int xc, yc;
+
+        vts_use = 1;
+
+        strncpy(buf, str, sizeof(buf));
+        p = strchr(buf, 'x');
+        if (!p)
+            goto out;
+        *p = '\0';
+        xc = simple_strtoul(buf, NULL, 0);
+        yc = simple_strtoul(p + 1, NULL, 0);
+        
+        if (!xc || !yc)
+            goto out;
+
+        vts_max_xc = xc;
+        vts_max_yc = yc;
+        return 1;
+    out:
+        printk(KERN_WARNING "vts: option format must be like 'vts=widthxheigth'. "
+                "use default config vts=%dx%d\n", vts_max_xc, vts_max_yc);
+        return 0;
+    }
+    __setup("vts=", vts_setup);
+    #endif
+
+    static int __init vts_init(void)
+    {
+        int err;
+
+    #ifndef MODULE
+        if (!vts_use)
+            return -ENODEV;
+    #endif
+        vts_dev = input_allocate_device();
+        if (!vts_dev) {
+            printk(KERN_ERR "vts: not enough memory\n");
+            err = -ENOMEM;
+            goto fail1;
+        }
+
+        vts_dev->name = DRIVER_DESC;
+        vts_dev->phys = "vts/input0";
+        vts_dev->id.bustype = BUS_VIRTUAL;
+        vts_dev->id.vendor = 0x0000;
+        vts_dev->id.product = 0x0000;
+        vts_dev->id.version = 0x0100;
+
+        vts_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
+        vts_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
+        input_set_abs_params(vts_dev, ABS_X, VTS_MIN_XC, vts_max_xc, 0, 0);
+        input_set_abs_params(vts_dev, ABS_Y, VTS_MIN_YC, vts_max_yc, 0, 0);
+
+        err = input_register_device(vts_dev);
+        if (err)
+            goto fail2;
+
+        return 0;
+
+    fail2:
+        input_free_device(vts_dev);
+    fail1:
+        return err;
+    }
+    module_init(vts_init);
+    #ifdef MODULE
+    static void __exit vts_exit(void)
+    {
+        input_unregister_device(vts_dev);
+        input_free_device(vts_dev);
+    }
+    module_exit(vts_exit);
+    #endif
+    MODULE_AUTHOR("Niu Tao ");
+    MODULE_DESCRIPTION(DRIVER_DESC);
+    MODULE_LICENSE("GPL");

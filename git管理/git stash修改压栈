@@ -1,0 +1,23 @@
+
+来自git stash --help
+
+$ git stash
+$ edit emergency fix
+$ git commit -a -m "Fix in a hurry"
+$ git stash apply
+
+$ git pull
+  file foobar not up to date, cannot merge.
+$ git stash
+$ git pull
+$ git stash apply
+
+git stash 直接保存,默认将以hash id做提示信息
+git stash save 11111111 以11111111为提示名字保存
+git stash apply stash@{1} 可以恢复git stash list嵌套堆栈中的任意一次stash保存
+git stash show
+git stash list
+git stash clear 清空所有stash
+git stash apply stash@{2}
+
+git stash pop stash@{num}。num 就是你要恢复的工作现场的编号

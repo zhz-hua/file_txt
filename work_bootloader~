@@ -1,0 +1,89 @@
+1:查找要编译的板子
+imx6-android-4.4.3/android/device/fsl/sabresd_6dq$ vim BoardConfig.mk		//config file
+
+TARGET_BOOTLOADER_CONFIG := imx6q:mx6qsabresdandroid_config imx6dl:mx6dlsabresdandroid_config
+2：查看是否有这个板子的配置文件 板子名 Makefile会自动加载  BoardConfig.mk
+
+imx6-android-4.4.3/android/bootable/bootloader/uboot-imx$ vim boards.cfg 
+eg:
+Active  arm         armv7          mx6         freescale       mx6sabresd          mx6qsabresdandroid                          mx6sabresd:IMX_CONFIG=board/freescale/imx/ddr/mx6q_4x_mt41j128.cfg,MX6Q,DEFAULT_FDT_FILE="imx6q-sabresd.dtb",DDR_MB=1024,SYS_USE_SPINOR,ANDROID_SUPPORT                                                           Fabio Estevam <fabio.estevam@freescale.com>
+
+Active  arm         armv7          mx6         freescale       mx6sabresd          mx6dlsabresdandroid                         mx6sabresd:IMX_CONFIG=board/freescale/mx6sabresd/mx6dl_4x_mt41j128.cfg,MX6DL,DEFAULT_FDT_FILE="imx6dl-sabresd.dtb",DDR_MB=1024,SYS_USE_SPINOR,ANDROID_SUPPORT                                                  Fabio Estevam <fabio.estevam@freescale.com>
+
+3:修改DDR
+	
+	进入  mx6sabresd:IMX_CONFIG=board/freescale/imx/ddr/mx6q_4x_mt41j128.cfg
+	进入  mx6sabresd:IMX_CONFIG=board/freescale/mx6sabresd/mx6dl_4x_mt41j128.cfg
+4：修改串口
+	mx6sabresd: 主函数文件
+	imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/board/freescale/mx6sabresd$ vim mx6sabresd.c
+
+	iomux_v3_cfg_t const uart1_pads[] = {
+		MX6_PAD_SD3_DAT6__UART1_RX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),
+		MX6_PAD_SD3_DAT7__UART1_TX_DATA | MUX_PAD_CTRL(UART_PAD_CTRL),	
+}
+.h配置
+mx6sabresd:
+imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/include/configs$ vim mx6sabresd.h
+
+/imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/include$ vim config.h .调用 2 #define CONFIG_IMX_CONFIG   board/freescale/mx6sabresd/mx6dl_4x_mt41j128.cfg
+
+4.编译	
+
+Active  arm         armv7          mx6         freescale       mx6sabresd          mx6dlsabresdandroid                         mx6dld50:IMX_CONFIG=board/freescale/mx6sabresd/mx6dld50_4x_mt41j128.cfg,M     X6DL,DEFAULT_FDT_FILE="imx6dl-sabresd.dtb",DDR_MB=1024,SYS_USE_SPINOR,ANDROID_SUPPORT                                                  Fabio Estevam <fabio.estevam@freescale.com>
+
+
+boards.cfg 中对内核驱动有用
+DEFAULT_FDT_FILE="imx6dl-sabresd.dtb",DDR_MB=1024,SYS_USE_SPINOR,ANDROID_SUPPORT 
+接下来，根据DEFAULT_FDT_FILE 来定义 fdt_file 的变量。
+
+include/configs/xxxcommon.h
+/imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/include/configs$ vim mx6sabresd.h 
+
+#include "mx6sabre_common.h"
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+157     CONFIG_MFG_ENV_SETTINGS \
+158     "script=boot.scr\0" \
+159     "image=zImage\0" \
+160     "fdt_file=" CONFIG_DEFAULT_FDT_FILE "\0" \                                                                                                                                                           
+161     "fdt_addr=0x18000000\0" \
+162     "boot_fdt=try\0" \
+163     "ip_dyn=yes\0" \
+164     "console=" CONFIG_CONSOLE_DEV "\0" \
+165     "fdt_high=0xffffffff\0"   \
+166     "initrd_high=0xffffffff\0" \
+167     "mmcdev="__stringify(CONFIG_SYS_MMC_ENV_DEV)"\0" \
+168     "mmcpart=" __stringify(CONFIG_SYS_MMC_IMG_LOAD_PART) "\0" \
+169     "mmcroot=" CONFIG_MMCROOT " rootwait rw\0" \
+170     "mmcautodetect=yes\0" \
+171     "update_sd_firmware=" \
+
+
+和相关环节变量的定义：    
+在board.c 里面设置环境变量，在这过程中，会调用上一步骤的run loadfdt 动作，把dtb 装载到内存中。
+
+179 +-----  3 lines: "setexpr fw_sz ${filesize} / 0x200; " \                                                                                                                                                 
+182             "fi; "  \
+183         "fi\0" \
+184     "smp=" CONFIG_SYS_NOSMP "\0"\
+185     "mmcargs=setenv bootargs console=${console},${baudrate} ${smp} " \
+186         "root=${mmcroot}\0" \
+187     "loadbootscript=" \
+188         "fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${script};\0" \
+189     "bootscript=echo Running bootscript from mmc ...; " \
+190         "source\0" \
+191     "loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
+192     "loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr} ${fdt_file}\0" \
+193     "mmcboot=echo Booting from mmc ...; " \
+194         "run mmcargs; " \
+195         "if test ${boot_fdt} = yes || test ${boot_fdt} = try; then " \
+196             "if run loadfdt; then " \
+197                 "bootz ${loadaddr} - ${fdt_addr}; " \
+198             "else " \
+
+
+      
+
+
+

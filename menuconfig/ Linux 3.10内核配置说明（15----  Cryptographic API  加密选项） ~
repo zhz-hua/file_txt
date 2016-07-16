@@ -1,0 +1,76 @@
+      --- Cryptographic API                                                                                                    
+      *** Crypto core or helper ***                            
+-*-   Cryptographic algorithm manager                          
+<*>   Userspace cryptographic algorithm configuration          
+[*]   Disable run-time self tests                              
+-*-   GF(2^128) multiplication functions                       
+-*-   Null algorithms                                          
+< >   Parallel crypto engine                                   
+< >   Software async crypto daemon                             
+-*-   Authenc support                                          
+< >   Testing module                                           
+      *** Authenticated Encryption with Associated Data ***    
+<*>   CCM support                                              
+<*>   GCM/GMAC support                                         
+-*-   Sequence Number IV Generator                             
+      *** Block modes ***                                      
+-*-   CBC support                                              
+-*-   CTR support                                              
+<*>   CTS support                                              
+-*-   ECB support                                              
+<*>   LRW support                                              
+< >   PCBC support                                             
+<*>   XTS support                                              
+      *** Hash modes ***                                       
+< >   CMAC support                                             
+-*-   HMAC support                                             
+< >   XCBC support                                             
+< >   VMAC support                                             
+      *** Digest ***                                           
+-*-   CRC32c CRC algorithm                                     
+< >   CRC32 CRC algorithm                                      
+-*-   GHASH digest algorithm                                   
+<*>   MD4 digest algorithm                                     
+-*-   MD5 digest algorithm                                     
+<*>   Michael MIC keyed digest algorithm                       
+<*>   RIPEMD-128 digest algorithm                              
+<*>   RIPEMD-160 digest algorithm                              
+<*>   RIPEMD-256 digest algorithm                              
+<*>   RIPEMD-320 digest algorithm                              
+-*-   SHA1 digest algorithm                                    
+< >   SHA1 digest algorithm (ARM-asm)                          
+-*-   SHA224 and SHA256 digest algorithm     
+<*>   RIPEMD-320 digest algorithm                                                                                                                                                                                    
+-*-   SHA1 digest algorithm                                    
+< >   SHA1 digest algorithm (ARM-asm)                          
+-*-   SHA224 and SHA256 digest algorithm                       
+<*>   SHA384 and SHA512 digest algorithms                      
+<*>   Tiger digest algorithms                                  
+<*>   Whirlpool digest algorithms                              
+      *** Ciphers ***                                          
+-*-   AES cipher algorithms                                    
+< >   AES cipher algorithms (ARM-asm)                          
+< >   Anubis cipher algorithm                                  
+-*-   ARC4 cipher algorithm                                    
+<*>   Blowfish cipher algorithm                                
+<*>   Camellia cipher algorithms                               
+< >   CAST5 (CAST-128) cipher algorithm                        
+< >   CAST6 (CAST-256) cipher algorithm                        
+-*-   DES and Triple DES EDE cipher algorithms                 
+< >   FCrypt cipher algorithm                                  
+< >   Khazad cipher algorithm                                  
+< >   Salsa20 stream cipher algorithm                          
+< >   SEED cipher algorithm                                    
+< >   Serpent cipher algorithm                                 
+< >   TEA, XTEA and XETA cipher algorithms                     
+<*>   Twofish cipher algorithm                                 
+      *** Compression ***                                      
+-*-   Deflate compression algorithm                            
+< >   Zlib compression algorithm                               
+-*-   LZO compression algorithm                                
+      *** Random Number Generation ***                         
+< >   Pseudo Random Number Generation for Cryptographic modules
+< >   User-space interface for hash algorithms                 
+< >   User-space interface for symmetric key cipher algorithms 
+[ ]   Hardware crypto devices  --->                            
+< >   Asymmetric (public-key cryptographic) key type  --->     

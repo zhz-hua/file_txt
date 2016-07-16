@@ -1,0 +1,6 @@
+Git补丁管理(方便在多台机器上开发同步时用)
+C代码  收藏代码
+
+    git diff > ../sync.patch         # 生成补丁  
+    git apply ../sync.patch          # 打补丁  
+    git apply --check ../sync.patch  #测试补丁能否成功  

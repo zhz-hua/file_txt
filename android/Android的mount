@@ -1,0 +1,172 @@
+查看块设备
+	root@m41s_6dl_rev01:/ # ls /dev/block/                                         
+	mmcblk3      mmcblk3p1    mmcblk3p3    mmcblk3p6    mmcblk3p9    vold/       
+	mmcblk3boot0 mmcblk3p10   mmcblk3p4    mmcblk3p7    mmcblk3rpmb  
+	mmcblk3boot1 mmcblk3p2    mmcblk3p5    mmcblk3p8    platform/
+查看挂载点
+	root@m41s_6dl_rev01:/ # mount
+	rootfs / rootfs ro,relatime 0 0
+	tmpfs /dev tmpfs rw,nosuid,relatime,mode=755 0 0
+	devpts /dev/pts devpts rw,relatime,mode=600 0 0
+	proc /proc proc rw,relatime 0 0
+	sysfs /sys sysfs rw,relatime 0 0
+	none /acct cgroup rw,relatime,cpuacct 0 0
+	none /sys/fs/cgroup tmpfs rw,relatime,mode=750,gid=1000 0 0
+	tmpfs /mnt/secure tmpfs rw,relatime,mode=700 0 0
+	tmpfs /mnt/asec tmpfs rw,relatime,mode=755,gid=1000 0 0
+	tmpfs /mnt/obb tmpfs rw,relatime,mode=755,gid=1000 0 0
+	tmpfs /mnt/shm tmpfs rw,relatime,size=1024k,mode=775,uid=1013,gid=1000 0 0
+	none /dev/cpuctl cgroup rw,relatime,cpu 0 0
+	/dev/block/mmcblk3p5 /system ext4 ro,relatime,data=ordered 0 0
+	/dev/block/mmcblk3p4 /data ext4 rw,nosuid,nodev,noatime,nodiratime,noauto_da_alloc,errors=panic,data=ordered 0 0
+	/dev/block/mmcblk3p6 /cache ext4 rw,nosuid,nodev,relatime,data=ordered 0 0
+	/dev/block/mmcblk3p7 /device ext4 ro,nosuid,nodev,relatime,data=ordered 0 0
+	/dev/block/mmcblk3p10 /mnt/media_rw/extsd ext4 rw,nosuid,nodev,noatime,nodiratime,data=ordered 0 0
+	adb /dev/usb-ffs/adb functionfs rw,relatime 0 0
+查看系统文件？？？？？
+	root@m41s_6dl_rev01:/sys/block # ll
+	lrwxrwxrwx root     root              1970-01-01 08:00 mmcblk3 -> ../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3
+	lrwxrwxrwx root     root              1970-01-01 08:00 mmcblk3boot0 -> ../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3boot0
+	lrwxrwxrwx root     root              1970-01-01 08:00 mmcblk3boot1 -> ../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3boot1
+	lrwxrwxrwx root     root              1970-01-01 08:00 mmcblk3rpmb -> ../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3rpmb
+root@m41s_6dl_rev01:/sys/dev/block # ll
+lrwxrwxrwx root     root              2015-01-01 00:58 179:0 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3
+lrwxrwxrwx root     root              2015-01-01 00:58 179:1 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p1
+lrwxrwxrwx root     root              2015-01-01 00:58 179:16 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3boot1
+lrwxrwxrwx root     root              2015-01-01 00:58 179:2 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p2
+lrwxrwxrwx root     root              2015-01-01 00:58 179:24 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3rpmb
+lrwxrwxrwx root     root              2015-01-01 00:58 179:3 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p3
+lrwxrwxrwx root     root              2015-01-01 00:58 179:4 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p4
+lrwxrwxrwx root     root              2015-01-01 00:58 179:5 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p5
+lrwxrwxrwx root     root              2015-01-01 00:58 179:6 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p6
+lrwxrwxrwx root     root              2015-01-01 00:58 179:7 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p7
+lrwxrwxrwx root     root              2015-01-01 00:58 179:8 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3boot0
+lrwxrwxrwx root     root              2015-01-01 00:58 259:0 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p8
+lrwxrwxrwx root     root              2015-01-01 00:58 259:1 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p9
+lrwxrwxrwx root     root              2015-01-01 00:58 259:2 -> ../../devices/soc0/soc.1/2100000.aips-bus/219c000.usdhc/mmc_host/mmc3/mmc3:0001/block/mmcblk3/mmcblk3p10
+查看主设备号
+	root@m41s_6dl_rev01:/proc # cat devices                                        
+	Character devices:
+	  1 mem
+	  4 /dev/vc/0
+	  4 tty
+	  5 /dev/tty
+	  5 /dev/console
+	  5 /dev/ptmx
+	  7 vcs
+	 10 misc   主设备号为10
+	 13 input
+	 29 fb
+	 81 video4linux
+	 89 i2c
+	108 ppp
+	116 alsa
+	128 ptm
+	136 pts
+	166 ttyACM
+	180 usb
+	188 ttyUSB
+	189 usb_device
+	199 galcore
+	207 ttymxc
+	226 drm
+	245 hidraw
+	246 mxc_vpu
+	247 ttyGS
+	248 hci_tty
+	249 ttyLP
+	250 iio
+	251 mxc_ipu
+	252 ptp
+	253 pps
+	254 rtc
+
+	Block devices:
+	259 blkext
+	  8 sd
+	 65 sd
+	 66 sd
+	 67 sd
+	 68 sd
+	 69 sd
+	 70 sd
+	 71 sd
+	128 sd
+	129 sd
+	130 sd
+	131 sd
+	132 sd
+	133 sd
+	134 sd
+	135 sd
+	179 mmc
+	254 device-mapper
+挂载方法
+	root@m41s_6dl_rev01:/ # cat fstab.freescale                                    
+	# Android fstab file.
+	#<src>                                                  <mnt_point>         <type>    <mnt_flags and options>                       <fs_mgr_flags>
+	# The filesystem that contains the filesystem checker binary (typically /system) cannot
+	# specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
+	#
+	/devices/soc0/soc.1/2100000.aips-bus/2184000.usb/ci_hdrc.0/usb1  /mnt/media_rw/udisk vfat defaults voldmanaged=udisk:auto
+	/devices/soc0/soc.1/2100000.aips-bus/2198000.usdhc/mmc_host /mnt/media_rw/sdcard vfat defaults voldmanaged=sdcard:auto
+	/dev/block/mmcblk3p5    /system      ext4    ro                                                                               wait
+	/dev/block/mmcblk3p4    /data        ext4    nosuid,nodev,nodiratime,noatime,nomblk_io_submit,noauto_da_alloc,errors=panic    wait,encryptable=footer
+	/dev/block/mmcblk3p6    /cache       ext4    nosuid,nodev,nomblk_io_submit                                                    wait
+	/dev/block/mmcblk3p7    /device      ext4    ro,nosuid,nodev                                                                  wait
+	/dev/block/mmcblk3p1    /boot        emmc    defaults                                                                         defaults
+	/dev/block/mmcblk3p2    /recovery    emmc    defaults                                                                         defaults
+	/dev/block/mmcblk3p8    /misc        emmc    defaults                                                                         defaults
+	/dev/block/mmcblk3p10   /mnt/media_rw/extsd   ext4      nosuid,nodev,nodiratime,noatime,nomblk_io_submit                      defaults
+	/dev/block/mmcblk3p9    /restore     ext4    nosuid,nodev,nomblk_io_submit  
+
+    第一列就是分区的label；
+    第二列是挂载点；
+    第三列是分区的格式；
+    第四列则是mount的一些挂载参数，等下会详细介绍一下有哪些参数，一般情况下，直接写defaults即可；
+    第五列的数字表示是否被dump备份，是的话这里就是1，否则就是0；
+    第六列是开机时是否自检磁盘，就是刚才讲过的那个fsck检测。1，2都表示检测，0表示不检测，在Redhat中，这个1，2还有个说法，/ 分区必须设为1，而且整个fstab中只允许出现一个1，这里有一个优先级的说法。1比2优先级高，所以先检测1，然后再检测2，如果有多个分区需要开机检测那么都设置成2吧，1检测完了后会同时去检测2。下面该说说第四列中常用到的参数了。 
+
+
+    async/sync ：async表示和磁盘和内存不同步，系统每隔一段时间把内存数据写入磁盘中，而sync则会时时同步内存和磁盘中数据；
+    auto/noauto ：开机自动挂载/不自动挂载；
+    default：按照大多数永久文件系统的缺省值设置挂载定义，它包含了rw, suid, dev, exec, auto, nouser,async ；
+    ro：按只读权限挂载 ；
+    rw：按可读可写权限挂载 ；
+    exec/noexec ：允许/不允许可执行文件执行，但千万不要把根分区挂载为noexec，那就无法使用系统了，连mount命令都无法使用了，这时只有重新做系统了；
+    user/nouser ：允许/不允许root外的其他用户挂载分区，为了安全考虑，请用nouser ；
+    suid/nosuid ：允许/不允许分区有suid属性，一般设置nosuid ；
+    usrquota ：启动使用者磁盘配额模式，磁盘配额相关内容在后续章节会做介绍；
+    grquota ：启动群组磁盘配额模式； 
+学完这个/etc/fstab后，我们就可以自己修改这个文件，增加一行来挂载新增分区。例如，笔者增加了这样一行
+/dev/hdb1 /test1 ext3 defaults 0 0
+那么系统再重启时就会挂载这个分区了、或者直接运行mount -a 来挂载你增加的那行，这样就不用重启啦。
+
+
+Linux系统Mount点：mount的时候，mount的目标文件夹/media/cdrom要手动创建
+mount /dev/cdrom /media/cdrom
+输入不带参数的mount命令，显示所以已经挂载好的文件系统
+Mount命令：挂载(mount)光盘镜像文件、移动硬盘、U盘以及Windows网络共享和UNIX NFS网络共享 
+命令格式：mount [-t vfstype] [-o options] device dir
+其中：
+　　1.-t vfstype 指定文件系统的类型，通常不必指定。mount 会自动选择正确的类型。常用类型有：
+    光盘或光盘镜像：iso9660
+    DOS fat16文件系统：msdos
+    Windows 9x fat32文件系统：vfat
+    Windows NT ntfs文件系统：ntfs
+    Mount Windows文件网络共享：smbfs
+    UNIX(LINUX) 文件网络共享：nfs 
+
+
+　　2.-o options 主要用来描述设备或档案的挂接方式。常用的参数有：
+
+    loop：用来把一个文件当成硬盘分区挂接上系统
+    ro：采用只读方式挂接设备
+    rw：采用读写方式挂接设备
+    iocharset：指定访问文件系统所用字符集 
+
+　　3.device 要挂载(mount)的设备。
+　　4.dir设备在系统上的挂接点(mount point)。
+
+
+

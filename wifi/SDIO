@@ -1,0 +1,88 @@
+http://blog.csdn.net/xieweihua2012/article/details/13984405  SDIO注册讲解
+http://blog.csdn.net/wh_19910525/article/details/7392518
+http://blog.csdn.net/wh_19910525/article/details/7393589
+
+ 上面的程序就是将功能模块逐个的注册进设备模型，这里想重点说明一下注册的名称（name），
+它是由三部分组成的，每部分之间用冒号隔开，（即 host的名称：rca：功能块编号） 。具体到笔者使用的WIFI模块，因为其host名称是mmc2  ,rca = 1,并且有两个功能模块(功能模块编号分别是1和2)，所以在/sys/bus/sdio/devices目录下能见到如下两个设备名
+mmc2:0001:1
+mmc2:0001:2
+
+308 /*** USDHC Configs ***/
+309 /* used for wl18xx */
+310 &usdhc1 {
+311     pinctrl-names = "default";
+312     pinctrl-0 = <&pinctrl_usdhc1>;
+313     bus-width = <4>;
+314     no-1-8-v;
+315     keep-power-in-suspend;
+316     non-removable;
+317     cap-power-off-card;
+318     status = "okay";
+319 }; 
+321 /* used for EMMC */
+322 &usdhc4 {
+323     pinctrl-names = "default";
+324     pinctrl-0 = <&pinctrl_usdhc4>;
+325     bus-width = <8>;                                                                                                                                                                                     
+326     non-removable;
+327     vmmc-supply = <&reg_3p3v>;
+328     no-1-8-v;
+329     keep-power-in-suspend;
+330     status = "okay";
+331 };
+
+root@m41s_6dl_rev00:/sys/bus/sdio/devices # ll
+lrwxrwxrwx root     root              2016-03-17 16:29 mmc0:0001:1 -> ../../../devices/soc0/soc.1/2100000.aips-bus/2190000.usdhc/mmc_host/mmc0/mmc0:0001/mmc0:0001:1
+lrwxrwxrwx root     root              2016-03-17 16:29 mmc0:0001:2 -> ../../../devices/soc0/soc.1/2100000.aips-bus/2190000.usdhc/mmc_host/mmc0/mmc0:0001/mmc0:0001:2
+root@m41s_6dl_rev00:/sys/bus/sdio/drivers/wl1271_sdio # ll
+--w------- root     root         4096 2016-03-17 16:29 bind
+lrwxrwxrwx root     root              2016-03-17 16:29 mmc0:0001:2 -> ../../../../devices/soc0/soc.1/2100000.aips-bus/2190000.usdhc/mmc_host/mmc0/mmc0:0001/mmc0:0001:2
+--w------- root     root         4096 2016-03-17 16:29 uevent
+--w------- root     root         4096 2016-03-17 16:29 unbind
+
+root@m41s_6dl_rev00:/sys/bus/sdio # cat drivers_autoprobe                      
+1
+root@m41s_6dl_rev00:/sys/bus/sdio # cat drivers_probe                          
+/system/bin/sh: cat: drivers_probe: Permission denied
+1|root@m41s_6dl_rev00:/sys/bus/sdio # cat uevent                               
+/system/bin/sh: cat: uevent: Permission denied
+
+
+root@m41s_6dl_rev00:/sys/class/mmc_host # ll
+lrwxrwxrwx root     root              1970-01-01 08:00 mmc0 -> ../../devices/soc0/soc.1/2100000.aips0
+lrwxrwxrwx root     root              2015-01-01 00:04 mmc3 -> ../../devices/soc0/soc.1/2100000.aips3
+
+root@m41s_6dl_rev00:/sys/class/mmc_host/mmc0/device # ls
+driver
+leds
+mmc_host
+modalias
+power
+reset_power
+subsystem
+uevent
+
+
+Sdio接口驱动
+
+     首先我们来探讨几个重要的数据结构：该结果位于core核心层，主要用于 核心层与主机驱动层 的数据交换处理。/include/linux/mmc/host.h 
+
+struct mmc_host 用来描述 卡控制器
+
+struct mmc_card 用来描述 卡
+
+struct mmc_driver 用来描述 mmc 卡驱动
+
+struct sdio_func  用来描述 功能设备
+
+struct mmc_host_ops 用来描述 卡控制器操作接口函数功能，用于从 主机控制器层向 core 层注册操作函数，从而将core 层与具体的主机控制器隔离。也就是说 core 要操作主机控制器，就用这个 ops 当中给的函数指针操作，不能直接调用具体主控制器的函数。
+
+
+文件
+
+	kernel_imx/drivers/net/wireless/libertas/if_sdio.c
+	kernel_imx/drivers/mmc/host/sdhci-esdhc-imx.c
+
+
+
+

@@ -1,0 +1,348 @@
+ http://www.it619.net/index.php?doc-view-1668.htm
+
+23、services目录
+文件	描述
+class AlarmManagerService extends IAlarmManager.Stub {	//定时管理服务
+public class AppOpsService extends IAppOpsService.Stub { 	// 程序选项服务
+public class AppsLaunchFailureReceiver extends BroadcastReceiver { 	//app启动失败广播
+class AppWidgetService extends IAppWidgetService.Stub { //	 
+class AppWidgetServiceImpl {	 
+public class AssetAtlasService extends IAssetAtlas.Stub {//	 
+public final class AttributeCache {	//属性缓存
+class BackupManagerService extends IBackupManager.Stub { 	//备份管理
+class BasePermissionDialog extends AlertDialog { 	//权限对话框
+public final class BatteryService extends IBatteryService.Stub {	 //电池服务
+class BluetoothManagerService extends IBluetoothManager.Stub { 	//蓝牙服务
+public class BootReceiver extends BroadcastReceiver { 	//启动广播
+public class BrickReceiver extends BroadcastReceiver {	 
+public class CertBlacklister extends Binder {	//黑名单
+public class ClipboardService extends IClipboard.Stub {	 //拷贝服务
+class CommonTimeManagementService extends Binder {	//时间服务
+public class ConnectivityService extends IConnectivityManager.Stub { 	//连接服务
+public class ConsumerIrService extends IConsumerIrService.Stub {	//信息检索服务
+public class CountryDetectorService extends ICountryDetector.Stub implements Runnable { 	//国家匹配服务
+public class DevicePolicyManagerService extends IDevicePolicyManager.Stub {	//设备信息服务
+public class DeviceStorageMonitorService extends Binder { 	//设备存储服务
+public class DiskStatsService extends Binder { 	//磁盘状态服务
+final class DockObserver extends UEventObserver { //	 
+public final class DropBoxManagerService extends IDropBoxManagerService.Stub {	//下拉框服务
+public class EntropyMixer extends Binder { //	 
+public final class FgThread extends HandlerThread {	//前台线程共享
+public class IdleMaintenanceService extends BroadcastReceiver {	//设备状态广播
+interface INativeDaemonConnectorCallbacks {	 
+public class InputMethodManagerService extends IInputMethodManager.Stub
+        implements ServiceConnection, Handler.Callback {	//系统服务管理的输入方法
+public abstract class IntentResolver<F extends IntentFilter, R extends Object> {	 
+public final class IoThread extends HandlerThread {	// 共享输入输出线程
+public class LightsService {	//亮度服务
+public class LocationManagerService extends ILocationManager.Stub { 	//定位信息服务
+public class LockSettingsService extends ILockSettings.Stub { 	//设置信息服务
+public class MasterClearReceiver extends BroadcastReceiver { 	//清除广播
+class MountService extends IMountService.Stub
+        implements INativeDaemonConnectorCallbacks, Watchdog.Monitor {	//安装服务
+class MSimTelephonyRegistry extends ITelephonyRegistryMSim.Stub { 	/卡服务
+final class NativeDaemonConnector implements Runnable, Handler.Callback,
+Watchdog.Monitor {	//连接器类与本地守护进程使用
+public class NativeDaemonConnectorException extends Exception { 	// 本地守护进程异常
+public class NativeDaemonEvent { 	//本地守护进程
+public class NetworkManagementService extends INetworkManagementService.Stub
+        implements Watchdog.Monitor {	//网络管理服务
+public class NetworkTimeUpdateService { 	//网络时间服务
+public class NotificationManagerService extends INotificationManager.Stub { 	//通知栏管理服务
+public class NsdService extends INsdManager.Stub {	 //网络搜索服务
+public class PackageManagerBackupAgent extends BackupAgent {	 //包管理
+class PermissionDialog extends BasePermissionDialog { 	//权限对话框
+class PermissionDialogResult {	 
+public class PreferredComponent {	 
+public class ProfileManagerService extends IProfileManager.Stub { 	//文件管理服务
+public class ProfileTriggerHelper extends BroadcastReceiver { //	 
+class RandomBlock { 	//随机锁
+public class RecognitionManagerService extends Binder { 	//识别管理服务
+class RotationSwitchObserver extends UEventObserver {	//旋转锁开关状态
+public class SamplingProfilerService extends Binder { 	//采样服务
+public class SerialService extends ISerialManager.Stub {	//串口服务
+public class ServiceWatcher implements ServiceConnection { 	//服务监听
+public class ShutdownActivity extends Activity {	 //关机窗体
+public class StatusBarManagerService extends IStatusBarService.Stub implements
+WindowManagerService.OnHardKeyboardStatusChangeListener { 	//状态栏服务
+public class SystemBackupAgent extends BackupAgentHelper { 	//系统备份管理
+public class SystemServer { 	//系统服务
+class TelephonyRegistry extends ITelephonyRegistry.Stub { 	//电话注册
+public class TextServicesManagerService extends ITextServicesManager.Stub { 	//文本管理服务
+public class ThemeService extends IThemeService.Stub { 	//主题服务
+public class TwilightCalculator {	//计算器
+public final class TwilightService {	 
+final class UiModeManagerService extends IUiModeManager.Stub { 	//界面模式服务
+public final class UiThread extends HandlerThread {	 //ui线程服务
+public class UpdateLockService extends IUpdateLock.Stub { 	//更新锁服务
+public class VibratorService extends IVibratorService.Stub
+        implements InputManager.InputDeviceListener { 	//震动服务
+class WallpaperManagerService extends IWallpaperManager.Stub {	//壁纸服务
+public class Watchdog extends Thread {	 //看门狗
+final class WiredAccessoryManager implements WiredAccessoryCallbacks {	 //监控耳机
+class AccessibilityInputFilter extends InputFilter implements
+EventStreamTransformation {	// 输入滤波器
+public class AccessibilityManagerService extends IAccessibilityManager.Stub {	//访问管理服务
+interface EventStreamTransformation { 	//事件流接口
+final class GestureUtils {	 //手势辅助
+public final class ScreenMagnifier extends IMagnificationCallbacks.Stub
+        implements EventStreamTransformation {	//屏幕放大镜
+class TouchExplorer implements EventStreamTransformation {	 // 触屏
+class AccountAuthenticatorCache
+        extends RegisteredServicesCache<AuthenticatorDescription>
+        implements IAccountAuthenticatorCache { 	//帐户认证缓存
+public class AccountManagerService extends IAccountManager.Stub implements
+RegisteredServicesCacheListener<AuthenticatorDescription> { 	//帐户管理服务
+public interface IAccountAuthenticatorCache {	 // 帐户认证缓存接口
+public final class ActiveServices {	 //在线的服务
+public final class ActivityManagerService extends ActivityManagerNative
+        implements Watchdog.Monitor, BatteryStatsImpl.BatteryCallback {	 //在线服务管理
+final class ActivityRecord {	 //界面堆栈记录
+final class ActivityResult extends ResultInfo {	 
+final class ActivityStack {	 //界面堆栈
+public final class ActivityStackSupervisor { 	//界面堆栈主管
+final class AppBindRecord {	 //服务客户端绑定记录
+final class AppErrorDialog extends BaseErrorDialog {	 //app错误对话框
+final class AppErrorResult {	 
+final class AppNotRespondingDialog extends BaseErrorDialog {	 //无响应对话框
+final class AppWaitingForDebuggerDialog extends BaseErrorDialog { 	//调试等待对话框
+final class BackupRecord {	 //备份记录
+class BaseErrorDialog extends AlertDialog { 	//错误对话框
+public final class BatteryStatsService extends IBatteryStats.Stub { 	//电池状态服务
+final class BroadcastFilter extends IntentFilter {	 //广播过滤
+public final class BroadcastQueue { 	//广播队列
+final class BroadcastRecord extends Binder { 	//广播记录
+public final class CompatModeDialog extends Dialog { 	//模式对话框
+public final class CompatModePackages {	 //兼容性模式包
+final class ConnectionRecord { 	//连接记录
+public final class ContentProviderConnection extends Binder { 	//共享数据库连接
+final class ContentProviderRecord { 	//共享数据库记录
+final class CoreSettingsObserver extends ContentObserver { 	//核心设置监听
+final class FactoryErrorDialog extends BaseErrorDialog {	//错误对话框
+final class IntentBindRecord { 	//意图监听
+public final class LaunchWarningWindow extends Dialog { 	//启动等待对话框
+final class NativeCrashListener extends Thread {	 //本地奔溃监听
+final class PendingIntentRecord extends IIntentSender.Stub { 	//意图记录
+final class PendingThumbnailsRecord { //	 
+final class ProcessList {	 //进程列表
+public class ProcessMemInfo { 	//进程内存信息
+final class ProcessRecord { 	//进程记录
+public final class ProcessStatsService extends IProcessStats.Stub { 	//进程状态服务
+public final class ProviderMap { 	//映射
+final class ReceiverList extends ArrayList<BroadcastFilter> implements
+IBinder.DeathRecipient { /	/接收广播
+final class ServiceRecord extends Binder { 	//服务记录
+final class StrictModeViolationDialog extends BaseErrorDialog { 	//模式
+final class TaskAccessInfo extends TaskThumbnails { 	//任务权限信息
+final class TaskRecord extends ThumbnailHolder { 	//任务记录
+public class ThumbnailHolder {	 
+final class UriPermission { 	//uri权限
+final class UriPermissionOwner { 	//uri权限拥有者
+public final class UsageStatsService extends IUsageStats.Stub { 	//计数统计服务
+public final class UserStartedState { 	//用户状态
+public class DataConnectionStats extends BroadcastReceiver {	 //连接状态
+public class Nat464Xlat extends BaseNetworkObserver { 	//采用 464xlat 守护进程
+public class PacManager {	 //管理
+public class Tethering extends INetworkManagementEventObserver.Stub {	 
+public class Vpn extends BaseNetworkStateTracker {	 //vpn网络
+public final class ContentService extends IContentService.Stub { 	//内容服务
+public class SyncManager { 	//同步管理
+public class SyncOperation implements Comparable { 	//同步操作
+public class SyncQueue { 	//同步队列
+public class SyncStorageEngine extends Handler { 	//同步存储引擎
+abstract class DisplayAdapter { 	//显示适配器
+abstract class DisplayDevice { 	//显示设备
+final class DisplayDeviceInfo { 	//设备信息
+public final class DisplayManagerService extends IDisplayManager.Stub {	 //显示管理服务
+public interface DisplayTransactionListener {	 
+public final class DisplayViewport { //显示根视图	 
+class ExtendedRemoteDisplayHelper { 	//扩展显示
+final class HeadlessDisplayAdapter extends DisplayAdapter { 	//无尽列表显示
+final class LocalDisplayAdapter extends DisplayAdapter {	 //本地显示
+final class LogicalDisplay { 	//逻辑显示？
+final class OverlayDisplayAdapter extends DisplayAdapter { 	//重叠显示
+final class OverlayDisplayWindow implements DumpUtils.Dump { 	//重叠显示
+final class PersistentDataStore {	//管理持久数据存储
+final class VirtualDisplayAdapter extends DisplayAdapter { 	//虚拟显示适配器
+final class WifiDisplayAdapter extends DisplayAdapter { 	//wifi显示适配器
+final class WifiDisplayController implements DumpUtils.Dump {	 //wifi显示控制
+final class DreamController { 	//进程控制
+public final class DreamManagerService extends IDreamManager.Stub {	 //服务管理
+class AndFilter extends FilterList { 	//并过滤
+class CategoryFilter implements Filter { 	//类型过滤
+interface Filter {	 
+public abstract class FilterFactory {	 
+abstract class FilterList implements Filter { 	//过滤列表
+public class IntentFirewall {	 //意图过滤
+class NotFilter implements Filter { 	//非过滤
+class OrFilter extends FilterList { 	//或过滤
+class PortFilter implements Filter { 	//端口过滤
+class SenderFilter {	 //发送者过滤
+class SenderPermissionFilter implements Filter {	 //发送者权限过滤
+abstract class StringFilter implements Filter { 	//字符串过滤
+public class EdgeGestureInputFilter implements IInputFilter { 	//手势输入滤波器
+public class EdgeGestureService extends IEdgeGestureService.Stub { 	//手势服务
+public class EdgeGestureTracker { 	//手势监听
+public class GestureInputFilter implements IInputFilter, 
+GestureDetector.OnGestureListener, OnDoubleTapListener { 	//手势输入过滤
+public class GestureService extends IGestureService.Stub { 	//手势服务
+public final class InputApplicationHandle { /	/输入应用处理
+public class InputManagerService extends IInputManager.Stub
+        implements Watchdog.Monitor, DisplayManagerService.InputManagerFuncs { 	//输入管理服务
+public final class InputWindowHandle { 	//输入窗体
+final class PersistentDataStore { 	//数据存储
+public class ComprehensiveCountryDetector extends CountryDetectorBase { 	//检测国家
+public abstract class CountryDetectorBase { 	//国家监听
+public class FlpHardwareProvider { 	//jvm虚拟机处理flp硬件接口
+public class FusedLocationHardwareSecure extends IFusedLocationHardware.Stub { 	//检测添加权限
+public final class FusedProxy { 	//代理
+public class GeocoderProxy {	 //编码代理
+public class GeofenceManager implements LocationListener, PendingIntent.OnFinished {	//边界管理
+public final class GeofenceProxy {	//边界代理
+public abstract class GeoFencerBase {	 
+public class GeoFencerProxy extends GeoFencerBase {	 
+public class GeofenceState {	 
+public class GpsLocationProvider implements LocationProviderInterface {	//GPS定位管理
+public class GpsXtraDownloader { 	//gps xtra数据
+public class LocationBasedCountryDetector extends CountryDetectorBase {	//检查国际定位
+public final class LocationBlacklist extends ContentObserver { 	//定位黑名单
+public class LocationFudger { 	//位置
+public interface LocationProviderInterface {	 
+public class LocationProviderProxy implements LocationProviderInterface {	 
+public class MockProvider implements LocationProviderInterface {	 
+public class PassiveProvider implements LocationProviderInterface {	 
+public final class MediaRouterService extends IMediaRouterService.Stub
+        implements Watchdog.Monitor {	 //媒体服务
+final class RemoteDisplayProviderProxy implements ServiceConnection {	// 远程显示服务
+public final class RemoteDisplayProviderWatcher {	//监听远程显示
+public class LockdownVpnTracker {	 //锁vpn监听
+public class NetworkIdentitySet extends HashSet<NetworkIdentity> { 	//网络标识
+public class NetworkPolicyManagerService extends INetworkPolicyManager.Stub { 	// 网络策略管理服务
+public class NetworkStatsCollection implements FileRotator.Reader { 	//网络状态
+public class NetworkStatsRecorder { 	//网络记录
+public class NetworkStatsService extends INetworkStatsService.Stub {	//网络状态服务
+public class SchedulingPolicyService extends ISchedulingPolicyService.Stub { 	//策略调度服务
+final class BasePermission { 	//权限
+class GrantedPermissions {	//授予的权限
+public final class Installer { 	//安装
+public class KeySetManager { 	//键值管理
+public class PackageKeySetData { 	//包键值
+public class PackageManagerService extends IPackageManager.Stub {	 //包管理服务
+final class PackageSetting extends PackageSettingBase {	 //包设置
+class PackageSettingBase extends GrantedPermissions { 	//包设置
+class PackageSignatures { 	//包签名
+public class PackageVerificationResponse {	//包装验证响应
+class PackageVerificationState {	//包装验证状态
+final class PendingPackage extends PackageSettingBase { 	//包意图
+class PreferredActivity extends IntentFilter implements PreferredComponent.Callbacks { //	 
+public class PreferredIntentResolver
+        extends IntentResolver<PreferredActivity, PreferredActivity> {	 
+public final class SELinuxMMAC {	 
+final class Settings { 	//动态设置
+final class SharedUserSetting extends GrantedPermissions {	 //共享用户设置
+public class UserManagerService extends IUserManager.Stub { 	//用户管理服务
+public class AutoBrightnessHandler {	//亮度
+interface DisplayBlanker { 	//显示操作接口
+final class DisplayPowerController { 	//显示电源控制
+final class DisplayPowerRequest {	 
+final class DisplayPowerState { 	//显示电源状态
+final class ElectronBeam {	 
+final class Notifier { 	//通知者
+public final class PowerManagerService extends IPowerManager.Stub
+        implements Watchdog.Monitor { /	/电力管理服务
+final class RampAnimator<T> { 	//自定义动画
+interface ScreenOnBlocker { 	//屏幕锁或解锁
+public final class ShutdownThread extends Thread { 	//关机线程
+interface SuspendBlocker { 	//挂起
+final class WirelessChargerDetector {	 //无线充电器
+public final class PrintManagerService extends IPrintManager.Stub { /	/输出管理服务
+final class RemotePrintService implements DeathRecipient { 	//远程输出服务
+final class RemotePrintSpooler { 	//远程输出
+final class UserState implements PrintSpoolerCallbacks, PrintServiceCallbacks { 	// 用户状态
+public class Searchables { 	//搜索
+public class SearchManagerService extends ISearchManager.Stub { 	//搜索管理服务
+public class CarrierProvisioningUrlsInstallReceiver extends
+ConfigUpdateInstallReceiver {	 
+public class CertPinInstallReceiver extends ConfigUpdateInstallReceiver {	 
+public class ConfigUpdateInstallReceiver extends BroadcastReceiver {	 
+public class IntentFirewallInstallReceiver extends ConfigUpdateInstallReceiver {	 
+public class SELinuxPolicyInstallReceiver extends ConfigUpdateInstallReceiver {	 
+public class SmsShortCodesInstallReceiver extends ConfigUpdateInstallReceiver {	 
+public class TZInfoInstallReceiver extends ConfigUpdateInstallReceiver {	 
+public class LegacyUsbDeviceManager extends UsbDeviceManager {	// 管理USB状态
+public class UsbDebuggingManager implements Runnable { 	//usb调试管理
+public class UsbDeviceManager { 	//usb设备管理
+public class UsbHostManager { 	//usb主机管理
+public class UsbService extends IUsbManager.Stub {	 //usb服务
+class UsbSettingsManager { 	//usb设置管理
+class WifiController extends StateMachine { 	//wifi控制
+final class WifiNotificationController { 	//wifi通知控制
+public final class WifiService extends IWifiManager.Stub { 	//wifi服务
+final class WifiSettingsStore { 	//wifi设置存储
+final class WifiTrafficPoller {	 //wifi传输
+public class AppTransition implements Dump {	//APP的过渡状态管理
+public class AppWindowAnimator {	 //窗体动画
+class AppWindowToken extends WindowToken { 	//窗体token
+public class BlackFrame { 	//黑色界面
+public class DimLayer { 	//层？
+class DisplayContent {	 //显示内容
+final class DisplayMagnifier {	//窗口管理器
+public class DisplaySettings { 	//显示设置
+class DragState { 	//拖动状态
+public final class FakeWindowImpl implements WindowManagerPolicy.FakeWindow { 	//渐变窗体接口
+class FocusedStackFrame {	 //堆栈框
+final class InputMonitor implements InputManagerService.WindowManagerCallbacks { 	// 输入
+public class KeyguardDisableHandler extends Handler { 	//键盘显示处理
+public class PointerEventDispatcher extends InputEventReceiver { 	//点击事件
+class ScreenRotationAnimation { 	// 屏幕旋转动画
+final class Session extends IWindowSession.Stub
+        implements IBinder.DeathRecipient { 	//绘画
+public class StackBox { 	//堆栈盒
+public class StackTapPointerEventListener implements PointerEventListener { 	// 堆栈点击事件监听
+final class StartingData { 	//开始数据
+class StrictModeFlash {	 
+class Task { 	//任务
+public class TaskGroup { 	//任务群
+public class TaskStack { 	//任务栈
+class ViewServer implements Runnable { 	//view服务
+class Watermark {	 //谁问
+public class WindowAnimator { 	//窗体动画
+public class WindowManagerService extends IWindowManager.Stub implements
+Watchdog.Monitor, WindowManagerPolicy.WindowManagerFuncs,
+DisplayManagerService.WindowManagerFuncs,
+DisplayManager.DisplayListener { 	//状体管理
+final class WindowState implements WindowManagerPolicy.WindowState { 	//窗体状态
+class WindowStateAnimator { 	// 窗体状态动画
+class WindowToken {	 // 窗体token
+ 	 
+
+
+
+24、framework_core目录
+
+
+文件	描述
+public abstract class AccessibilityService extends Service {	当AccessibilityEvent事件被启动后AccessibilityService 会接收回调函数运行于后台，这些事件指的是在用户接口间的状态转换，比如,焦点变化，按钮被点击等。
+public class AccessibilityServiceInfo implements Parcelable {	服务的配置
+ oneway interface IAccessibilityServiceClient {	 
+interface IAccessibilityServiceConnection {	 
+public abstract class AbstractAccountAuthenticator {	帐户认证抽象类
+public class Account implements Parcelable {	一个帐户类
+public class AccountAndUser {	帐户与存储用户关联
+public class AccountAuthenticatorActivity extends Activity {	认证界面
+public class AccountAuthenticatorResponse implements Parcelable {	帐户认证回应
+public class AccountManager {	帐户管理
+public interface AccountManagerCallback<V> {	 
+public interface AccountManagerFuture<V> {	 
+public class AccountManagerResponse implements Parcelable {	响应信息
+public class AccountsException extends Exception {	帐户异常
+public class AuthenticatorDescription implements Parcelable {	认证描述
+public class AuthenticatorException extends AccountsException {	 //认证异常
+public class CantAddAccountActivity extends Activity {	帐户限制
+public class ChooseAccountActivity extends Activity {	选择用户
+public class ChooseTypeAndAccountActivity extends Activity
+        implements AccountManagerCallback<Bundle> { 	//选择帐户
+public class GrantCredentialsPermissionActivity extends Activity implements
+View.OnClickListener { 	//授予证书权限
+public class NetworkErrorException extends AccountsException {
+    public NetworkErrorException() { 	

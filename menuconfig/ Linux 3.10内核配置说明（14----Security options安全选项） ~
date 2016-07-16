@@ -1,0 +1,89 @@
+──────────────────────────────────────────────────────────────────────  
+ -*- Enable access key retention support                                
+ < >   ENCRYPTED KEYS                                                   
+ [ ]   Enable the /proc/keys file by which keys may be viewed           
+ [ ] Restrict unprivileged access to the kernel syslog                  
+ [*] Enable different security models                                   
+ [*] Enable the securityfs filesystem                                   
+ [*] Socket and Networking Security Hooks                               
+ [ ]   XFRM (IPSec) Networking Security Hooks                           
+ [ ] Security hooks for pathname based access control                   
+ (32768) Low address space for LSM to protect from user allocation      
+ [*] NSA SELinux Support                                                
+ [ ]   NSA SELinux boot parameter                                       
+ [ ]   NSA SELinux runtime disable                                      
+ [*]   NSA SELinux Development Support                                  
+ [*]   NSA SELinux AVC Statistics                                       
+ (1)   NSA SELinux checkreqprot default value                           
+ [ ]   NSA SELinux maximum supported policy format version              
+ [ ] Simplified Mandatory Access Control Kernel Support                 
+ [ ] TOMOYO Linux Support                                               
+ [ ] AppArmor support                                                   
+ [ ] Yama support                                                       
+ [ ] Integrity Measurement Architecture(IMA)                            
+ [ ] EVM support                                                        
+     Default security module (SELinux)  ---> 
+
+
+ -*- Enable access key retention support 
+	在内核中保留authentication token和access key
+< >   ENCRYPTED KEYS 
+
+[ ]   Enable the /proc/keys file by which keys may be viewed  
+	允许有权限的进程通过/proc/keys读取所有的key
+[*] Enable different security models  
+	允许内核选择不同的安全模型,如果未选中则内核将使用默认的安全模型
+[*] Socket and Networking Security Hooks 
+	允许安全模型通过Security Hook对Socket与Networking进行访问控制
+[ ]   XFRM (IPSec) Networking Security Hooks  
+	启用XFRM安全Hook
+[ ] Security hooks for pathname based access control  
+
+[*] NSA SELinux Support 
+	美国国家安全局(NSA)开发的安全增强Linux(SELinux),你还需要进行策略配置(checkpolicy)并且对文件系统进行标记(setfiles)	
+[ ]   NSA SELinux boot parameter 
+	添加一个内核引导参数以允许在引导时使用'selinux=0'禁用SELinux或'selinux=1'启用SELinu 
+
+Default Linux Capabilities
+
+启用与"默认"Linux的兼容性
+
+Root Plug Support
+
+一个简单的Linux安全模块,在特定的USB设备不存在时它简单的禁止一切egid==0的进程运行
+
+x
+
+NSA SELinux boot parameter default value
+
+上述参数的默认值
+
+NSA SELinux runtime disable
+
+允许在运行时禁用SELinux
+
+NSA SELinux Development Support
+
+SELinux开发支持
+
+NSA SELinux AVC Statistics
+
+搜集存取向量(access vector)缓冲区的统计信息并在/selinux/avc/cache_stats中显示出来.这些信息可以用avcstat之类的工具查看
+
+NSA SELinux checkreqprot default value
+
+checkreqprot标志的默认值
+
+NSA SELinux enable new secmark network controls by default
+
+默认启用新的基于安全标记(secmark)的网络
+
+NSA SELinux maximum supported policy format version
+
+允许将支持的最高策略格式版本设置为一个特定的数值
+
+NSA SELinux maximum supported policy format version value
+
+支持的最高策略格式版本的数值                            
+                                                                        
+

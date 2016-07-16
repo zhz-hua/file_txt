@@ -1,0 +1,127 @@
+内核 配置 
+	Device Drivers ---> Graphics support ---> Console display driver support ---> Framebuffer Console support。
+
+	Device Drivers ---> Graphics support ---> Bootup logo
+
+
+源代码分析
+	主要在 drivers/video/fbmem.c
+	drivers/video/console/fbcon.c 中
+	drivers/video/logo/ 中
+
+fbmem_init(void) 
+	初始化这个函数首先调用函数proc_create在/proc目录下创建了一个fb文件，
+	接着又调用函数register_chrdev来注册了一个名称为fb的字符设备，最后调用函数class_create在/sys/class目录下创建了一个graphics目录，用来描述内核的图形系统。
+        模块fbmem除了会执行上述初始化工作之外，还会导出一个函数register_framebuffer：
+	这个函数在内核的启动过程会被调用，以便用来执行注册帧缓冲区硬件设备的操作
+
+帧缓冲区控制台在内核中对应的驱动程序模块为fbcon，它实现在文件kernel/goldfish/drivers/video/console/fbcon.c中
+	static struct notifier_block fbcon_event_notifier = {  
+		.notifier_call  = fbcon_event_notify,  
+	};  
+	  
+	......  
+	  
+	static int __init fb_console_init(void)  
+帧缓冲区硬件设备的注册事件最终是由函数fbcon_fb_registered来处理的
+
+函数fbcon_select_primary用来检查当前注册的帧缓冲区硬件设备是否是一个主帧缓冲区硬件设备。如果是的话，那么就将它的信息记录下来。
+这个函数只有当指定了CONFIG_FRAMEBUFFER_CONSOLE_DETECT_PRIMARY编译选项时才有效，否则的话，它是一个空函数。
+
+        在Linux内核中，每一个控制台和每一个帧缓冲区硬件设备都有一个从0开始的编号，它们的初始对应关系保存在全局数组con2fb_map_boot中。
+控制台和帧缓冲区硬件设备的初始对应关系是可以通过设置内核启动参数来初始化的。在模块fbcon中，还有另外一个全局数组con2fb_map，
+也是用来映射控制台和帧缓冲区硬件设备的对应关系，不过它映射的是控制台和帧缓冲区硬件设备的实际对应关系。
+
+        全局变量first_fb_vc和last_fb_vc是全局数组con2fb_map_boot和con2fb_map的索引值，用来指定系统当前可用的控制台编号范围，它们也是可以通过设置内核启动参数来初始化的。全局变量first_fb_vc的默认值等于0，而全局变量last_fb_vc的默认值等于MAX_NR_CONSOLES - 1。
+
+
+接下来我们主要关注函数fbcon_init和fbcon_switch的实现，
+系统就是通过它来初始化和切换控制台的。在初始化的过程中，
+会决定是否需要准备第一个开机画面的内容，而在切换控制台的过程中，会决定是否需要显示第一个开机画面的内容。
+ 函数fbcon_init的实现如下所示
+
+fbcon_init
+fbcon_prepare_logo 备要显示的第一个开机画面的内容。
+第一个开机画面的内容是通过调用函数fb_prepare_logo来准备的
+fb_prepare_logo实现在文件kernel/goldfish/drivers/video/fbmem.c中，
+/* Return if no suitable logo was found */  
+        fb_logo.logo = fb_find_logo(depth);  
+这一步执行完成之后，第一个开机画面的内容就保存在模块fbmem的全局变量fb_logo的成员变量logo中了
+
+当系统执行切换控制台的操作的时候，模块fbcon中的函数fbcon_switch就会被调用。在调用的过程中，就会执行显示第一个开机画面的操作。
+
+    static int fbcon_switch(struct vc_data *vc)  
+    {  
+            struct fb_info *info, *old_info = NULL;  
+            struct fbcon_ops *ops;  
+            struct display *p = &fb_display[vc->vc_num];  
+            struct fb_var_screeninfo var;  
+            int i, prev_console, charcnt = 256;  
+      
+            ......  
+      
+            if (logo_shown == FBCON_LOGO_DRAW) {  
+                    logo_shown = fg_console;  
+                    /* This is protected above by initmem_freed */  
+                    fb_show_logo(info, ops->rotate);  
+                    ......  
+                    return 0;  
+            }  
+            return 1;  
+    }  
+    int fb_show_logo(struct fb_info *info, int rotate)  
+    {  
+            int y;  
+      
+            y = fb_show_logo_line(info, rotate, fb_logo.logo, 0,  
+                                  num_online_cpus());  
+            ......  
+      
+            return y;  
+    }  
+
+fb_show_logo_line也是实现在文件kernel/goldfish/drivers/video/fbmem.c
+
+函数fb_do_show_logo也是实现在文件kernel/goldfish/drivers/video/fbmem.c中，如下所示
+
+    static void fb_do_show_logo(struct fb_info *info, struct fb_image *image,  
+                                int rotate, unsigned int num)  
+    {  
+            unsigned int x;  
+      
+            if (rotate == FB_ROTATE_UR) {  
+                    for (x = 0;  
+                         x < num && image->dx + image->width <= info->var.xres;  
+                         x++) {  
+                            info->fbops->fb_imageblit(info, image);  
+                            image->dx += image->width + 8;  
+                    }  
+            } else if (rotate == FB_ROTATE_UD) {  
+                    for (x = 0; x < num && image->dx >= 0; x++) {  
+                            info->fbops->fb_imageblit(info, image);  
+                            image->dx -= image->width + 8;  
+                    }  
+            } else if (rotate == FB_ROTATE_CW) {  
+                    for (x = 0;  
+                         x < num && image->dy + image->height <= info->var.yres;  
+                         x++) {  
+                            info->fbops->fb_imageblit(info, image);  
+                            image->dy += image->height + 8;  
+                    }  
+            } else if (rotate == FB_ROTATE_CCW) {  
+                    for (x = 0; x < num && image->dy >= 0; x++) {  
+                            info->fbops->fb_imageblit(info, image);  
+                            image->dy -= image->height + 8;  
+                    }  
+            }  
+    }  
+开始显示
+参数rotate用来描述屏幕的当前旋转方向。屏幕旋转方向不同，第一个开机画面的渲染方式也有所不同。
+例如，当屏幕上下颠倒时（FB_ROTATE_UD），第一个开机画面的左右顺序就刚好调换过来，这时候就需要从右到左来渲染。
+其它三个方向FB_ROTATE_UR、FB_ROTATE_CW和FB_ROTATE_CCW分别表示没有旋转、顺时针旋转90度和逆时针旋转90度。
+
+       参数info用来描述要渲染的帧缓冲区硬件设备，它的成员变量fbops指向了一系列回调函数，用来操作帧缓冲区硬件设备，其中，回调函数fb_imageblit就是用来在指定的帧缓冲区硬件设备渲染指定的图像的。
+
+       至此，第一个开机画面的显示过程就分析完成了。
+
+

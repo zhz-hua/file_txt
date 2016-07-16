@@ -1,0 +1,271 @@
+usage: pm list packages [-f] [-d] [-e] [-s] [-3] [-i] [-u] [--user USER_ID] [FILTER]
+       pm list permission-groups
+       pm list permissions [-g] [-f] [-d] [-u] [GROUP]
+       pm list instrumentation [-f] [TARGET-PACKAGE]
+       pm list features
+       pm list libraries
+       pm list users
+       pm path PACKAGE
+       pm dump PACKAGE
+       pm install [-lrtsfd] [-i PACKAGE] [PATH]
+       pm install-create [-lrtsfdp] [-i PACKAGE] [-S BYTES]
+       pm install-write [-S BYTES] SESSION_ID SPLIT_NAME [PATH]
+       pm install-commit SESSION_ID
+       pm install-abandon SESSION_ID
+       pm uninstall [-k] [--user USER_ID] PACKAGE
+       pm set-installer PACKAGE INSTALLER
+       pm clear [--user USER_ID] PACKAGE
+       pm enable [--user USER_ID] PACKAGE_OR_COMPONENT
+       pm disable [--user USER_ID] PACKAGE_OR_COMPONENT
+       pm disable-user [--user USER_ID] PACKAGE_OR_COMPONENT
+       pm disable-until-used [--user USER_ID] PACKAGE_OR_COMPONENT
+       pm hide [--user USER_ID] PACKAGE_OR_COMPONENT
+       pm unhide [--user USER_ID] PACKAGE_OR_COMPONENT
+       pm grant PACKAGE PERMISSION
+       pm revoke PACKAGE PERMISSION
+       pm set-install-location [0/auto] [1/internal] [2/external]
+       pm get-install-location
+       pm set-permission-enforced PERMISSION [true|false]
+       pm trim-caches DESIRED_FREE_SPACE
+       pm create-user [--profileOf USER_ID] [--managed] USER_NAME
+       pm remove-user USER_ID
+       pm get-max-users
+
+pm list packages: prints all packages, optionally only
+  those whose package name contains the text in FILTER.  Options:
+    -f: see their associated file.
+    -d: filter to only show disbled packages.
+    -e: filter to only show enabled packages.
+    -s: filter to only show system packages.
+    -3: filter to only show third party packages.
+    -i: see the installer for the packages.
+    -u: also include uninstalled packages.
+
+pm list permission-groups: prints all known permission groups.
+
+pm list permissions: prints all known permissions, optionally only
+  those in GROUP.  Options:
+    -g: organize by group.
+    -f: print all information.
+    -s: short summary.
+    -d: only list dangerous permissions.
+    -u: list only the permissions users will see.
+
+pm list instrumentation: use to list all test packages; optionally
+  supply <TARGET-PACKAGE> to list the test packages for a particular
+  application.  Options:
+    -f: list the .apk file for the test package.
+
+pm list features: prints all features of the system.
+
+pm list users: prints all users on the system.
+
+pm path: print the path to the .apk of the given PACKAGE.
+
+pm dump: print system state associated with the given PACKAGE.
+
+pm install: install a single legacy package
+pm install-create: create an install session
+    -l: forward lock application
+    -r: replace existing application
+    -t: allow test packages
+    -i: specify the installer package name
+    -s: install application on sdcard
+    -f: install application on internal flash
+    -d: allow version code downgrade
+    -p: partial application install
+    -S: size in bytes of entire session
+
+pm install-write: write a package into existing session; path may
+  be '-' to read from stdin
+    -S: size in bytes of package, required for stdin
+
+pm install-commit: perform install of fully staged session
+pm install-abandon: abandon session
+
+pm set-installer: set installer package name
+
+pm uninstall: removes a package from the system. Options:
+    -k: keep the data and cache directories around after package removal.
+
+pm clear: deletes all data associated with a package.
+
+pm enable, disable, disable-user, disable-until-used: these commands
+  change the enabled state of a given package or component (written
+  as "package/class").
+
+pm grant, revoke: these commands either grant or revoke permissions
+  to applications.  Only optional permissions the application has
+  declared can be granted or revoked.
+
+pm get-install-location: returns the current install location.
+    0 [auto]: Let system decide the best location
+    1 [internal]: Install on internal device storage
+    2 [external]: Install on external media
+
+pm set-install-location: changes the default install location.
+  NOTE: this is only intended for debugging; using this can cause
+  applications to break and other undersireable behavior.
+    0 [auto]: Let system decide the best location
+    1 [internal]: Install on internal device storage
+    2 [external]: Install on external media
+
+pm trim-caches: trim cache files to reach the given free space.
+
+pm create-user: create a new user with the given USER_NAME,
+  printing the new user identifier of the user.
+
+pm remove-user: remove the user with the given USER_IDENTIFIER,
+  deleting all data associated with that user
+
+
+
+
+1. 具体使用方法：
+	1.1：察看已安装的包：
+	pm list package
+	此时则显示所有已经安装的包名。
+
+	pm list package -f
+	也显示associated文件所在目录(即保存的APK文件)
+
+1.2：察看已知的权限组：
+	pm list permission-groups
+
+1.3：察看所有已知的权限：
+	pm list permissions
+
+1.4：列出所有硬件相关信息：
+	pm list features
+
+1.5：列出指定包名的  associated 文件 (APK存档文件) 所在：
+	例如：
+	pm path com.TDiJoy.fane
+	package:/mnt/asec/com.TDiJoy.fane-1/pkg.apk
+
+
+1.6: 安装APK：
+	pm install [-l] [-r] [-t] [-i INSTALLER_PACKAGE_NAME] [-s] [-f] PATH
+
+	PATH 指 APK文件绝对路径和文件名。
+
+	例如：
+	pm install /data/3dijoy_fane.apk
+
+	这几个参数很有用：
+	-r: 安装一个已经安装的APK，保持其数据不变。
+	-i：指定安装的包名。(没试出来)
+	-s: 安装到SDCard上。
+	-f: 安装到内部Flash上。
+
+1.6：卸载APK：
+	pm uninstall 包名。
+	例如：
+	pm uninstall com.TDiJoy.fane
+
+
+
+
+
+1.7：注意安装包的权限
+1.8：
+
+android 5.0 项目上开发的时候，进入U盘目录，通过pm 命令安装apk，发现安装失败，提示apk路径不对。
+安装log信息如下：
+cd /mnt/usb/2D80-E3ED/APK_backup
+
+shell@yjw:/mnt/usb/2D80-E3ED/APK_backup # pm install AndyKeyTest.apk      
+        pkg: AndyKeyTest.apk
+Failure [INSTALL_FAILED_INVALID_URI]
+logcat信息：
+01-01 08:20:49.955 D/AndroidRuntime( 2952): Calling main entry com.android.commands.pm.Pm
+01-01 08:20:49.968 W/asset   ( 2734): Asset path /AndyKeyTest.apk is neither a directory nor file (type=1).
+--------- beginning of system
+01-01 08:20:49.968 W/DefContainer( 2734): Failed to parse package at /AndyKeyTest.apk: android.content.pm.PackageParser$PackageParserException: Failed to parse /AndyKeyTest.apk
+
+通过log信息及测试发现，原来在android5.0中不能直接在u盘目录下执行pm install 安装apk ，必须到要在pm 命令带上apk所在路劲。更早的android版本没有这个要求
+改为在根目录下，执行下面命令，则安装apk成功
+
+	shell@yjw:/ # pm install mnt/usb/2D80-E3ED/APK_backup/AndyKeyTest.apk
+	       pkg: mnt/usb/2D80-E3ED/APK_backup/AndyKeyTest.apk
+	Success
+
+
+针对上面的问题，查看了一下源码，发现android 5.0 的parsePackage功能在细节上有一些更改，所以出现上面的情况。
+
+相关代码如下：
+
+PackageParser.java@
+
+    /**
+     * Parse only lightweight details about the package at the given location.
+     * Automatically detects if the package is a monolithic style (single APK
+     * file) or cluster style (directory of APKs).
+     * <p>
+     * This performs sanity checking on cluster style packages, such as
+     * requiring identical package name and version codes, a single base APK,
+     * and unique split names.
+     *
+     * @see PackageParser#parsePackage(File, int)
+     */
+    public static PackageLite parsePackageLite(File packageFile, int flags)
+            throws PackageParserException {
+        if (packageFile.isDirectory()) {
+            return parseClusterPackageLite(packageFile, flags);
+        } else {
+            return parseMonolithicPackageLite(packageFile, flags);
+        }
+    }
+
+
+DefaultContainerService.java@
+
+        /**
+         * Parse given package and return minimal details.
+         *
+         * @param packagePath absolute path to the package to be copied. Can be
+         *            a single monolithic APK file or a cluster directory
+         *            containing one or more APKs.
+         */
+        @Override
+        public PackageInfoLite getMinimalPackageInfo(String packagePath, int flags,
+                String abiOverride) {
+            final Context context = DefaultContainerService.this;
+            final boolean isForwardLocked = (flags & PackageManager.INSTALL_FORWARD_LOCK) != 0;
+
+            PackageInfoLite ret = new PackageInfoLite();
+            if (packagePath == null) {
+                Slog.i(TAG, "Invalid package file " + packagePath);
+                ret.recommendedInstallLocation = PackageHelper.RECOMMEND_FAILED_INVALID_APK;
+                return ret;
+            }
+
+            final File packageFile = new File(packagePath);
+            final PackageParser.PackageLite pkg;
+            final long sizeBytes;
+            try {
+                pkg = PackageParser.parsePackageLite(packageFile, 0);
+                sizeBytes = PackageHelper.calculateInstalledSize(pkg, isForwardLocked, abiOverride);
+            } catch (PackageParserException | IOException e) {
+                Slog.w(TAG, "Failed to parse package at " + packagePath + ": " + e);
+
+                if (!packageFile.exists()) {
+                    ret.recommendedInstallLocation = PackageHelper.RECOMMEND_FAILED_INVALID_URI;
+                } else {
+                    ret.recommendedInstallLocation = PackageHelper.RECOMMEND_FAILED_INVALID_APK;
+                }
+
+                return ret;
+            }
+
+            ret.packageName = pkg.packageName;
+            ret.versionCode = pkg.versionCode;
+            ret.installLocation = pkg.installLocation;
+            ret.verifiers = pkg.verifiers;
+            ret.recommendedInstallLocation = PackageHelper.resolveInstallLocation(context,
+                    pkg.packageName, pkg.installLocation, sizeBytes, flags);
+            ret.multiArch = pkg.multiArch;
+
+            return ret;
+        }
+﻿﻿

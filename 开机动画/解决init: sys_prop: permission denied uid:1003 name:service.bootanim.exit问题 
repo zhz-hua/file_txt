@@ -1,0 +1,104 @@
+这个错误是在调用property_set函数时出现的。通过打印信息，找到了以下代码
+
+[cpp] view plaincopyprint?在CODE上查看代码片派生到我的代码片
+
+    /android/system/core/init/property_service.c  
+      
+    if (check_perms(msg.name, cr.uid, cr.gid, source_ctx)) {  
+        property_set((char*) msg.name, (char*) msg.value);  
+    } else {  
+        ERROR("sys_prop: permission denied uid:%d  name:%s\n",  
+            cr.uid, msg.name);  
+    }  
+
+
+继续查找check_perms函数，发现以下相关代码
+
+[cpp] view plaincopyprint?在CODE上查看代码片派生到我的代码片
+
+    for (i = 0; property_perms[i].prefix; i++) {  
+        if (strncmp(property_perms[i].prefix, name,  
+                    strlen(property_perms[i].prefix)) == 0) {  
+            if ((uid && property_perms[i].uid == uid) ||  
+                (gid && property_perms[i].gid == gid)) {  
+      
+                return check_mac_perms(name, sctx);  
+            }  
+        }  
+    }  
+
+
+查看property_perms，
+
+[cpp] view plaincopyprint?在CODE上查看代码片派生到我的代码片
+
+    struct {  
+        const char *prefix;  
+        unsigned int uid;  
+        unsigned int gid;  
+    } property_perms[] = {  
+        { "net.rmnet0.",      AID_RADIO,    0 },  
+        { "net.gprs.",        AID_RADIO,    0 },  
+        { "net.ppp",          AID_RADIO,    0 },  
+        { "net.qmi",          AID_RADIO,    0 },  
+        { "net.lte",          AID_RADIO,    0 },  
+        { "net.cdma",         AID_RADIO,    0 },  
+        { "ril.",             AID_RADIO,    0 },  
+        { "gsm.",             AID_RADIO,    0 },  
+        { "persist.radio",    AID_RADIO,    0 },  
+        { "net.dns",          AID_RADIO,    0 },  
+        { "sys.usb.config",   AID_RADIO,    0 },  
+        { "net.",             AID_SYSTEM,   0 },  
+        { "dev.",             AID_SYSTEM,   0 },  
+        { "runtime.",         AID_SYSTEM,   0 },  
+        { "hw.",              AID_SYSTEM,   0 },  
+        { "sys.",             AID_SYSTEM,   0 },  
+        { "sys.powerctl",     AID_SHELL,    0 },  
+        { "service.",         AID_SYSTEM,   0 },  
+        { "wlan.",            AID_SYSTEM,   0 },  
+        { "bluetooth.",       AID_BLUETOOTH,   0 },  
+        { "dhcp.",            AID_SYSTEM,   0 },  
+        { "dhcp.",            AID_DHCP,     0 },  
+        { "debug.",           AID_SYSTEM,   0 },  
+        { "debug.",           AID_SHELL,    0 },  
+        { "log.",             AID_SHELL,    0 },  
+        { "service.adb.root", AID_SHELL,    0 },  
+        { "service.adb.tcp.port", AID_SHELL,    0 },  
+        { "persist.sys.",     AID_SYSTEM,   0 },  
+        { "persist.service.", AID_SYSTEM,   0 },  
+        { "persist.security.", AID_SYSTEM,   0 },  
+        { "persist.service.bdroid.", AID_BLUETOOTH,   0 },  
+        { "selinux."         , AID_SYSTEM,   0 },  
+        { "wfd.enable",        AID_MEDIA,    0 },  
+        { NULL, 0, 0 }  
+    };  
+
+可见问题的关键在于bootanimation服务的进程uid与AID_SYSTEM不一致
+
+
+既然找到问题的根源，那么接下来就是想办法解决问题了。
+有两种方法可以解决这个问题：
+
+
+方法一：
+在property_perms中，增加一项，匹配bootanimation服务的进程uid,我的uid是graphics，
+所以添加如下
+[cpp] view plaincopyprint?在CODE上查看代码片派生到我的代码片
+
+    { "service.bootanim.",         AID_GRAPHICS,   0 },  
+
+
+方法二：
+比较暴力的做法，直接修改进程uid。找到启动bootanimation服务的地方
+[cpp] view plaincopyprint?在CODE上查看代码片派生到我的代码片
+
+    service bootanim /system/bin/bootanimation  
+        class main  
+        user graphics  
+        group graphics  
+        disabled  
+        oneshot  
+
+将user graphics改为user system
+
+至此，问题解决！

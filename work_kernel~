@@ -1,0 +1,110 @@
+首先是boards.cfg 里面定义 DEFAULT_FDT_FILE 的名称，这个名词必须和内核编译出来的dtb的名称一样。这样才能保证dtb被load到内存里面。.才能启动驱动程序
+
+device/fsl/imx6/soc/imx6dq.mk:12:TARGET_KERNEL_DEFCONF := imx_v7_android_defconfig
+
+在boards.cfg中修改要生成的dtb.
+EFAULT_FDT_FILE="imx6q-sabresd.dtb
+进入
+zhz@zhz:~/imx6-android-4.4.3/android/kernel_imx/arch/arm/configs$ find ./ -name "imx_v7_android_defconfig"
+
+make distclean
+make imx_v7_android_defconfig
+make -j4 uImage LOADADDR=0x10008000
+
+修改init.rc里面
+./device/fsl/sabresd_6dq/init.rc
+mount rootfs rootfs / ro remount 改成
+mount rootfs rootfs / rw remount
+
+1:由于官方默认方式是使用传统的ATAGS方式传递内核参数的，但为了提高开发效率，本文还是使用了新的DTB方式传递内核参数。为此，需要配置内核，关闭老式ATAGS方式内核参数传递的支持
+-*- Flattened Device Tree support                                                                                                   │ │  
+ [ ]   Support for the traditional ATAGS boot data passing 
+2:关摄像头
+imx6-android-4.4.3/android/device/fsl/sabresd_6dq$ vim init.rc
+zhz@zhz:~/imx6-android-4.4.3/android/kernel_imx/arch/arm/configs$ vim imx_v7_android_defconfig +2292
+zhz@zhz:~/imx6-android-4.4.3/android/kernel_imx/drivers/media/platform/mxc/capture$ vim 0V5642
+zhz@zhz:~/imx6-android-4.4.3/android/out/target/product/sabresd_6dq/root$ vim init.freescale.rc
+zhz@zhz:~/imx6-android-4.4.3/android$ vim device/fsl/imx6/sabresd_6dq.mk +21
+MXC Camera/V4L2 PRP Features support
+
+$(TARGET_KERNEL_CONFIGURE): kernel_imx/arch/arm/configs/$(TARGET_KERNEL_DEFCONF) $(KERNEL_CONFIGURE)
+ 823     $(MAKE) -C kernel_imx $(TARGET_KERNEL_DEFCONF) $(KERNEL_ENV)
+ 824     install -D $(KERNEL_CONFIGURE) $(TARGET_KERNEL_CONFIGURE)  
+
+ .PHONY: kernelimage
+ifneq ($(strip $(TARGET_NO_KERNEL)),true)
+KERNEL_CROSS_TOOLCHAIN := `pwd`/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6/bin/arm-eabi-
+KERNEL_ENV := ARCH=arm CROSS_COMPILE=$(KERNEL_CROSS_TOOLCHAIN) LOADADDR=$(LOAD_KERNEL_ENTRY)
+HOST_PROCESSOR := $(shell cat /proc/cpuinfo | grep processor | wc -l)
+INSTALLED_KERNEL_TARGET := $(PRODUCT_OUT)/kernel
+TARGET_PREBUILT_KERNEL := $(PRODUCT_OUT)/kernel
+KERNEL_CONFIGURE := kernel_imx/.config
+TARGET_KERNEL_CONFIGURE := $(PRODUCT_OUT)/.config
+KERNEL_ZIMAGE    := kernel_imx/arch/arm/boot/zImage
+KERNEL_OUT := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ
+
+.PHONY: $(TARGET_PREBUILT_KERNEL)
+kernelimage: $(TARGET_PREBUILT_KERNEL)
+
+$(KERNEL_CONFIGURE): kernel_imx/arch/arm/configs/$(TARGET_KERNEL_DEFCONF)
+
+$(TARGET_KERNEL_CONFIGURE): kernel_imx/arch/arm/configs/$(TARGET_KERNEL_DEFCONF) $(KERNEL_CONFIGURE)
+    $(MAKE) -C kernel_imx $(TARGET_KERNEL_DEFCONF) $(KERNEL_ENV)
+    install -D $(KERNEL_CONFIGURE) $(TARGET_KERNEL_CONFIGURE)
+
+$(TARGET_PREBUILT_KERNEL): $(TARGET_KERNEL_CONFIGURE)
+    $(MAKE) -C kernel_imx -j$(HOST_PROCESSOR) uImage $(KERNEL_ENV)
+    $(MAKE) -C kernel_imx dtbs $(KERNEL_ENV)
+    install -D $(KERNEL_ZIMAGE)  $(PRODUCT_OUT)/kernel
+    for dtsplat in $(TARGET_BOARD_DTS_CONFIG); do \
+        DTS_PLATFORM=`echo $$dtsplat | cut -d':' -f1`; \
+        DTS_BOARD=`echo $$dtsplat | cut -d':' -f2`; \
+        install -D kernel_imx/arch/arm/boot/dts/$$DTS_BOARD $(PRODUCT_OUT)/$$DTS_BOARD; \
+    done
+else
+kernelimage:
+endif
+ .PHONY: kernelmodules
+ 
+ kernel_modules_src_list :=
+ kernel_modules_dist_list :=
+ 
+ $(foreach cf,$(TARGET_KERNEL_MODULES),                          \
+ $(eval _src := $(call word-colon,1,$(cf)))                      \
+ $(eval _dest := $(call word-colon,2,$(cf)))                     \
+ $(eval kernel_modules_src_list += $(_src))                      \
+ $(eval kernel_modules_dest_list += $(call append-path,$(PRODUCT_OUT),$(_dest))))
+ 
+ ifneq ($(strip $(kernel_modules_src_list)),)
+ 
+ kernelmodules: $(TARGET_PREBUILT_KERNEL) | $(ACP)
+     $(MAKE) -C kernel_imx modules $(KERNEL_ENV)
+     $(hide) $(foreach cf, $(TARGET_KERNEL_MODULES),             \
+     $(eval _src := $(call word-colon,1,$(cf)))              \
+     $(eval _dest := $(call word-colon,2,$(cf)))             \
+     $(eval _full_dest := $(call append-path,$(PRODUCT_OUT),$(_dest)))   \
+     $(eval _dest_dir := $(call dir, $(_full_dest)))             \
+     mkdir -p $(_dest_dir);                          \
+     $(ACP) $(_src) $(_full_dest);                       \
+     )
+     @echo "install kernel modules: $(kernel_modules_src_list)"
+ else
+ kernelmodules:
+ endif
+ # ----------------------------------------------------------------
+ # support ubifs rules:
+ .PHONY: ubiimagesgenerate
+ ifeq ($(TARGET_USERIMAGES_USE_UBIFS),true)
+ UBI_RAW_IMAGE := $(PRODUCT_OUT)/android_root.img
+ 
+ .PHONY: $(UBI_RAW_IMAGE)
+ 
+ ubiimagesgenerate: $(UBI_RAW_IMAGE)
+ 
+ $(UBI_RAW_IMAGE) : $(INSTALLED_USERDATAIMAGE_TARGET) systemimage
+     $(call pretty,"Generating UBI raw image:" "$(UBI_RAW_IMAGE)" "$(UBI_RAW_RECO_IMAGE)")
+     $(MKUBIRAW) -o $(UBI_RAW_IMAGE) $(TARGET_UBIRAW_ARGS)
+ else
+ ubiimagesgenerate:
+ endif
+

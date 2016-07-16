@@ -1,0 +1,206 @@
+data/
+dev/
+init*
+init.rc*
+init.usb.rc
+init.wandboard.usb.rc
+sbin/
+system/
+ueventd.goldfish.rc
+default.prop
+fstab.wandboard
+init.goldfish.rc
+init.trace.rc
+init.wandboard.rc*
+proc/
+sys/
+ueventd.freescale.rc
+ueventd.rc
+蓝牙模块资料：
+
+ftp.nforetek.com
+61.251.146.75
+账号：auto-link
+密码：autolink58glHc
+
+请史工和饶丹下载查看。
+
+NF3108_Android 4.4.2_Freescale i.MX6_Patch_v1.0.0_20151104.tar.bz2
+
+约了安富蓝牙模块技术支持明天下午3点过来进行交流，有什么问题请大家准备好。
+
+Check the physical circuit if correct :
+SoC Host UART RTS ---- BT Module RTS
+SoC Host UART CTS ---- BT Module CTS
+SoC Host UART TX  ---- BT Module RX
+SoC Host UART RX  ---- BT Module TX
+1:device/fsl/imx6/etc/ueventd.freescale.rc ,add the lines:  设备节点归属哪个用户组, 哪个用户,  是在 一个 名称为  ueventd.freescale.rc
+	#nFore add TI bt support start                                                                   
+	# for Bluetooth
+	/dev/ttymxc2             0660   bluetooth  bluetooth
+	# for TI Bluetooth user driver
+	/dev/hci_tty             0666   bluetooth  bluetooth
+	#nFore add TI bt support end
+
+2:/device/fsl/imx6/sabresd_6dq.mk
+	 #nFore add TI bt support start
+	 PRODUCT_PACKAGES += $(call inherit-product-if-exists, hardware/ti/wpan/ti-wpan-products.mk)
+	 #nFore add TI bt support end
+	 
+	 #nFore add TI wifi support start
+	 PRODUCT_PACKAGES += $(call inherit-product-if-exists,/hardware/ti/wlan/mac80211/Android.mk)
+	 PRODUCT_COPY_FILES += \
+	     device/fsl/sabresd_6dq/wifi/p2p_supplicant_overlay.conf:system/etc/wifi/p2p_supplicant_overlay.conf \
+	     device/fsl/sabresd_6dq/wifi/wpa_supplicant_overlay.conf:system/etc/wifi/wpa_supplicant_overlay.conf
+3: Edit your /device/fsl/sabresd_6dq/BoardConfig.mk ,add the lines
+	##nFore modified start                                                                           
+	BOARD_HAVE_NFORE_NF3108 := true
+	##nFore modified end
+	Fore modified start
+
+	ifeq ($(BOARD_HAVE_NFORE_NF3108), true)
+		###############################
+		#   BT  #
+		###############################
+		BOARD_HAVE_BLUETOOTH := true
+		BT_ALT_STACK := true
+
+		#nFore add TI bt support
+		#Enable NFORE NF3108 (TI 1837) Support
+		BOARD_HAVE_BLUETOOTH_NFORE_NF3108 := true
+		BOARD_WPAN_DEVICE := true
+		#enable building the TI WPAN-stuff
+		BOARD_HAVE_BLUETOOTH_TI := true
+
+		###############################
+		#   WLAN    #
+		###############################
+		USES_TI_MAC80211 := true
+		COMMON_GLOBAL_CFLAGS += -DUSES_TI_MAC80211
+		BOARD_TI_SOFTAP := true
+		BOARD_WPA_SUPPLICANT_DRIVER      := NL80211
+		BOARD_HOSTAPD_DRIVER             := NL80211
+		WPA_SUPPLICANT_VERSION           := VER_0_8_X_TI
+		HOSTAPD_VERSION                  := VER_0_8_X_TI
+		BOARD_WLAN_DEVICE                := wl12xx_mac80211
+		BOARD_SOFTAP_DEVICE              := wl12xx_mac80211
+		BOARD_HOSTAPD_PRIVATE_LIB        := lib_driver_cmd_wl12xx
+		BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_wl12xx
+		WIFI_FIRMWARE_LOADER             := ""
+
+		WIFI_COMPAT_MODULE_PATH   := "/system/lib/modules/compat.ko"
+		WIFI_COMPAT_MODULE_NAME   := "compat"
+		WIFI_COMPAT_MODULE_ARG    := ""
+		WIFI_CFG80211_MODULE_PATH := "/system/lib/modules/cfg80211.ko"
+		WIFI_CFG80211_MODULE_NAME := "cfg80211"
+		WIFI_CFG80211_MODULE_ARG  := ""
+		WIFI_MAC80211_MODULE_PATH := "/system/lib/modules/mac80211.ko"
+		WIFI_MAC80211_MODULE_NAME := "mac80211"
+		WIFI_MAC80211_MODULE_ARG  := ""
+		WIFI_DRIVER_MODULE_PATH   := "/system/lib/modules/wlcore.ko"
+		WIFI_DRIVER_MODULE_NAME   := "wlcore"
+		WIFI_DRIVER_P2P_MODULE_ARG      := ""
+		WIFI_SDIO_IF_DRIVER_MODULE_PATH := "/system/lib/modules/wlcore_sdio.ko"
+		WIFI_SDIO_IF_DRIVER_MODULE_ARG  := ""
+		WIFI_SDIO_IF_DRIVER_MODULE_NAME := "wlcore_sdio"
+		WIFI_DRIVER_CORE_MODULE_PATH    := "/system/lib/modules/wl18xx.ko"
+		WIFI_DRIVER_CORE_MODULE_ARG     := ""
+		WIFI_DRIVER_CORE_MODULE_NAME    := "wl18xx"
+		WIFI_TEST_INTERFACE          := "wlan0" 
+	endif
+
+4:kernel_imx/Makefile)
+	 #nFore modify start
+	 ifndef BOARD_HAVE_NFORE_NF3108
+	   BOARD_HAVE_NFORE_NF3108= true
+	 endif
+	 #nFore modify end 
+	 
+	 ifneq ($(BOARD_HAVE_NFORE_NF3108),true)
+	 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+		    -fno-strict-aliasing -fno-common \
+		    -Werror-implicit-function-declaration \
+		    -Wno-format-security \
+		    -fno-delete-null-pointer-checks                                                      
+	 else
+	 KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
+		    -fno-strict-aliasing -fno-common \
+		    -Werror-implicit-function-declaration \
+		    -Wno-format-security \
+		    -fno-delete-null-pointer-checks \
+		    -DNF_NF3108_PATCH -DNF_DEBUG
+	 endif
+5:Edit your kernel config (.config), add the lines:
+	#
+	# Texas Instruments shared transport line discipline
+	#
+	CONFIG_TI_ST=y
+	CONFIG_ST_HCI=y
+	CONFIG_ST_FM=m
+	CONFIG_ST_GPS=m
+6:set GPIO to connect BT_ON correctly. 此处通过dts配置，并注册platform总线
+	/****************************************************************************
+	 *                                                                          
+	 * Bluetooth  nf3108
+	 *                                                                          
+	 ****************************************************************************/
+	#define nFore_BT_ON		IMX_GPIO_NR(3, 16)
+	/* ------------------------------------------------------------------------ */
+
+	/* This assumes wifi is initialized (chip has power) */
+	#ifdef NF_BT_PATCH
+	static const struct imxuart_platform_data bt_uart_data_3108 = {
+		.flags      = IMXUART_HAVE_RTSCTS | IMXUART_SDMA, 
+		.dma_req_tx = MX6Q_DMA_REQ_UART3_TX, /*use UART3*/
+		.dma_req_rx = MX6Q_DMA_REQ_UART3_RX,
+	};
+
+	static struct ti_st_plat_data wilink_pdata = {
+		.nshutdown_gpio = nFore_BT_ON,
+		.dev_name = "/dev/ttymxc2", /* UART3 */
+		.flow_cntrl = 1,
+		.baud_rate = 921600,
+	};
+
+	static struct platform_device wl138x_device = {
+		.name= "kim",
+		.id= -1,
+		.dev.platform_data = &wilink_pdata,
+	};
+
+	static __init void  nFore_init_bluetooth_nf3108(void) 
+	{
+		gpio_request(nFore_BT_ON, "nFore_BT_ON");
+		gpio_direction_output(nFore_BT_ON, 0);
+		msleep(22);
+		gpio_set_value(nFore_BT_ON, 0);
+		mdelay(20);
+		gpio_set_value(nFore_BT_ON, 1);
+		mdelay(20);
+		gpio_set_value(nFore_BT_ON, 0);
+		gpio_free(nFore_BT_ON);
+
+		pr_err("nFore_init_bluetooth_nf3108");
+		mx6q_sabresd_pads_init_bluetooth_nf3108();
+		imx6q_add_imx_uart(2, &bt_uart_data_3108); /*use UART3*/
+		platform_device_register(&wl138x_device);
+
+	}
+	#endif //NF_BT_PATCH
+	#endif
+
+7: Setup Kernel Config file:
+	$make ARCH=arm menuconfig
+	Networking support -> Wireless
+	CFG80211 and MAC80211:
+	Cryptographic API:
+	<*> CCM support
+
+
+ _WL_IDX
+
+
+
+
+
+

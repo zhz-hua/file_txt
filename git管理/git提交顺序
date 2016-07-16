@@ -1,0 +1,99 @@
+got clone git@192.168.2.249:root/imx6-android-4.43.git 下载版本
+git 先更新后提交
+	更新
+	 	git fetch 
+		git merge origin/i.MX6DL-M41 
+
+		cherry-pick 661353284c6a651c6795361a6e8175bf448a3e87  commit_id和并
+
+	提交 
+		git push origin BSP_i.MX6DL-M41 
+
+
+
+
+
+	2 ,从远程获取最新版本到本地
+	$ git fetch origin master
+	$ git fetch origin master 这句的意思是：从远程的origin仓库的master分支下载代码到本地的origin master
+
+	3. 比较本地的仓库和远程参考的区别
+
+	$ git log -p master.. origin/master
+	git show i.MX6DL-M41 origin/master 
+	git diff i.MX6DL-M41 origin/master   比较本地和远程仓库的不同 
+	su@SUCHANGLI /e/eoe_client/android-app (master)
+	因为我的本地仓库和远程仓库代码相同所以没有其他任何信息
+ 	git branch -r 获得远程版本库信息
+
+
+4. 把远程下载下来的代码合并到本地仓库，远程的和本地的合并
+	$ git merge origin/master
+	Already up-to-date.
+	su@SUCHANGLI /e/eoe_client/android-app (master)
+
+	我的本地参考代码和远程代码相同，所以是Already up-to-date
+
+git cherry-pick用于把另一个本地分支的commit修改应用到当前分支
+
+版本不想更新，可以直接还原分支
+	查看远程分支
+		git branch -r
+		  origin/BSP_i.MX6DL-M41
+		  origin/HEAD -> origin/master
+		  origin/PV-Branch
+		  origin/i.MX6DL-M41
+		  origin/master
+没有更改的情况下 更新版本
+
+		git reset --hard origin/BSP_i.MX6DL-M41  （库里面的最新版本）
+查看远程仓库
+	git remote -v
+
+我们常用 -p 选项展开显示每次提交的内容差异，用 -2 则仅显示最近的两次更新
+
+	git log -p -2
+
+
+查看版本修改内容 
+	git show commit_id
+
+
+
+
+
+
+Please move or remove them before you can merge.
+Aborting
+
+
+方案1：
+git clean  -d  -fx ""
+其中 
+x  -----删除忽略文件已经对git来说不识别的文件
+d  -----删除未被添加到git的路径中的文件
+f  -----强制运行
+
+
+git branch -r
+
+git merge命令示例:
+$ git merge branchname
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,133 @@
+https://community.freescale.com/docs/DOC-98109
+
+http://blog.chinaunix.net/uid-26119896-id-3198886.html  uboot的讲解
+http://blog.csdn.net/voice_shen/article/details/6789424
+
+如果是在第三阶段bootanimation之后出现黑屏，我觉得你可以研究下SystemUI这块，看是否能引入平滑的过渡。
+
+
+总结公式如下
+第一条指令：屏幕的分辨率（空格）播放频率
+第二条指令：p（空格）播放次数（空格）后续操作（空格）作用文件夹
+第三条指令：同上
+第N条指令：同上
+屏幕分辨率的格式是：宽（空格）高，胖6的就是320 480。。。播放频率，上面已经说清楚了，至于到底要用多大的数字，视你开机动画的张数而定，比如说，一共有100张图片，开机时间是20秒，那么100/20就是5。
+播放次数，1是代表一次，0代表循环播放。如果要播放2次的话，就是就是打个2上去，应该是这样吧，反正我是没试过，只试过0和1.
+后续操作，0代表什么都不做，直接进入下一条指令。10是代表稍作停顿。
+
+
+、增加u-boot显示启动画面
+  1）修改/common/lcd.c 中的int lcd_display_bitmap(ulong bmp_image, int x, int y)函数。
+  2）include/configs/sbs.h 增加#define CONFIG_SPLASH_SCREEN    /*support splash screen*/
+
+2、/board/sbs/config.mk	下最后一行的宏TEXT_BASE
+TEXT_BASE = 0xA7F80000 改为 0xA7F00000 增大显存，支持LCD 800x600 的屏。
+
+
+u-boot在调用board_init_r函数后，就进入C代码了，此时板子就相当于跑裸机程序，编写LCD相关驱动程序，
+显示logo无非就是在lcd上显示图片，简单的可以直接调用图像素bin文件，稍微复杂点的显示bmp，png等图片格式文件。
+至于logo从那获取，最简单的写成像素数组，不然的话从存储媒介获取，此时涉及文件系统的操作，u-boot有相关的MMC实现源码可以参考 
+
+在有实现LCD显示和LCD命令行终端的U-boot中，默认情况下在左上角都有显示一个logo，如果是atmel的芯片，就会有atmel的logo，三星的则是denx的logo。如果想把它改成自己喜欢的或者公司的logo，则只要作简单的修改便可以实现。
+
+一、图片的放置路径
+
+所 有的开机logo都放在了 /tools/logos 之下，所以，把你需要显示的logo图片（bmp格式）也放置到该目录下。根据你所设置的显示帧缓存的大小，图片大小有所限制。使用这种方法还有一个限制 是：图片只能是8bpp的bmp图（参考uboot源码）。Tekkman文章中所说的“所替换的logo必须和原来的大小、格式一模一样，否则会出现 u-boot使用过程中宕机重启的后果”，我自己亲测中并未遇到，当然，我也并没有做足够的测试，只是这并不需要和原图的大小一模一样。
+
+二、修改Makefile文件
+修改/tools目录下的Makefile文件，大约是44~46行
+
+ifeq ($(LOGO_BMP),)
+LOGO_BMP= logos/denx.bmp
+endif
+
+把 denx.bmp 替换为你需要显示的logo图片的文件名，保存退出，重新编译uboot。
+三、图片的转换脚本
+在制作图片前，请您现确认您的Linux主机上安装了Netpbm 工具包。如果是ubuntu，你可以直接用新立得安装；如果是别的发行版，可以在 Netpbm主页 下载源代码编译。然后用以下的脚本处理一下就好了：
+
+#!/bin/sh
+#install Netpbm first
+    jpegtopnm $1 | ppmquant 31 | ppmtobmp -bpp 8 > $2
+
+使用方法： （脚本名） （ 待处理的JPG图片名） （输出文件名）
+
+关于uboot的lcd驱动的编写，可参考资料【3】和Tekkaman的uboot移植源码以及相应的芯片数据手册。参考资料【2】中的BMP命令不是必须的，不过实现了这个命令可以方便调试。
+
+
+U-Boot中的Splash Screen
+U-Boot配置
+    在U-Boot中使用Splash Screen，可以实现U-Boot启动后，在LCD上显示自定义图片，起到友好的界面显示作用。使用Splash Screen需要在配置文件中使能BMP图片功能和SPLASH功能：
+#define CONFIG_CMD_BMP
+#define CONFIG_SPLASH_SCREEN
+ 
+
+
+ 
+ 
+操作    
+现在要实现splash screen，需要进行操作，先下载一个图片到内存中，然后擦除FLASH的splashimage区域，接着将图片写入splashimage区域，最后设置并保存splashimage环境变量即可。
+    U-Boot> tftp a0008000 logo.bmp                   ；下载文件到内存
+    U-Boot> erase 1:23-31                                 ；擦除Flash的splashimage区域
+    U-Boot> cp.b a0008000 00180000 $filesize    ；将logo写到Flash的splashimage区域
+    U-Boot> setenv splashimage 00180000         ；设置splashimage环境变量
+    U-Boot> saveenv                                         ；保存环境变量
+ 
+    u-boot启动后，输入bmp d $splashimage即可在LCD上显示logo图片。为了实现开机就显示logo，可以修改common/lcd.c文件，在其中加入实现 bmp d $splashimage的代码即可。
+
+#############################################3
+
+自定义u-boot的开机logo的方法
+我用的u-boot是2009.08版的。想要修改开机logo为自定义的图片，而不是原来的denx.bmp。
+方法其实很简单，只需替换u-boot的tools/logos目录中的denx.bmp，再重新编译（可能需要先执行make clean，再make，新的图片
+才会起作用），图片大小不要起过你的屏的大小，色彩深度不能大于256色，即8位色深的图片。
+不过，如果你不想替换denx.bmp，而要用自已的图片文件，比如，我用的是rat-linux.bmp文件，也可以。把你的文件拷贝
+到/tools/logos目录中，再修改/tools目录下的makefile文件，找到以下代码段
+
+ifeq ($(LOGO_BMP),)
+LOGO_BMP= logos/denx.bmp
+endif
+ifeq ($(VENDOR),atmel)
+LOGO_BMP= logos/atmel.bmp
+endif
+ifeq ($(VENDOR),ronetix)
+LOGO_BMP= logos/ronetix.bmp
+endif
+将其中的LOGO_BMP= logos/denx.bmp改为 LOGO_BMP= logos/rat-linux.bmp即可。重新编译，你的图片就可以起作用了。
+U-boot开机logo的制作方法
+在有实现LCD显示和LCD命令行终端的U-boot中，在左上角都有显示一个logo，如果是atmel的芯片，就会有atmel的logo，三星的则是denx的logo。
+有的网友发邮件说想改成自己公司的Logo，而且如果是自己玩的话，改成自己喜欢的logo也爽阿。所以今天我做好了实验，将简单的修改方法总结如下：
+
+
+
+一、图片的放置路径
+
+所有的开机logo都放在了 /tools/logos 之下，你只需要将你的班子作对应的logo替换就好了。
+
+对于S3C2440，你只需要将denx.bmp替换成你想要的logo就好了。
+
+对于ATMEL的芯片，据说会显示ATMEL的logo，所以替换那个logo即可。
+
+但是你所替换的logo必须和原来的大小、格式一模一样，否则会出现u-boot使用过程中宕机重启的后果。
+
+
+二、图片的大小标准
+
+
+不同的logo对应不同的大小，这里S3C2440所对应的是160＊96分辨率的BMP图片。
+
+
+三、图片的转换脚本
+
+
+在制作图片前，请您现确认您的Linux主机上安装了Netpbm 工具包。如果是ubuntu，你可以直接用新立得安装；如果是别的发行版，可以在 Netpbm主页 下载源代码编译。
+
+   将你想要的图片裁减成160＊96的JPG图片，然后用以下的脚本处理一下就好了：
+
+
+
+
+#!/bin/sh
+#install Netpbm first
+    jpegtopnm $1 | ppmquant 31 | ppmtobmp -bpp 8 > $2
+
+

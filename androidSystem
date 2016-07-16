@@ -1,0 +1,65 @@
+(2)修改内核配置文件,打开 Android 必须的驱动(日志和 BINDER)如下:kernel/.config
+3327 CONFIG_ANDROID=y
+3328 CONFIG_ANDROID_BINDER_IPC=y
+3329 CONFIG_ANDROID_BINDER_IPC_32BIT=y
+此部分的代码在内核 drivers/staging/android 目录下
+(3)为了提高启动速度,采用 ramdisk,将 android 文件系统的部分内容压缩到内核中。
+首先打开内核驱动:
+CONFIG_BLK_DEV_INITRD=y
+CONFIG_INITRAMFS_SOURCE="root"
+CONFIG_INITRAMFS_ROOT_UID=0
+CONFIG_INITRAMFS_ROOT_GID=0
+然后在 android 源代码编译出来的 out/target/product/merlin/root 目录复制到内核目录下
+(4)根据 android 文件系统的要求对 nand flash 进行重新分区,举例如下:
+将 nand flash 分区以下 8 个分区
+NTIM
+OBM
+U-boot
+Kernel
+System
+UserData
+Mass Storage
+BBT
+(5)根据分区表修改内核启动参数如下:
+CONFIG_CMDLINE="ubi.mtd=4 ubi.mtd=5 ubi.mtd=6 root=ubi0_0 rootfstype=ubifs
+console=ttyS1,115200 uart_dma init=/init"
+参数的意思是:载入的文件系统部分有 3 个分区,分别为 nand flash 的第 4,5,6 分区(从 0 编号),文件
+系统采用 ubifs 格式,控制台设备为 ttyS1,波特率为 115200
+启动的第一个应用程序是/init
+(6)确保控制台的设置和硬件保持一致,如:硬件上串口用的是 UART1,则内核启动参数中设置有
+console=ttyS1,而且 android 的启动过程中设要设置正确,修改
+部分位于 android 源代码 system/core/init/init.c 文件中,将
+static char *console_name = "/dev/console";
+修改成
+static char *console_name = "/dev/ttyS1";
+(7) 修 改 android 源 代 码 system/core/rootdir 目 录 下 的 init.rc 文 件 , 作 如 下 修 改 (android 默 认
+yaffs2 文件系统):
+首先将 android 文件系统修改成可读写,将
+mount rootfs rootfs / ro remount
+修改成
+mount rootfs rootfs / rw remount
+8)完成后编译内核,可以启动文件系统,控制台可用,但是没有显示启动 log,而且不停的重启。
+(9)系统不停的重启,因此控制台已经可用了,自然而然的想到看到 logcat 日志,一看,发现 logcat 设
+备居然没起来,配置文件里面都定义了
+居然没起来,查看了下内核 drivers/staging/android 目录,没有.o 文件,证明是没编译到,在看内核
+目录下的.config 文件,发现居然没有了
+logcat 和 binder 的宏定义,配置文件里面有定义而.config 文件中无定义,肯定是相关 Kconfig 文件的
+问题,通过分析 drivers/staging 目录下的
+Kconfig 文件发现是因为 STAGING_EXCLUDE_BUILD 宏默认是 y,在配置文件中否定此宏即可,在配
+置文件中 CONFIG_STAGING 定义后加上即可,如下:
+CONFIG_STAGING=y
+# CONFIG_STAGING_EXCLUDE_BUILD is not set
+修改后重新编译发现系统完成正常启动,启动过程中启动 log 也显示正常。
+至此,android 初步移植工作已经完成,当然,系统还有很多问题,需要下一步继续修改。
+总结:android 的移植按如下流程:
+(1)android linux 内核的普通驱动移植,让内核可以在目标平台上运行起来。
+(2)正确挂载文件系统,确保内核启动参数和 android 源代码 system/core/rootdir 目录下的 init.rc 中
+的文件系统挂载正确。
+(3)调试控制台,让内核启动参数中的 console 参数以及 android 源代码 system/core/init/init.c 中的
+onsole_name 设置和硬件保持一致
+(4)打开 android 相关的驱动(logger,binder 等),串口输入 logcat 看 logger 驱动起来,没有的话调试
+logger 驱动。
+说明:ARM 的内核配置文件定义在内核 arch/arm/configs 目录下imx_v7_android_defconfig
+
+
+

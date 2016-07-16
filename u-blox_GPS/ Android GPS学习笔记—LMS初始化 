@@ -1,0 +1,371 @@
+ LocationManagerService（简称LMS）和Android Java Framework中的其他Service一样由SystemServer创建并运行在system_process进程中。LMS是系统Location模块的核心，我们来看一下它的初始化。
+
+    目录：
+frameworks/base/services/java/com/android/server/SystemServer.java
+frameworks/base/services/java/com/android/server/SystemServer.java 
+
+1. SystemServer.java
+
+    在SystemServer.java文件中，startOtherService函数创建LMS的代码如下，首先创建了LMS对象，并将LOCATION_SERVICE添加到ServiceManager中。
+[java] view plaincopy
+
+    if (!disableLocation) {  
+                    try {  
+                        Slog.i(TAG, "Location Manager");  
+                        location = new LocationManagerService(context);  
+                        ServiceManager.addService(Context.LOCATION_SERVICE, location);  
+                    } catch (Throwable e) {  
+                        reportWtf("starting Location Manager", e);  
+                    }  
+
+final LocationManagerService locationF = location;  
+同样是在startOtherService函数中，调用了LMS的systemRunning函数，代码如下：
+[java] view plaincopy
+
+    try {  
+             if (locationF != null) locationF.systemRunning();  
+         } catch (Throwable e) {  
+             reportWtf("Notifying Location Service running", e);  
+         }  
+
+2. LMS(LocationManagerService)
+
+LMS的systemRunning函数实现如下：
+[java] view plaincopy
+
+    public void systemRunning() {  
+            synchronized (mLock) {  
+                if (D) Log.d(TAG, "systemReady()");  
+      
+                // fetch package manager  
+                mPackageManager = mContext.getPackageManager();  
+      
+                // fetch power manager  
+                mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);  
+      
+                // prepare worker thread  
+                mLocationHandler = new LocationWorkerHandler(BackgroundThread.get().getLooper());  
+      
+                // prepare mLocationHandler's dependents  
+                // Android平台提供粗细两种精度的位置信息。其中，粗精度的位置信息由LocationFudger根据细精度的位置  
+                // 信息进行一定的数学模糊处理后得到。  
+                mLocationFudger = new LocationFudger(mContext, mLocationHandler);  
+                // 系统有一个黑白名单用于禁止使用某些特定的LP，在黑白名单中，LP由其对应的java包名指定  
+                mBlacklist = new LocationBlacklist(mContext, mLocationHandler);  
+                mBlacklist.init();  
+                //GeofenceManager为地理围栏对象。              
+                mGeofenceManager = new GeofenceManager(mContext, mBlacklist);  
+      
+                // prepare providers 关键函数  
+                loadProvidersLocked();  
+                // 根据设置中的开关情况，开启或者禁止某个LP。在此函数中，各LP实现的LocationProviderInterface接口的enable/disable函数被调用  
+                updateProvidersLocked();  
+            }  
+      
+            // listen for settings changes 监听设置数据库的变化，字段LOCATION_PROVIDERS_ALLOWED，当用户点击设置菜单按钮时，会改变数据库该字段的值  
+            mContext.getContentResolver().registerContentObserver(  
+                    Settings.Secure.getUriFor(Settings.Secure.LOCATION_PROVIDERS_ALLOWED), true,  
+                    new ContentObserver(mLocationHandler) {  
+                        @Override  
+                        public void onChange(boolean selfChange) {  
+                            synchronized (mLock) {  
+                                updateProvidersLocked();  
+                            }  
+                        }  
+                    }, UserHandle.USER_ALL);  
+            mPackageMonitor.register(mContext, mLocationHandler.getLooper(), true);  
+      
+            // 其他如监听用户切换，APK安装/卸载等事件在此不赘述  
+            ... ...  
+        }  
+
+systemRunning中的内容较多，我们看其中的关键函数：loadProvidersLocked()，该函数用于创建及加载系统中所有的LP，其代码如下：
+[java] view plaincopy
+
+    private void loadProvidersLocked() {  
+              
+            //创建PassiveProvider,这个LP始终是enable的。passive译为被动，它自己不能更新位置信息，而是靠其他LP来触发  
+            //位置更新，PassiveProvider的位置更新是由LMS接收到其他LP的位置更新通知后，主动调用PassiveProvider的  
+            //updateLocation函数来完成的  
+            PassiveProvider passiveProvider = new PassiveProvider(this);  
+            //LMS将保存所有的LP  
+            addProviderLocked(passiveProvider);  
+            //PassiveProvider永远处于启用状态。mEnabledProviders用于保存那些被启用的LP          
+            mEnabledProviders.add(passiveProvider.getName());  
+            mPassiveProvider = passiveProvider;  
+              
+            //创建GPSLP实例   
+            GpsLocationProvider gpsProvider = new GpsLocationProvider(mContext, this,  
+                    mLocationHandler.getLooper());  
+      
+            if (GpsLocationProvider.isSupported()) {  
+                mGpsStatusProvider = gpsProvider.getGpsStatusProvider();  
+                mNetInitiatedListener = gpsProvider.getNetInitiatedListener();  
+                //保存GPSLP  
+                addProviderLocked(gpsProvider);  
+                //GPSLP是真实的位置提供者，将它保存在mRealProviders中             
+                mRealProviders.put(LocationManager.GPS_PROVIDER, gpsProvider);  
+            }  
+            mGpsMeasurementsProvider = gpsProvider.getGpsMeasurementsProvider();  
+            mGpsNavigationMessageProvider = gpsProvider.getGpsNavigationMessageProvider();  
+      
+       
+            Resources resources = mContext.getResources();  
+            ArrayList<String> providerPackageNames = new ArrayList<String>();  
+            //config_locationProviderPackageNames存储了第三方LP的java包名。Android原生代码中该值为  
+            //"com.android.location.fused"。FusedLP对应的源码路径为frameworks/base/packages/FusedLocation  
+            String[] pkgs = resources.getStringArray(  
+                    com.android.internal.R.array.config_locationProviderPackageNames);  
+            if (D) Log.d(TAG, "certificates for location providers pulled from: " +  
+                    Arrays.toString(pkgs));  
+            if (pkgs != null) providerPackageNames.addAll(Arrays.asList(pkgs));  
+            //加载应用程序的实现的LP服务时，LMS将检查它们的签名信息以及版本信息  
+            ensureFallbackFusedProviderPresentLocked(providerPackageNames);  
+      
+            // 加载NetworkLP  
+            LocationProviderProxy networkProvider = LocationProviderProxy.createAndBind(  
+                    mContext,  
+                    LocationManager.NETWORK_PROVIDER,  
+                    NETWORK_LOCATION_SERVICE_ACTION,  
+                    com.android.internal.R.bool.config_enableNetworkLocationOverlay,  
+                    com.android.internal.R.string.config_networkLocationProviderPackageName,  
+                    com.android.internal.R.array.config_locationProviderPackageNames,  
+                    mLocationHandler);  
+            if (networkProvider != null) {  
+                //NetworkLP属于真实的LP  
+                mRealProviders.put(LocationManager.NETWORK_PROVIDER, networkProvider);  
+                //应用程序实现的LP保存在mProxyProviders中  
+                mProxyProviders.add(networkProvider);  
+                addProviderLocked(networkProvider);  
+            } else {  
+                Slog.w(TAG,  "no network location provider found");  
+            }  
+      
+            // 加载FusedLP  
+            LocationProviderProxy fusedLocationProvider = LocationProviderProxy.createAndBind(  
+                    mContext,  
+                    LocationManager.FUSED_PROVIDER,  
+                    FUSED_LOCATION_SERVICE_ACTION,  
+                    com.android.internal.R.bool.config_enableFusedLocationOverlay,  
+                    com.android.internal.R.string.config_fusedLocationProviderPackageName,  
+                    com.android.internal.R.array.config_locationProviderPackageNames,  
+                    mLocationHandler);  
+            if (fusedLocationProvider != null) {  
+                addProviderLocked(fusedLocationProvider);  
+                mProxyProviders.add(fusedLocationProvider);  
+                //FusedLP默认处于启用的状态  
+                mEnabledProviders.add(fusedLocationProvider.getName());  
+                mRealProviders.put(LocationManager.FUSED_PROVIDER, fusedLocationProvider);  
+            } else {  
+                Slog.e(TAG, "no fused location provider found",  
+                        new IllegalStateException("Location service needs a fused location provider"));  
+            }  
+      
+            // 加载Geocoder  
+            mGeocodeProvider = GeocoderProxy.createAndBind(mContext,  
+                    com.android.internal.R.bool.config_enableGeocoderOverlay,  
+                    com.android.internal.R.string.config_geocoderProviderPackageName,  
+                    com.android.internal.R.array.config_locationProviderPackageNames,  
+                    mLocationHandler);  
+            if (mGeocodeProvider == null) {  
+                Slog.e(TAG,  "no geocoder provider found");  
+            }  
+      
+            ... ...  
+              
+        }  
+
+在LMS的初始化函数中，loadProvidersLocked用于创建和加载系统中所有的LP如下：
+
+1. PassiveProvider：提供被动式的位置数据更新服务，其位置数据来源于其他LP
+
+2. GpsLocationProvider：由LMS创建并加载，运行在LMS所在的进程system_process中，属于系统提供的LP服务
+
+3. NetworkLocationProvider：该LP服务是由应用程序提供的
+
+4. FusedLocationProvider：由FusedLocation.apk服务，属于系统提供的应用程序。其内部将使用其他的LP
+
+5. GeocodeProvider：由第三方应用程序提供，一般和NetworkLP位于同一个应用程序中。
+
+其中GpsLocationProvider是重点，在下一篇文章中将介绍它的初始化。我们先来看一下LMS是如何与应用进程中的LP交互的。
+
+3. LocationProviderProxy.java
+
+    由loadProvidersProxy.java代码可知，LMS通过LocationProviderProxy的createAndBind函数来加载应用进程中的LP。
+
+[java] view plaincopy
+
+    public static LocationProviderProxy createAndBind(  
+                Context context, String name, String action,  
+                int overlaySwitchResId, int defaultServicePackageNameResId,  
+                int initialPackageNamesResId, Handler handler) {  
+            LocationProviderProxy proxy = new LocationProviderProxy(context, name, action,  
+                    overlaySwitchResId, defaultServicePackageNameResId, initialPackageNamesResId,  
+                    handler);  
+            if (proxy.bind()) {  
+                return proxy;  
+            } else {  
+                return null;  
+            }  
+        }  
+
+上述函数中有两个重要函数，一个是LocationProviderProxy的构造函数，另一个是bind函数。我们先来看一下其构造函数：
+
+[java] view plaincopy
+
+    private LocationProviderProxy(Context context, String name, String action,  
+                int overlaySwitchResId, int defaultServicePackageNameResId,  
+                int initialPackageNamesResId, Handler handler) {  
+            mContext = context;  
+            mName = name;  
+            mServiceWatcher = new ServiceWatcher(mContext, TAG + "-" + name, action, overlaySwitchResId,  
+                    defaultServicePackageNameResId, initialPackageNamesResId,  
+                    mNewServiceWork, handler);  
+        }  
+
+
+其中ServiceWatcher是LocationProviderProxy中最重要的对象。在Android LMS架构中，应用程序实现的LP服务是通过Service提供的。ServiceWatcher是LocationProviderProxy中用来连接和监视应用程序实现的LP服务的。
+
+再来看一下bind函数：
+
+[java] view plaincopy
+
+    private boolean bind () {  
+            return mServiceWatcher.start();  
+        }  
+
+bind函数直接调用了ServiceWatcher的start函数，我们直接来看start函数：
+
+[java] view plaincopy
+
+    public boolean start() {  
+            synchronized (mLock) {  
+            //关键函数bindBestPackageLocked  
+            if (!bindBestPackageLocked(mServicePackageName)) return false;  
+            }  
+      
+            // 监听用户切换  
+            IntentFilter intentFilter = new IntentFilter();  
+            intentFilter.addAction(Intent.ACTION_USER_SWITCHED);  
+            mContext.registerReceiverAsUser(new BroadcastReceiver() {  
+                @Override  
+                public void onReceive(Context context, Intent intent) {  
+                    String action = intent.getAction();  
+                    if (Intent.ACTION_USER_SWITCHED.equals(action)) {  
+                        switchUser();  
+                    }  
+                }  
+            }, UserHandle.ALL, intentFilter, null, mHandler);  
+      
+            // 监听应用程序的安装，卸载，更新等广播事件  
+            if (mServicePackageName == null) {  
+                mPackageMonitor.register(mContext, null, UserHandle.ALL, true);  
+            }  
+      
+            return true;  
+        }  
+
+其中的重要函数是bindBestPackageLocked，它的工作主要有以下内容：
+
+1. 检查目标应用程序的签名
+
+2. 根据createAndBind第三个参数查找该目标应用程序实现的Service。以NetworkLP为例，目标应用程序必须提供一个名为"com.android.location.service.v2.NetworkLocationProvider"的服务
+
+3. 绑定到该服务上，并获取一个类型为ILocationProvider的实例。通过该实例，LocationProviderProxy可与应用程序中的LP服务交互
+
+bindBestPackageLocked中最重要的函数是bindToPackageLocked，其代码如下：
+
+[java] view plaincopy
+
+    private void bindToPackageLocked(String packageName, int version, boolean isMultiuser) {  
+            unbindLocked();  
+            Intent intent = new Intent(mAction);  
+            intent.setPackage(packageName);  
+            mPackageName = packageName;  
+            mVersion = version;  
+            mIsMultiuser = isMultiuser;  
+            if (D) Log.d(mTag, "binding " + packageName + " (version " + version + ") ("  
+                    + (isMultiuser ? "multi" : "single") + "-user)");  
+            mContext.bindServiceAsUser(intent, this, Context.BIND_AUTO_CREATE | Context.BIND_NOT_FOREGROUND  
+                    | Context.BIND_NOT_VISIBLE, mIsMultiuser ? UserHandle.OWNER : UserHandle.CURRENT);  
+        }  
+
+bindServiceAsUser函数绑定了第三方应用程序的LP服务，参数intent中传入的mAction是在ServiceWatcher的构造函数中赋值的，从LocationProviderProxy的代码中可以看出，这个action是在createAndBind函数中传入的，即在LMS中定义了此Action:
+[java] view plaincopy
+
+    private static final String NETWORK_LOCATION_SERVICE_ACTION =  
+                "com.android.location.service.v3.NetworkLocationProvider"  
+
+
+绑定成功后，ServiceWatcher的onServiceConnected函数将被调用：
+
+[java] view plaincopy
+
+    public void onServiceConnected(ComponentName name, IBinder binder) {  
+            synchronized (mLock) {  
+                String packageName = name.getPackageName();  
+                if (packageName.equals(mPackageName)) {  
+                    if (D) Log.d(mTag, packageName + " connected");  
+                    mBinder = binder;  
+                    if (mHandler !=null && mNewServiceWork != null) {  
+                        mHandler.post(mNewServiceWork);  
+                    }  
+                } else {  
+                    Log.w(mTag, "unexpected onServiceConnected: " + packageName);  
+                }  
+            }  
+        }  
+
+mNewServiceWork由LocationProviderProxy提供，是一个Runnable对象，其代码如下：
+
+[java] view plaincopy
+
+    private Runnable mNewServiceWork = new Runnable() {  
+        @Override  
+        public void run() {  
+            if (D) Log.d(TAG, "applying state to connected service");  
+      
+            boolean enabled;  
+            ProviderProperties properties = null;  
+            ProviderRequest request;  
+            WorkSource source;  
+            ILocationProvider service;  
+            synchronized (mLock) {  
+                enabled = mEnabled;  
+                request = mRequest;  
+                source = mWorksource;  
+                service = getService();  
+            }  
+      
+            if (service == null) return;  
+      
+            try {  
+                // 获取LP的属性信息，这些属性统一封装在类型为ProviderProperties的对象中  
+                properties = service.getProperties();  
+                if (properties == null) {  
+                    Log.e(TAG, mServiceWatcher.getBestPackageName() +  
+                            " has invalid locatino provider properties");  
+                }  
+      
+                // apply current state to new service  
+                if (enabled) {  
+                    service.enable();//启动这个LP  
+                    if (request != null) {//如果客户端有请求，则将该请求发送给LP  
+                        service.setRequest(request, source);  
+                    }  
+                }  
+            } catch (RemoteException e) {  
+                Log.w(TAG, e);  
+            } catch (Exception e) {  
+                // never let remote service crash system server  
+                Log.e(TAG, "Exception from " + mServiceWatcher.getBestPackageName(), e);  
+            }  
+      
+            synchronized (mLock) {  
+                mProperties = properties;  
+            }  
+        }  
+    };  
+
+
+

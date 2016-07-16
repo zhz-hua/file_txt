@@ -1,0 +1,370 @@
+http://www.cnblogs.com/wanqieddy/archive/2012/09/17/2688366.html  开机动画加声音
+http://www.itnose.net/detail/6184574.html    加服务线程分析
+
+开启 rgb2565 工具
+build/core/user_tags.mk
+build/tools/rgb2565
+第一个动画：
+
+Bootloader开机使用的图片是linux.bmp，长高分别是120*120，色度是32，所以可以拿相同格式图片替换，进行编译烧写即可
+http://jishublog.iteye.com/blog/1782918
+我们平时目测的开机logo一般是两种：静态的和动画的。其实在实现logo的过程中，
+有四幅图片:
+	1)、uboot显示；
+	2）、kernel显示logo_linux_clut244.ppm；
+	3）、android第一幅intilogo.rle；
+	4）、android第二幅,bootanimation。前三幅一般我们做成相同的，
+	4）为动画显示。启动过程如下所示。
+
+uboot 开机图片
+一 :kernel 开机图片 logo_linux_clut224.ppm	
+	1、内核目录中 make menuconfig
+	Device Drivers ---->Graphics support ---->Bootup logo ----> Standard 224-color Linux logo
+	把开机LOGO图片保存为bmp或者png格式：如linux.png;linux.bmp通过linux工具把图片转化为：ppm格式。替换：driver/video/logo/logo_linux_clut244.ppm
+	下面命令需要安装netpbm的工具包 如果没有：sudo apt-get install netpbm
+
+	软件
+	kernel
+
+	/kernel/drivers/video/fbmem.c
+	/kernel/drivers/video/logo/logo.c
+	/kernel/drivers/video/logo/Kconfig
+	/kernel/include/linux/linux_logo.h
+
+吧图片显示中间
+	logo居中：
+
+
+一、首先说明logo显示相关程序。
+(1)在driver/video/console/fbcon.c文件中，函数fncon_init(),为虚拟设备结构体VC赋值，并调用本文件中的fbcon_prepare_logo()函数，为显示logo做准备。
+(2)fbcon_prepare_logo(),调用了fb_prepare_logo()函数(此函数在driver/video/fbmem.c中)。
+(3)fb_prepare_logo()中调用了fb_find_logo()函数(此函数在driver/video/logo/logo.c中)，这个函数会根据配置文件找到相应的logo数据，这个数据就是logo文件夹下logo_xxx_xxx.ppm生成的，我的linux就是logo_linux_clut224.ppm。
+(4)fb_prepare_logo()函数获取了照片信息后进行一次判断，看图片高度是否超过屏幕高度，否则，不显示。
+(5)fbcon_prepare_logo()函数获取图片数据后，又进一步处理判断，用照片的高度除以字模高度后，于屏高度除以字模高度的值相比较，判断图片可否显示。若过大，则打印显示“fbcon_init:disable boot-logo(boot-logo bigger than screen)”。
+1、设置logo图片在屏幕中的位置
+
+	vi drivers/video/fbmem.c
+
+	找到"fb_show_logo_line"函数，把
+
+	image.dx = 0;
+
+	image.dy = y;
+
+	改为
+image.dx=(info->var.xres/2)-(logo->width/2);
+image.dy=(info->var.yres/2)-(logo->height/2);
+
+	//image.dx = (info->var.xres/2) - (610/2);
+
+	//image.dy = (info->var.yres/2) - (206/2);
+
+	[注：
+
+	info->var.xres和info->var.yres是分辨率大小
+
+	610和206是logo图片的大小
+
+	]
+
+2、
+	vi drivers/video/console/fbcon.c
+
+	找到"fbcon_prepare_logo"函数，在
+
+	logo_height = fb_prepare_logo(info, ops->rotate);
+
+	后面加上
+	logo_height += (info->var.yres/2)-(logo_height/2);
+
+	//logo_height += (info->var.yres/2) - (206/2);
+
+二、然后，在以上的基础，说明我的问题，我的屏幕是800*600，移植同等大小图片后不显示，且打印fbcon_init:disable boot-logo(boot-logo bigger than screen)。
+不明白为什么同样大小的图片不显示？？
+仔细阅读源码，定位于fbcon_prepare_logo()函数，发现计算屏幕显示所需行数是计算方法为：
+logo_lines=(logo_height+vc->vc_font.height-1)/vc->vc_font.height;
+而后来与之相比较的vc->vc_bottom=info->var.yres(屏幕高度)/vc_font.height;
+不明白这是为什么？？这样算法不公平的啊？？
+于是，更改为：
+logo_lines=(logo_height)/vc->vc_font.height;
+编译后，800*600图片显示成功！！
+
+
+
+罗老师，我将第一个开机画面的logo换成了140*153这么大小的图片，如果只替换，可以正常显示，但是如果我修改
+    image.dx = 0;
+    image.dy = y;
+    这两个图片所在的位置，那我的图就没有完全显示，底部有几行没有显示，不知怎么回事，按道理来说我的buf是有720*480那么大来着的啊。请指教如何把logo显示在正中间
+
+	Re: 罗升阳 2012-09-18 00:01发表 [回复]
+	    回复gzzaigcn：改两个地方：
+	    1. 打开drivers/video/fbmem.c文件，找到fb_show_logo_line函数里面的这两行：
+	    image.dx = 0;
+	    image.dy = y;
+	    改成：
+	    image.dx = (info->var.xres / 2) - (logo->width / 2);
+	    image.dy = (info->var.yres / 2) - (logo->height / 2);
+	    2. 打开drivers/video/console/fbcon.c文件，找到fbcon_prepare_logo函数，找到下面这一行：
+	    logo_height = fb_prepare_logo(info, ops->rotate);
+	    在后面加上一行：
+	    logo_height += (info->var.yres / 2) - (logo_height / 2);
+
+	./drivers/video/logo/logo_linux_clut224.ppm
+二:android 开机图片  initlogo.rle    http://blog.csdn.net/qq258711519/article/details/8092595  显示分析
+		修改宏可以修改文件
+		android/中的宏：
+		system/core/init/init.h
+	    	#define INIT_IMAGE_FILE "/initlogo.rle"
+		int load_565rle_image( char *file_name );
+	PRODUCT_COPY_FILES +=	\
+		device/fsl/imx5x/initlogo.rle:root/initlogo.rle
+
+	system/core/init/init.h:135:#define INIT_IMAGE_FILE	"/initlogo.rle"
+	system/core/init/init.c:660:    if( load_565rle_image(INIT_IMAGE_FILE) ) {
+
+		用到 android/out/host/linux-x86/bin
+
+	（1）找一张.png格式的图片，使用linux下的ImageMagick自带的convert命令，进行raw格式转换，命令为：
+	    convert -depth 8 android_logo.png rgb:android_logo.raw  
+
+	（2）、需要用到android编译后的rgb2565工具，在android/out/host/linux-x86/bin目录下(android为当前源码所在目录)，转换命令如下：
+	    rgb2565 -rle < android_logo.raw >initlogo.rle  
+
+	　　注：ubuntu10.04 默认已经安装ImgageMagick工具，如果当前系统没有安装，可以执行下面的命令安装：
+	　　sudo apt-getinstall imagemagick（支持convert命令）
+
+		为了方便，我们把rgb2565这个bin文件，拷贝到我们做动画的文件夹中。同上面也写一个脚本出来：
+
+		android_rle.sh
+三:android 开机动画
+	如果是在 linux下面，用下面的命令:
+	cd directory/that/contains/desc.txt/and/part0/part1/
+	zip -r -X -Z store ../bootanimation part*/*.png desc.txt
+
+	zip -r -X -Zstore ../bootanimation part*/*.png desc.txt 
+
+	frameworks/base/cmds/bootanimation/，通过分析源码可知，修改Android开机动画有两种方式：
+    1)替换frameworks/base/core/res/assets/images/目录下的两个图片文件：android-logo-mask.png和android-logo-shine.png，android-logo-mask.png是镂空蒙板png图片，
+	android-logo-shine.png是镂空蒙板后面的闪光png图片
+	( 编译成功后在android源码根目录生成out目录，
+	 修改android\out\target\product\sdkDemo\system\framework目录下的framework-res.apk
+	 用winrar格式打开，替换assets\images里的2张图片即可)
+    2)在/data/local/或/system/media/目录创建bootanimation.zip文件
+ 
+bootanimation.zip文件打包前的结构为：
+[cpp] view plaincopy
+1. desc.txt             动画属性描述文件  
+2. part0/                          第一阶段动画图片的目录（动画是由一帧帧图片组成的）  
+3. part1/                          第二阶段动画图片的目录  
+bootanimation.zip文件是直接由这几个文件打包的，打包的格式是ZIP，并且要指定用压缩打包方式（就是在打包时的压缩方式选择为存储）。
+ 
+ 
+desc.txt文件的格式为：
+
+1. 480 250 15  
+2. p 1 0 part0  
+3. p 0 10 part1  
+其中各个参数的意义为：
+
+
+
+
+
+
+
+
+
+android
+	Android 系统启动后，init.c中main()调用load_565rle_image()函数读取/initlogo.rle（一张565 rle压缩的位图），
+	如果读取成功，则在/dev/graphics/fb0显示Logo图片；如果读取失败，则将/dev/tty0设为TEXT模式，并打开/dev/tty0，输出文本“A N D R I O D”字样。
+	 /system/core/init/init.c 
+	 /system/core/init/init.h 
+	/system/core/init/init.rc 
+	/system/core/init/logo.c *.rle文件
+	：Android的系统登录动画类似于Windows系统的滚动条，是由前景和背景两张PNG图片组成
+	frameworks/base/core/res/assets/images/。
+	前景图片（android-logo-mask.png）
+	背景图片（android-logo-shine.png）则是简单的纹理
+	/frameworks/base/libs/surfaceflinger/BootAnimation.h
+	/frameworks/base/libs/surfaceflinger/BootAnimation.cpp
+	/frameworks/base/core/res/assets/images/android-logo-mask.png  Android默认的前景图片，文字部分镂空，大小256×64
+	/frameworks/base/core/res/assets/images/android-logo-shine.png Android默认
+	init.c解析init.rc（其中定义服务：“service bootanim /system/bin/bootanimation”），
+	bootanim服务由SurfaceFlinger.readyToRun()（property_set("ctl.start", "bootanim");）
+	执行开机动画、bootFinished()（property_set("ctl.stop", "bootanim");）执行停止开机动画。
+	BootAnimation.h和BootAnimation.cpp文件放到了
+	/frameworks/base/cmds/bootanimation目录下了，
+	增加了一个入口文件bootanimation_main.cpp。Android.mk文件中可以看到，将开机动画从原来的SurfaceFlinger里提取出来
+（1）adb shell后，可以直接运行“bootanimation”来重新看开机动画，它会一直处于动画状态，而不会停止。
+（2）adb shell后，命令“setprop ctl.start bootanim”执行开机动画；命令“getprop ctl.start bootanim”停止开机动画。这两句命令分别对应SurfaceFlinger.cpp的两句语句：property_set("ctl.start", "bootanim");和property_set("ctl.stop", "bootanim");
+相关文件：
+/frameworks/base/cmds/bootanimation/BootAnimation.h
+/frameworks/base/cmds/bootanimation/BootAnimation.cpp
+/frameworks/base/cmds/bootanimation/bootanimation_main.cpp
+/system/core/init/init.c
+/system/core/rootdir/init.rc
+刷第一个开机画面软件使用教程：
+先打开机子的fastboot模式
+1:先找好图片(适合自己分辨率的图片)放在工具里（最好是PNG格式，其他格式容易失真）
+2:点开 G2开机画面制作工具
+3：点OPEN打开图片
+4：点convert生成第一个开机画面文件
+5：刷开机画面（系统C:\WINDOWS\system32里面必须有Adb那2个文件）
+
+
+刷第二屏开机画面比较麻烦
+
+下面分析一下2.0、2.1系统开机画面的构成
+文件名为bootanimation.zip 一定是这个不能修改
+里面包含part1 part2文件夹 和desc.txt（另一种就是android文件夹+desc.txt，这样设置就可以改系统开机几秒的音乐了）
+part 文件夹里面放的是动画拆分的图片 格式为png 大家可以自己制作
+desc.txt里面是播放的设置
+格式是这样的
+480 800 15
+p 1 0 part1
+p 0 0 part2
+480 800是指显示的分辨率 宽 高
+15是一秒的帧数
+p后面的数字是指播放次数 0为循环
+后面那位数字 一般为0 pause If pause = 10, it will show the last frame and then sleep 10/fps seconds before continuing with the animation.这是外国人写的 没有很大影响
+part0 为文件夹名
+为什么要用两个文件夹呢 其实一个也可以的
+按照我的设置
+part1是播放一遍的
+part2是循环播放直到开机
+这里看懂了 就可以开始制作了 按照上面的格式搞好之后用 zip软件打包（最好把原来的bootanimation.zip备份一份）
+注意文件名不能错一定为bootanimation.zip
+
+
+制作bootanimation.zip
+     首先从里面的图片说起 图片一定要转换成PNG格式，建议找到的图片要和自己机子的分辨率一样，如果不是也可以的 有可能变形 注意图片的大小要统一
+ （如果不会做连接的图片组 直接找个适合自己分辨率的动态图片分解出PNG格式的静态图片，用ImageReady可以批量导出）
+     建立part1 part2或android文件夹 放进一组连接的图片组
+     开始压缩成ZIP格式  名字一定要bootanimation.zip  压缩方式一定是存储     压缩完了看下大小一般最大的2MB左右 太大了用JPEG Imager压缩下 压缩图片很好的
+     开始写desc.txt （文件每节后面有个黑色符号不知道是什么 最好写的时候看下我传的样本）
+desc.txt 格式(解释看上面）
+有2个文件夹 part1、part2 （此种没开机声音）
+代码：
+320 480 15
+p 1 1 part1
+p 0 0 part2
+
+有1个文件夹 android   （有声音 声音文件下面讲解）
+320 480 15
+p 1 1 android
+
+保存后拖入bootanimation.zip  里面OK   
+
+android文件夹的声音文件制作
+把一个体积很小的MP3文件改成android_audio.mp3 放到system/media/ 和system/customize/resource/
+
+刷的时候直接用ES或Root explorer打开system读写权限R/O   直接用ES、Root explorer或91助手（用91的时候也要用ES或Root explorer打开system读写权限R/O）
+替换system/media/bootanimation.zip 和system/customize/resource/bootanimation.zip 两处的文件 重新启动成功刷完2.0、2.1系统的开机第二画面
+
+
+开机动画文件：bootanimation.zip
+
+动画是由系列图片连续刷屏实现的。。
+
+bootanimation.zip文件是zip压缩文件，压缩方式要求是存储压缩，包含一个文件和两个目录：
+
+    1.动画属性描述文件：desc.txt
+    2.第一阶段动画图片目录：part0
+    3.第二阶段动画图片目录：part1
+
+desc.txt文件内容：
+    480 427 30
+    p 1 0 part0
+    p 0 10 part1
+   
+desc.txt文件分析：
+    480  427   30
+     宽   高    帧数
+      p         1              0                      part0
+    标志符 循环次数 阶段切换间隔时间  对应目录名
+      p         0             10                     part1
+    标志符 循环次数 阶段切换间隔时间  对应目录名
+
+    ==================
+    标志符：
+        必须是: p
+
+    循环次数：
+        0 : 表示本阶段无限循环
+
+    阶段切换间隔时间：
+       &nbs
+                                                                                                               
+                                                                                               
+        在ubuntu
+zip -Z store bootanimation.zip part0/*PNG part1/*PNG desc.txt
+OR
+zip -0 bootanimation.zip part0/*PNG part1/*PNG desc.txt
+adb push bootanimation.zip /system/media/
+
+
+
+
+跪求答案：在kernel logo（静态图）显示完之后，会有1s时间黑屏，然后进入android logo（动画）这中间的1s能去掉吗？原因是什么？
+
+	Re: GEN216IUS 2015-01-05 11:25发表 [回复]
+	    回复luoyuan34：遇到同样的问题，要怎么解决呢
+
+	Re: Robot__Man 2015-11-19 18:57发表 [回复]
+	    回复GEN216IUS：这是在安卓开机动画阶段对framebuff进行了一些ioctl的操作和memset，建议看一下init_frame_buffer_locked()这个函数，
+	我把里面的上述操作注释掉了，生成一个gralloc.smdk4x12.so的动态库，
+  	adb push到system/lib/hw下，我这里是UT4412的ARM cortex A9开发板，就不黑屏了。我是通过加while（1）和打印不断追踪，才追到这里的。目前还没研究这样改，有什么影响。
+
+一：去掉kernel的logo和intilogo.rle之间的黑屏，
+	在BootAnimation开始绘图之前，会先做一次clear screen的动作，避免出现前面的图干扰到BootAnimation的显示。
+	通过check main_log先确认播放开机动画是哪个function，在对应function删除clear screen的动作的对应代码
+	frameworks/base/cmds/bootanimation/BootAnimation.cpp
+
+
+
+1. 这个现象是因为，在BootAnimation开始绘图之前，会先做一次clear screen的动作，避免出现前面的图干扰到BootAnimation的显示。这是Google default design，虽然不可避免，但是可以优化。
+
+优化方法：
+通过check main_log先确认播放开机动画是哪个function，在对应function删除clear screen的动作的对应代码。
+/frameworks/base/cmds/bootanimation/BootAnimation.cpp
+450bool BootAnimation::android()451{452 initTexture(&mAndroid[0], mAssets, "images/android-logo-mask.png");453 initTexture(&mAndroid[1], mAssets, "images/android-logo-shine.png");454/*----------------------------删除clear screen对应code-------------------------*/
+455 // clear screen
+456 glShadeModel(GL_FLAT);
+457 glDisable(GL_DITHER);
+458 glDisable(GL_SCISSOR_TEST);
+459 glClearColor(0,0,0,1);
+460 glClear(GL_COLOR_BUFFER_BIT);
+461 eglSwapBuffers(mDisplay, mSurface);
+/*----------------------------删除clear screen对应code-------------------------*/
+462463 glEnable(GL_TEXTURE_2D);464 glTexEnvx(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+
+
+594bool BootAnimation::movie()/*----------------------------删除clear screen对应code-------------------------*/
+700 // clear screen
+701 glShadeModel(GL_FLAT);
+702 glDisable(GL_DITHER);
+703 glDisable(GL_SCISSOR_TEST);
+704 glDisable(GL_BLEND);
+705 glClearColor(0,0,0,1);
+706 glClear(GL_COLOR_BUFFER_BIT);
+707
+708 eglSwapBuffers(mDisplay, mSurface);
+709/*----------------------------删除clear screen对应code-------------------------*/
+
+
+1128bool BootAnimation::MTKmovie()/*----------------------------删除clear screen对应code-------------------------*/1222 // clear screen1223 glDisable(GL_DITHER);1224 glDisable(GL_SCISSOR_TEST);1225 glDisable(GL_BLEND);1226 glClear(GL_COLOR_BUFFER_BIT);12271228 eglSwapBuffers(mDisplay, mSurface);/*----------------------------删除clear screen对应code-------------------------*/
+
+2.还有，在initAudioPath() function中，两个while循环可能耗时导致黑屏。
+820char* BootAnimation::initAudioPath() {835 while (strcmp(type, "-1") == 0 &&836 strcmp(crypto_state, "unencrypted") != 0 &&837 deal_with_encryption == true){838 usleep(100000);839 property_get("ro.crypto.state", crypto_state, "-1");840 property_get("vold.encryption.type", type, "-1");841 }842843 while (strcmp(type, "default") == 0 && deal_with_encryption == true){844 property_get("vold.decrypt", status, "-1");845 if (strcmp(status, "trigger_restart_framework") != 0){846 usleep(100000);847 XLOGD("[BootAnimation %s %d]Decrypt status=%s",__FUNCTION__,__LINE__,status);848 continue;849 }850 property_get("persist.sys.mute.state", volume, "-1");851 int nVolume = -1;852 nVolume = atoi(volume);853 XLOGD("[BootAnimation %s %d]nVolume=%d",__FUNCTION__,__LINE__,nVolume);854 if(nVolume == 0 || nVolume == 1){855 XLOGD("initAudioPath: DON'T PLAY AUDIO!");856 return NULL;857 }858 break;859 }
+
+
+
+
+
+
+
+
+
+
+
+

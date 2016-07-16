@@ -1,0 +1,13 @@
+$(hide) 表示引用hide变量
+比如定义了
+hide = sourcecode.c
+$(hide) 就代表了 sourcecode.c
+ 
+$@表示生成目标
+ 
+比如
+boot.o : boot.c
+    gcc -o $@ -c $<
+     
+其中 $@表示生成的目标 boot.o
+ $< 表示生成的依赖文件 boot.c

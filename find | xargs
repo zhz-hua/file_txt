@@ -1,0 +1,1 @@
+find ./hardware/ -name Android.mk |xargs grep libbt

@@ -1,0 +1,110 @@
+使用定时器的步骤：
+	1） 定义定时器:
+
+	struct timer_list my_timer
+
+	2）初始化定时器：
+
+	初始化定时器的到期节拍数
+
+	my_timer.expires = jiffies +delay ;该设置让定时器的触发时间设置为 激活定时器后的delay个节拍点
+
+	my_timer.function = 处理函数的名称 该设置设置定时器触发时处理的函数
+
+	my_timer.data 初始化处理函数的参数值，若处理函数没有参数则可简单设置为0或任意其他数值
+
+	3）激活定时器：即内核会开始定时，直到my_timer.expires
+
+	使用函数add_timer 即 add_timer(&my_timer);
+
+	内核原型为：
+
+	void add_timer(struct timer_list *timer)
+	{
+	  BUG_ON(timer_pending(timer));
+	  mod_timer(timer, timer->expires); //该函数设置定时器timer的定时时间为timer->expires;
+	}
+
+	4)删除定时器：如果需要在定时器到期之前停止定时器，则可以使用该函数，若是定时器已经过期则不需调用该函数，因为它们会自动删除
+
+del_timer(&my_timer);
+
+//电平翻转周期1秒
+struct timer_list s_timer;
+
+void heartbeat_func(void)
+{
+	value = value ^ 1;
+        gpio_set_value(heartbeat_gpio,value);
+}
+
+static void second_timer_handle(unsigned long arg)
+{
+	heartbeat_func();
+	mod_timer(&s_timer,jiffies + 5*HZ/10);
+
+}
+int main(char *arg char **arc){
+	init_timer(&s_timer);
+	s_timer.function = &second_timer_handle;
+        s_timer.expires = jiffies + 5*HZ/10;
+        add_timer(&s_timer);
+	return 0;
+}
+
+
+
+
+ 
+
+定时器的简单实例：该例子的功能是首先初始化一个定时器，当定时器时间到后触发定时器出俩函数的执行，该函数又重新设置了该定时器的时间，即该定时器又在下一次定时时间的到来继续处理函数，一直循环，知道最后在该模块卸载时进行删除定时器，结束该定时器
+
+代码中 HZ为内核每一秒的节拍数，是通过宏进行定义的，通过该程序的打印结果可以得到，本人电脑的节拍数测试结果为250
+复制代码
+
+#include< linux/module.h >
+#include< linux/init.h >
+#include< linux/sched.h >
+#include < linux/timer.h >
+
+#include < linux/kernel.h >
+
+struct timer_list stimer; //定义定时器
+static void time_handler(unsigned long data){ //定时器处理函数
+  mod_timer(&stimer, jiffies + HZ);
+  printk(“current jiffies is %ld\n”, jiffies);
+}
+static int __init timer_init(void){ //定时器初始化过程
+  printk(“My module worked!\n”);
+  init_timer(&stimer);
+  stimer.data = 0;
+  stimer.expires = jiffies + HZ; //设置到期时间
+  stimer.function = time_handler;
+  add_timer(&stimer);
+  return 0;
+}
+static void __exit timer_exit(void){
+  printk(“Unloading my module.\n”);
+  del_timer(&stimer);//删除定时器
+  return;
+}
+module_init(timer_init);//加载模块
+module_exit(timer_exit);//卸载模块
+
+MODULE_AUTHOR(“fyf”);
+
+MODULE_LICENSE(“GPL”);
+
+复制代码
+
+加载/ 卸载该程序后通过命令dmesg可以看到
+
+[ 6225.522208] My module worked!
+[ 6226.520014] current jiffies is 1481630
+[ 6227.520014] current jiffies is 1481880
+[ 6228.520013] current jiffies is 1482130
+[ 6229.520011] current jiffies is 1482380
+[ 6229.770335] Unloading my module.
+即每2次的jiffies之差为250
+
+ 

@@ -1,0 +1,101 @@
+struct work_struct  
+	{  
+	  unsigned long pending;//这个工作是否正在等待处理  
+	  struct list_head entry;//链接所有工作的链表，形成工作队列  
+	  void (*func)(void *);//处理函数  
+	  void *data;//传递给处理函数的参数  
+	  void *wq_data;//内部使用数据  
+	  struct timer_list timer;//延迟的工作队列所用到的定时器  
+	};  
+
+ 而这些工作（结构体）链接成的链表就是所谓的工作队列。工作者线程会在被唤醒时执行链表上的所有工作，当一个工作被执行完毕后，
+ 相应的work_struct结构体也会被删除。当这个工作链表上没有工作时，工作线程就会休眠。
+ 
+	INIT_WORK(struct work_struct*work,void(*func)(void*),void *data);
+	  
+将工作队列机制对应到具体的中断程序中，即那些被推后的工作将会在func所指向的那个工作队列处理函数中被执行。
+实现了工作队列处理函数后，就需要schedule_work函数对这个工作进行调度，就像这样
+
+schedule_work(&work);  
+
+这样work会马上就被调度，一旦工作线程被唤醒，这个工作就会被执行（因为其所在工作队列会被执行）。
+
+
+1. 在探测函数里goodix_ts_probe初始化	完成数据的初始化工作
+   INIT_WORK(&ts->work, goodix_ts_work_func);//struct work_struct  work，ts是client私有数据结构体
+   主要目的就是因为就算没有中断，在第一次开机时也有检测设备，所以这个任务一开始就执行，只不过到后来中断发生后就再执行.
+2. 现在当然轮到static void goodix_ts_work_func(struct work_struct *work)这个工作任务了
+   在这个函数里会有一句：
+   struct goodix_ts_data *ts = container_of(work, struct goodix_ts_data, work);
+	 这函数的主要目的就是解决前面所说的我们的data跑哪去了，使用container_of这个函数来求出我们的data的指针
+3.当然你不能忘记注册你的中断函数了
+	request_irq(client->irq, goodix_ts_irq_handler,pdata->irq_edge ? IRQ_TYPE_EDGE_FALLING : IRQ_TYPE_EDGE_RISING,client->name, ts);
+	所以用一个结构体ts就可以把中断，任务，设备名等全部囊括进来
+4:中断函数开启工作队列
+	static u32 goodix_ts_irq_handler(struct goodix_ts_data *ts)
+	{
+			disable_irq_nosync(ts->client->irq)		//disable_irq关闭中断并等待中断处理完后返回, 而disable_irq_nosync立即返回
+	    dprintk(DEBUG_INT_INFO, "==========------TS Interrupt-----============\n");
+	    schedule_work(&ts->work);
+	    return 0;
+	}
+eg:
+struct gt811_ts_platdata  
+{  
+    u32 size_x;  
+    u32 size_y;  
+    u32 size_p;  
+    u32 swap;  
+    u32 revert_x;  
+    u32 revert_y;  
+    u32 reset_pin;  
+    u32 interrupt_pin;  
+    u32 ponits_max;  
+    struct i2c_client *client;  
+    struct input_dev *input;  
+    struct work_struct work;  
+};  
+static int gt811_ts_probe(struct i2c_client *client, const struct i2c_device_id *id)  
+{
+	 struct gt811_ts_platdata *pdata = dev_get_platdata(dev);
+	.....
+	INIT_WORK(&pdata->work, gt811_ts_handler);  
+	error = devm_request_any_context_irq(dev, client->irq, gt811_ts_isr,IRQF_TRIGGER_FALLING, client->name, pdata); 
+	.....  
+}
+static irqreturn_t gt811_ts_isr(int irq, void *dev_id)  
+{  
+    struct gt811_ts_platdata* pdata = (struct gt811_ts_platdata*)dev_id;  
+  
+    disable_irq_nosync(pdata->client->irq);  
+    schedule_work(&pdata->work);  
+  
+    return IRQ_HANDLED;  
+} 
+
+static void gt811_ts_handler(struct work_struct *work)  
+{  
+	struct gt811_ts_platdata *pdata = container_of(work, struct gt811_ts_platdata, work);   
+	...
+	if (i2c_write_bytes(pdata->client,buffer,2) < 0) {  
+		dev_err(dev, "Failed to write wakeup message.\n");  
+		goto reenable_irq;  
+	}  
+	...  
+	if (i2c_read_bytes(pdata->client, buffer, sizeof(buffer)) < 0) {  
+		dev_err(dev, "Failed to read touch message.\n");  
+		goto reenable_irq;  
+	}  
+	.... 
+	if (i2c_write_bytes(pdata->client, buffer, 2) < 0) {  
+		dev_err(dev, "Failed to write sleep message.\n");  
+		goto reenable_irq;  
+	}  
+	buffer[25] = buffer[19];  
+	buffer[19] = 0;  
+	
+	flags = buffer[2]&0x1f;  
+	... 
+reenable_irq:  
+	enable_irq(pdata->client->irq);  
+}   

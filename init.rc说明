@@ -1,0 +1,357 @@
+
+
+AIL由如下4部分组成。
+
+1.  动作（Actions）
+
+2.  命令（Commands）
+
+3． 服务（Services）
+
+4.  选项（Options）
+
+     这4部分都是面向行的代码，也就是说用回车换行符作为每一条语句的分隔符。而每一行的代码由多个符号（Tokens）表示。可以使用反斜杠转义符在 Token中插入空格。双引号可以将多个由空格分隔的Tokens合成一个Tokens。如果一行写不下，可以在行尾加上反斜杠，来连接下一行。也就是 说，可以用反斜杠将多行代码连接成一行代码。
+
+     AIL的注释与很多Shell脚本一行，以#开头。
+
+     AIL在编写时需要分成多个部分（Section），而每一部分的开头需要指定Actions或Services。也就是说，每一个Actions或 Services确定一个Section。而所有的Commands和Options只能属于最近定义的Section。如果Commands和 Options在第一个Section之前被定义，它们将被忽略。
+
+Actions和Services的名称必须唯一。如果有两个或多个Action或Service拥有同样的名称，那么init在执行它们时将抛出错误，并忽略这些Action和Service。
+
+下面来看看Actions、Services、Commands和Options分别应如何设置。
+
+Actions的语法格式如下：
+
+on <trigger>  
+   <command>  
+   <command>  
+   <command>
+
+      也就是说Actions是以关键字on开头的，然后跟一个触发器，接下来是若干命令。例如，下面就是一个标准的Action。
+
+    on boot  
+        ifup lo  
+        hostname localhost  
+        domainname localdomain  
+
+其中boot是触发器，下面三行是command
+
+那么init.rc到底支持哪些触发器呢？目前init.rc支持如下5类触发器。
+
+1.  boot
+
+   这是init执行后第一个被触发Trigger，也就是在 /init.rc被装载之后执行该Trigger
+
+2.  <name>=<value>
+
+   当属性<name>被设置成<value>时被触发。例如，
+
+on property:vold.decrypt=trigger_reset_main
+
+    class_reset main
+
+3.  device-added-<path>
+
+    当设备节点被添加时触发
+
+4.  device-removed-<path>
+
+   当设备节点被移除时添加
+
+5. service-exited-<name>
+
+   会在一个特定的服务退出时触发
+
+Actions后需要跟若干个命令，这些命令如下：
+
+1.  exec <path> [<argument> ]*
+
+  创建和执行一个程序（<path>）。在程序完全执行前，init将会阻塞。由于它不是内置命令，应尽量避免使用exec ，它可能会引起init执行超时。
+
+    2.  export <name> <value>
+
+在全局环境中将 <name>变量的值设为<value>。（这将会被所有在这命令之后运行的进程所继承）
+
+3.  ifup <interface>
+
+   启动网络接口
+
+4.  import <filename>
+
+   指定要解析的其他配置文件。常被用于当前配置文件的扩展
+
+5.  hostname <name>
+
+   设置主机名
+
+6.  chdir <directory>
+
+   改变工作目录
+
+7.  chmod <octal-mode><path>
+
+   改变文件的访问权限
+
+8.  chown <owner><group> <path>
+
+   更改文件的所有者和组
+
+9.  chroot <directory>
+
+  改变处理根目录
+
+10.  class_start<serviceclass>
+
+   启动所有指定服务类下的未运行服务。
+
+11  class_stop<serviceclass>
+
+  停止指定服务类下的所有已运行的服务。
+
+12.  domainname <name>
+
+   设置域名
+
+13.  insmod <path>
+
+   加载<path>指定的驱动模块
+
+14.  mkdir <path> [mode][owner] [group]
+
+   创建一个目录<path> ，可以选择性地指定mode、owner以及group。如果没有指定，默认的权限为755，并属于root用户和 root组。
+
+15. mount <type> <device> <dir> [<mountoption> ]*
+
+   试图在目录<dir>挂载指定的设备。<device> 可以是mtd@name的形式指定一个mtd块设备。<mountoption>包括 "ro"、"rw"、"re
+
+16.  setkey
+
+   保留，暂时未用
+
+17.  setprop <name><value>
+
+   将系统属性<name>的值设为<value>。
+
+18. setrlimit <resource> <cur> <max>
+
+   设置<resource>的rlimit （资源限制）
+
+19.  start <service>
+
+   启动指定服务（如果此服务还未运行）。
+
+20．stop<service>
+
+   停止指定服务（如果此服务在运行中）。
+
+21. symlink <target> <path>
+
+   创建一个指向<path>的软连接<target>。
+
+22. sysclktz <mins_west_of_gmt>
+
+   设置系统时钟基准（0代表时钟滴答以格林威治平均时（GMT）为准）
+
+23.  trigger <event>
+
+  触发一个事件。用于Action排队
+
+24.  wait <path> [<timeout> ]
+
+等待一个文件是否存在，当文件存在时立即返回，或到<timeout>指定的超时时间后返回，如果不指定<timeout>，默认超时时间是5秒。
+
+25. write <path> <string> [ <string> ]*
+
+向<path>指定的文件写入一个或多个字符串。  
+
+Services （服务）是一个程序，他在初始化时启动，并在退出时重启（可选）。Services （服务）的形式如下：
+
+    service <name> <pathname> [ <argument> ]*  
+          <option>  
+          <option>  
+
+例如，下面是一个标准的Service用法
+复制代码
+
+    service servicemanager /system/bin/servicemanager  
+        class core  
+        user system  
+        group system  
+        critical  
+        onrestart restart zygote  
+        onrestart restart media  
+        onrestart restart surfaceflinger  
+        onrestart restart drm  
+
+复制代码
+
+Services的选项是服务的修饰符，可以影响服务如何以及怎样运行。服务支持的选项如下：
+
+1.  critical
+
+表明这是一个非常重要的服务。如果该服务4分钟内退出大于4次，系统将会重启并进入 Recovery （恢复）模式。
+
+2. disabled
+
+ 表明这个服务不会同与他同trigger （触发器）下的服务自动启动。该服务必须被明确的按名启动。
+
+3.  setenv <name><value>
+
+在进程启动时将环境变量<name>设置为<value>。
+
+4.  socket <name><type> <perm> [ <user> [ <group> ] ]
+
+   Create a unix domain socketnamed /dev/socket/<name> and pass
+
+   its fd to the launchedprocess.  <type> must be"dgram", "stream" or "seqpacket".
+
+   User and group default to0.
+
+   创建一个unix域的名为/dev/socket/<name> 的套接字，并传递它的文件描述符给已启动的进程。<type> 必须是 "dgram","stream" 或"seqpacket"。用户和组默认是0。
+
+5.  user <username>
+
+在启动这个服务前改变该服务的用户名。此时默认为 root。
+
+6.  group <groupname> [<groupname> ]*
+
+在启动这个服务前改变该服务的组名。除了（必需的）第一个组名，附加的组名通常被用于设置进程的补充组（通过setgroups函数），档案默认是root。
+
+7.  oneshot
+
+   服务退出时不重启。
+
+8.  class <name>
+
+   指定一个服务类。所有同一类的服务可以同时启动和停止。如果不通过class选项指定一个类，则默认为"default"类服务。
+
+9. onrestart
+
+    当服务重启，执行一个命令（下详）。
+
+
+
+
+./device/fsl/sabresd_6dq/init.rc
+当我们只是按下电源键开机时,会进入正常启动模式。 Secondary stage bootloader 会从boot 分区开始启动。Boot 分区的格式是固定的,首先是一个头部,然后是 Linux 内核,最后是用作根文件系统的 ramdisk。
+当 Linux 内核启动完毕后,就开始执行根文件系统中的 init 程序,init 程序会读取启动脚本文件(init.rc 和init.goldfish)。
+现在就来说一下，init.rc到底在做些什么
+了解Linux的同学都应该知道Linux的重要特征之一就是一切都是以文件的形式存在的，例如，一个设备通常与一个或多个设备文件对应。这些与内核空间交互的文件都在用户空间，所以在Linux内核装载完，需要首先建立这些文件所在的目录。而完成这些工作的程序就是本文要介绍的init。Init是一个命令行程序。其主要工作之一就是建立这些与内核空间交互的文件所在的目录。当Linux内核加载完后，要做的第一件事就是调用init程序，也就是说，init是用户空间执行的第一个程序。
+
+在分析init的核心代码之前，还需要初步了解init除了建立一些目录外，还做了如下的工作
+
+1. 初始化属性
+
+2. 处理配置文件的命令（主要是init.rc文件），包括处理各种Action。
+
+3. 性能分析（使用bootchart工具）。
+
+4. 无限循环执行command（启动其他的进程）。
+
+     尽管init完成的工作不算很多，不过代码还是非常复杂的。Init程序并不是由一个源代码文件组成的，而是由一组源代码文件的目标文件链接而成的。这些文件位于如下的目录。
+
+<Android源代码本目录>/system/core/init
+
+     其中init.c是init的主文件，现在打开该文件，看看其中的内容。由于init是命令行程序，所以分析init.c首先应从main函数开始，现在好到main函数，代码如下：
+int main(int argc, char **argv){
+	//  下面的代码开始建立各种用户空间的目录，如/dev、/proc、/sys等
+	mkdir("/dev", 0755);
+	mkdir("/proc", 0755);
+	mkdir("/sys", 0755);
+	...
+	/* 检测/dev/.booting文件是否可读写和创建*/
+	close(open("/dev/.booting", O_WRONLY | O_CREAT, 0000));
+
+	open_devnull_stdio();
+	klog_init();
+	//  初始化属性
+	property_init();
+
+	get_hardware_name(hardware, &revision);
+	//  处理内核命令行
+	process_kernel_cmdline();
+	queue_builtin_action(property_service_init_action, "property_service_init"); 
+	… …
+	//  分析/init.rc文件的内容
+	init_parse_config_file("/init.rc");
+	… …//  执行初始化文件中的动作
+	action_for_each_trigger("init", action_add_queue_tail);
+	//  在charger模式下略过mount文件系统的工作
+	if (!is_charger) {
+		action_for_each_trigger("early-fs", action_add_queue_tail);
+		action_for_each_trigger("fs", action_add_queue_tail);
+		action_for_each_trigger("post-fs", action_add_queue_tail);
+		action_for_each_trigger("post-fs-data", action_add_queue_tail);
+	}
+	//  进入无限循环，建立init的子进程（init是所有进程的父进程）
+	for(;;) {
+		}
+
+
+	return 0;
+
+}
+1.  初始化（包括建立/dev、/proc等目录、初始化属性、执行init.rc等初始化文件中的action等）。
+
+2.  使用for循环无限循环建立子进程。
+	     在Linux系统中init是一切应用空间进程的父进程。所以我们平常在Linux终端执行的命令，并建立进程。实际上都是在这个无限的for循环中完成的。也就是说，
+	在Linux终端执行ps –e 命令后，看到的所有除了init外的其他进程，都是由init负责创建的。而且init也会常驻内容。当然，如果init挂了，Linux系统基本上就崩溃了。
+
+	对于main函数最开始完成的建立目录的工作比较简单，这部分也没什么可以分析的。就是调用了一些普通的API（mkdir）建立一些目录。现在说一些题外话，
+	由于Android的底层源代码（包括init）实际上是属于Linux应用编程领域：配置文件的解析。
+	这里的配置文件主要指init.rc。读者可以进到Android的shell，会看到根目录有一个init.rc文件。该文件是只读的，即使有了root权限，可以修改该文件也没有。
+	因为我们在根目录看到的文件只是内存文件的镜像。也就是说，android启动后，会将init.rc文件装载到内存。而修改init.rc文件的内容实际上只是修改内存中的init.rc文件的内容。
+	一旦重启android，init.rc文件的内容又会恢复到最初的装载。想彻底修改init.rc文件内容的唯一方式是修改Android的ROM中的内核镜像（boot.img）。其实boot.img名曰内核镜像，
+	不过该文件除了包含完整的Linux内核文件（zImage）外，还包括另外一个镜像文件（ramdisk.img）。ramdisk.img就包含了init.rc文件和init命令。所以只有修改ramdisk.img文件中的init.rc文件，
+	并且重新打包boot.img文件，并刷机，才能彻底修改init.rc文件。如果读者有Android源代码，编译后，就会看到out目录中的相关子目录会生成一个root目录，
+	该目录实际上就是ramdisk.img解压后的内容。会看到有init命令和init.rc文件。在后续的文章中将会讨论具体如何修改init.rc文件，如何刷机。不过这些内容与本文关系不大，所以不做详细的讨论。
+	现在回到main函数，在创建完目录后，会看到执行了如下3个函数。
+
+	    property_init();
+	    get_hardware_name(hardware, &revision);
+	    process_kernel_cmdline();
+	     其中property_init主要是为属性分配一些存储空间，该函数并不是核心。不过当我们查看init.rc文件时会发现该文件开始部分用一些import语句导入了其他的配置文件，
+	例如，/init.usb.rc。大多数配置文件都直接使用了确定的文件名，只有如下的代码使用了一个变量（${ro.hardware}）执行了配置文件名的一部分。那么这个变量值是从哪获得的呢？
+3.属性服务（Property Service）
+	queue_builtin_action(property_service_init_action, "property_service_init"); 
+	static int property_service_init_action(int nargs, char **args)  
+	{                                                                                                                          
+	    start_property_service();                                    
+	    return 0;                                                    
+	}
+	在研究这些配置文件之前应先了解init是如何处理这些属性的。编写过Windows本地应用的读者都应了解，在windows中有一个注册表机制，在注册表中提供了大量的属性。在Linux中也有类似的机制，这就是属性服务。
+	init在启动的过程中会启动属性服务（Socket服务），并且在内存中建立一块存储区域，用来存储这些属性。当读取这些属性时，直接从这一内存区域读取，如果修改属性值，需要通过Socket连接属性服务完成。
+	在init.c文件中的一个action函数中调用了start_property_service函数来启动属性服务，action是init.rc及其类似文件中的一种执行机制，由于内容比较多，所以关于init.rc文件中的执行机制将在下一篇文章中详细讨论。
+	     现在顺藤摸瓜，找到start_property_service函数，该函数在Property_service.c文件中，该文件与init.c文件中同一个目录。
+	#define PROP_PATH_RAMDISK_DEFAULT  "/default.prop"
+	#define PROP_PATH_SYSTEM_BUILD     "/system/build.prop"
+	#define PROP_PATH_SYSTEM_DEFAULT   "/system/default.prop"
+	#define PROP_PATH_LOCAL_OVERRIDE   "/data/local.prop"
+	void start_property_service(void)
+	{
+	    int fd;
+	    //  装载不同的属性文件
+	    load_properties_from_file(PROP_PATH_SYSTEM_BUILD);
+	    load_properties_from_file(PROP_PATH_SYSTEM_DEFAULT);
+	    load_override_properties();
+	    /* Read persistent properties after all default values have been loaded. */
+	    load_persistent_properties();
+	    //  创建socket服务（属性服务）
+	    fd = create_socket(PROP_SERVICE_NAME, SOCK_STREAM, 0666, 0, 0);
+	    if(fd < 0) return;
+	    fcntl(fd, F_SETFD, FD_CLOEXEC);
+	    fcntl(fd, F_SETFL, O_NONBLOCK);
+	    //  开始服务监听
+	    listen(fd, 8);
+	    property_set_fd = fd;
+	}
+Android初始化語言由四大类声明组成：行为类(Actions),命令类(Commands)，服务类(Services),选项类(Options).
+初始化语言以行为单位，由以空格间隔的语言符号組成。C风格的反斜杠转义符可以用来插入空白到语言符号。双引号也可以用来防止文本被空格分成多个语言符号。当反斜杠在行末时，作为换行符。
+* 以#开始(前面允许空格)的行为注释。
+* Actions和Services隐含声明一个新的段落。所有该段落下Commands或Options的声明属于该段落。第一段落前的Commands或Options被忽略。
+* Actions和Services拥有唯一的命名。在他们之后声明相同命名的类将被当作错误并忽略。
+Actions是一系列命令的命名。Actions拥有一个触发器(trigger)用来決定action何時执行。当一个action在符合触发条件被执行时，如果它还没被加入到待执行队列中的话，則加入到队列最后。
+队列中的action依次执行，action中的命令也依次执行。Init在执行命令的中间处理其他活动(设备创建/销毁,property 设置，进程重启)。 
+
+
+

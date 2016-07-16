@@ -1,0 +1,2770 @@
+.config for Kernel-3.10.10-xxx.x86_64 of Linux
+
+*一级配色
+*二级配色
+*三级配色
+*四级配色
+*五级配色
+*注释配色
+
+    [*] 64-bit kernel
+        General setup  ---> 常规设置
+        ()  Cross-compiler tool prefix    CONFIG_CROSS_COMPILE="" 交叉编译工具前缀
+        ()  Local version - append to kernel release    CONFIG_LOCALVERSION="" 在内核版本后面附加上你指定的版本信息,这个信息在uname -a命令里面可以看到
+        [ ] Automatically append version information to the version string    CONFIG_LOCALVERSION_AUTO=y 自动根据源代码中的git版本信息附加一个-gxxxxxxxx这样的版本号
+            Kernel compression mode (Gzip)  --->    内核压缩模式。注意，这几种压缩方式只能选择一种使用。
+            (X) Gzip    HAVE_KERNEL_GZIP=y 用于UNIX系统的文件压缩格式
+            ( ) Bzip2    HAVE_KERNEL_BZIP2=y    bzip2 是一个基于Burrows-Wheeler变换的无损压缩软件，压缩效果比传统的LZ77/LZ78压缩算法来得好。bzip2比传统的gzip或者 ZIP的压缩效率更高，但是它的压缩速度较慢。参考:http://zh.wikipedia.org/wiki/Gzip
+            ( ) LZMA    HAVE_KERNEL_LZMA=y    是一个Deflate和LZ77算法改良和优化后的压缩算法。它使用类似于LZ77的字典编码机制，在一般的情况下压缩率比bzip2为高，用于压缩的可变字典最大小可达4GB。参考:http://zh.wikipedia.org/wiki/LZMA
+            ( ) XZ    HAVE_KERNEL_XZ=y     是一个使用 LZMA压缩算法的无损数据压缩文件格式。和gzip与bzip2一样，同样支持多文件压缩，但是约定不能将多于一个的目标文件压缩进同一个档案文件。 相反，xz通常作为一种归档文件自身的压缩格式，例如使用tar或cpioUnix程序创建的归档。参 考:http://zh.wikipedia.org/wiki/Xz
+            ( ) LZO    HAVE_KERNEL_LZO=y      是致力于解压速度的一种数据压缩算法，LZO是Lempel-Ziv-Oberhumer的缩写。参考:http://zh.wikipedia.org/wiki/LZO
+        ((none)) Default hostname    CONFIG_DEFAULT_HOSTNAME="(none)"
+            指定一个默认的主机名。指定了这个以后，可以省去使用sethostname命令设置主机名称。在制作最小系统时比较有用。
+        [*] Support for paging of anonymous memory (swap)    CONFIG_SWAP=y 是否支持交换分区
+        [*] System V IPC    CONFIG_SYSVIPC=y 支持System V IPC     这个主要是为了兼容使用了System V IPC的UNIX程序而设的，如果不考虑兼容性，则可以忽略这个参数。参考:http://www.eefocus.com/article/09-06/75167s.html
+        [*] POSIX Message Queues    CONFIG_POSIX_MQUEUE=y 是否支持POSIX Message Queues，这个是为了兼容POSIX标准而设的。这个只有在CONFIG_EXPERIMENTAL=y时显示。
+        [*] open by fhandle syscalls    CONFIG_FHANDLE=y
+        -*- Auditing support    CONFIG_AUDIT=y 支持审计功能
+        [*]   Enable system-call auditing support    CONFIG_AUDITSYSCALL=y 开启系统调用的审计功能
+        [ ]   Make audit loginuid immutable
+            IRQ subsystem  --->    中断子系统
+            Timers subsystem  --->
+            CPU/Task time and stats accounting  --->
+            RCU Subsystem  --->    非对称读写锁系统    一种新的kernel锁机制，适用于读多写少环境。对于被RCU保护的共享数据结构，读者不需要获得任何锁就可以访问它，但写者在访问它时首先拷贝一个副 本，然后对副本进行修改，最后使用一个回调（callback）机制在适当的时机把指向原来数据的指针重新指向新的被修改的数据。这个时机就是所有引用该 数据的CPU都退出对共享数据的操作。
+        < > Kernel .config support    CONFIG_IKCONFIG=y|m 把编译内核时使用的.config文件保存在编译好的内核中。
+        (17) Kernel log buffer size (16 => 64KB, 17 => 128KB)    CONFIG_LOG_BUF_SHIFT=17 内核日志缓存的大小。这个值是以2的平方取的，取值范围12-21。
+        [ ] Memory placement aware NUMA scheduler
+        -*- Control Group support  --->    CGROUPS=y|n 支持组控制
+        [ ] Checkpoint/restore support
+        [*] Namespaces support  --->
+        [*] Automatic process group scheduling
+        [ ] Enable deprecated sysfs features to support old userspace tools    在某些文件系统上(比如debugfs)提供从内核空间向用户空间传递大量数据的接口
+        -*- Kernel->user space relay support (formerly relayfs)    内核系统区和用户区进行传递通讯的支持。这个选项在特定的文 件系统中提供数据传递接口支持，它可以提供从内核空间到用户空间的大批量的数据传递工具和设施。
+        [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support    CONFIG_BLK_DEV_INITRD=y|n 支持初始化RAM文件系统和RAM盘。
+        ()    Initramfs source file(s)    CONFIG_INITRAMFS_SOURCE="" 指定initramfs的文件名称
+        [*]   Support initial ramdisks compressed using gzip    CONFIG_RD_GZIP=y 支持GZIP压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using bzip2    CONFIG_RD_BZIP2=y 支持BZip2压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using LZMA    CONFIG_RD_LZMA=y 支持LZMA压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using XZ    CONFIG_RD_XZ=y 支持XZ压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using LZO    CONFIG_RD_LZO=y 支持LZO压缩的RAM盘文件
+        [*] Optimize for size    CONFIG_CC_OPTIMIZE_FOR_SIZE=y 这个仅仅是标识在编译内核时增加-Os参数，如果不选择则增加-O2参数。这个选项对内核功能性没有影响。
+        [*] Configure standard kernel features (expert users)  --->    显示高级选项,选上这个才会出现高级选项
+        [*] Enable 16-bit UID system calls    启用16位UID。系统模式使用的UID是32位。
+        [ ] Sysctl syscall support
+        -*- Load all symbols for debugging/ksymoops    装载所有调试符号
+        [ ]   Include all symbols in kallsyms    所有符号装入kallsyms
+        [*] Enable support for printk
+        [*] BUG() support
+        [*] Enable ELF core dumps
+        [*] Enable PC-Speaker support    开启PC喇叭
+        [*] Enable full-sized data structures for core
+        [*] Enable futex support
+        [*] Enable eventpoll support
+        [*] Enable signalfd() system call
+        [*] Enable timerfd() system call
+        -*- Enable eventfd() system call
+        -*- Use full shmem filesystem
+        [*] Enable AIO support
+        [ ] Embedded system
+            Kernel Performance Events And Counters  --->  
+        [*] Enable VM event counters for /proc/vmstat
+        [*] Enable PCI quirk workarounds
+        [ ] Disable heap randomization
+            Choose SLAB allocator (SLUB)  --->    选择内存分配管理器
+            ( ) SLAB    通用内存分配管理器
+            (X) SLUB (Unqueued Allocator)    比SLAB性能更好的内存分配器
+            ( ) SLOB (Simple Allocator)    简单的内存分配器
+        [*] Profiling support
+        OProfile system profiling
+        [ ]   OProfile multiplexing support (EXPERIMENTAL)
+        [*] Kprobes
+        [ ] Optimize very unlikely/likely branches
+            GCOV-based kernel profiling  --->
+    [*] Enable loadable module support  --->
+    [*] Enable the block layer  --->
+        Processor type and features  --->    处理器类型和特性
+        [*] DMA memory allocation support    CONFIG_ZONE_DMA=y   支持DMA内存分配低于16MB的地址空间，如果不分配的话，这部分内存也不会被使用。从网上查到的信息，这个前16MB是原来ISA设备遗留的问 题，ISA设备的DMA只能访问前16M的内存。估计之前这16MB是为了兼容ISA设备而预留的，现在已经几乎找不到ISA设备了，所以这块内存又拿回 来使用。参考:http://blog.csdn.net/supperwangli/article/details/5207918
+        [*] Symmetric multi-processing support    对称多处理器支持
+        [*] Support x2apic
+        [*] Enable MPS table
+        [ ] Support for extended (non-PC) x86 platforms    支持非PC的x86平台
+        [*] Intel Low Power Subsystem Support
+        [*] Numascale NumaChip
+        [ ] ScaleMP vSMP
+        [ ] SGI Ultraviolet
+        [*] Single-depth WCHAN output
+        [*] Paravirtualized guest support  --->    虚拟化客户端支持
+        [ ] paravirt-ops debugging
+        [ ] Memtest    启用内存测试
+            Processor family (Intel Atom)  --->    Atom专用    选择Atom CPU
+        [*] Supported processor vendors  --->    这个选项，里面只选Intel,其他的不选
+            --- Supported processor vendors
+            [*]   Support Intel processors
+            [ ]   Support AMD processors
+            [ ]   Support Centaur processors
+        [*] Enable DMI scanning
+        [*] GART IOMMU support
+        [ ] IBM Calgary IOMMU support    这个是IBM专用的，所以不选
+        [ ] Enable Maximum number of SMP Processors and NUMA Nodes
+        (4) Maximum number of CPUs    NR_CPUS=4 N2600是双核4线程的，所以改为4 (我不确认这个选择4还是选择2还是选择1，因为CPU是一个CPU、2个核心、4个线程)
+        [*] SMT (Hyperthreading) scheduler support    SCHED_SMT=y|n 支持Intel HT超线程,N2600支持HT，所以选择
+        [*] Multi-core scheduler support    SCHED_MC=y|n 多核调度程序支持
+        [ ] Fine granularity task level IRQ time accounting
+            Preemption Model (Voluntary Kernel Preemption (Desktop))  --->
+        [*] Reroute for broken boot IRQs
+        [*] Machine Check / overheating reporting
+        [*]   Intel MCE features
+        [ ]   AMD MCE features    这个对Atom CPU没有作用
+        Machine check injector support
+        < > Dell laptop support    这个是DELL专用的，所以不选
+        <*> /dev/cpu/microcode - microcode support
+        [*]   Intel microcode patch loading support
+        [ ]   AMD microcode patch loading support    这个对AMD专用
+        /dev/cpu/*/msr - Model-specific register support
+        /dev/cpu/*/cpuid - CPU information support
+        [*] Enable 1GB pages for kernel pagetables
+        [ ] Numa Memory Allocation and Scheduler Support 是否支持NUMA，只有在多物理CPU条件下才选择
+        [ ] Old style AMD Opteron NUMA detection    AMD专用的，所以不选
+        [*] ACPI NUMA detection
+        [ ] NUMA emulation
+        (6) Maximum NUMA Nodes (as a power of 2)
+            Memory model (Sparse Memory)  --->
+        [*] Sparse Memory virtual memmap
+        [ ] Enable to assign a node which has only movable memory
+        [ ] Allow for memory hot-add    内存热插拔支持，这个需要硬件的支持,所以一般不需要。除非确认硬件支持。
+        -*- Allow for memory compaction
+        -*- Page migration
+        [*] Enable KSM for page merging
+        (65536) Low address space to protect from user allocation
+        [*] Enable recovery from hardware memory errors
+        < >   HWPoison pages injector
+        [*] Transparent Hugepage Support
+              Transparent Hugepage Support sysfs defaults (madvise)  --->
+        [*] Cross Memory Support
+        [*] Enable cleancache driver to cache clean pages if tmem is present
+        [ ] Enable frontswap to cache swap pages if tmem is present
+        [*] Check for low memory corruption
+        [*]   Set the default setting of memory_corruption_check
+        (64) Amount of low memory, in kilobytes, to reserve for the BIOS
+        [*] MTRR (Memory Type Range Register) support
+        [*]   MTRR cleanup support
+        (1)     MTRR cleanup enable value (0-1)
+        (1)     MTRR cleanup spare reg num (0-7)
+        [*]   x86 PAT support 这个选项只有在32bit时出现
+        [*] x86 architectural random number generator
+        [ ] EFI runtime service support    没有使用EFI
+        [*] Enable seccomp to safely compute untrusted bytecode
+        [*] Enable -fstack-protector buffer overflow detection (EXPERIMENTAL)
+            Timer frequency (250 HZ)  --->
+        [*] kexec system call
+        [*] kernel crash dumps
+        [*] kexec jump (EXPERIMENTAL)
+        (0x1000000) Physical address where the kernel is loaded
+        [*] Build a relocatable kernel
+        -*- Support for hot-pluggable CPUs
+        [ ] Compat VDSO support
+        [ ] Built-in kernel command line
+    Power management and ACPI options  --->
+    Bus options (PCI etc.)  --->
+        [*] PCI support
+        [*]   Support mmconfig PCI config space access
+        [*]   PCI Express support
+        [*]     Root Port Advanced Error Reporting support
+        [ ]       PCI Express ECRC settings control
+               PCIe AER error injector support
+        -*-     PCI Express ASPM control
+        [ ]       Debug PCI Express ASPM
+                  Default ASPM policy (BIOS default)  --->
+        -*- Message Signaled Interrupts (MSI and MSI-X)
+        [ ] PCI Debugging
+        [ ] Enable PCI resource re-allocation detection
+        PCI Stub driver
+        < > Xen PCI Frontend    不需要Xen的支持，所以不取
+        [*] Interrupts on hypertransport devices
+        [ ] PCI IOV support    这个是PCI Express接口IO虚拟化技术的支持
+        -*- PCI PRI support
+        -*- PCI PASID support
+        <*> PCI IO-APIC hotplug support
+        < > PCCard (PCMCIA/CardBus) support  --->    没有PCCard设备
+        < > Support for PCI Hotplug  --->    PCI热插支持,除非确定需要支持，否则不选
+        [ ] RapidIO support
+    Executable file formats / Emulations  --->
+        [*] Kernel support for ELF binaries
+        [*] Write ELF core dumps with partial segments
+        < > Kernel support for MISC binaries    支持Mono .NET代码
+        [*] Enable core dump support
+        [ ] IA32 Emulation    不需要兼容IA32的代码,所以不选
+    -*- Networking support  --->
+        --- Networking support
+              Networking options  --->
+            <*> Packet socket
+            < >   Packet: sockets monitoring interface
+            <*> Unix domain sockets
+            < >   UNIX: socket monitoring interface
+            Transformation user configuration interface
+            [*] Transformation sub policy support
+            -*- Transformation migrate database
+            [ ] Transformation statistics
+            PF_KEY sockets
+            [*]   PF_KEY MIGRATE
+            [*] TCP/IP networking
+            [*]   IP: multicasting
+            [*]   IP: advanced router
+            [*]     FIB TRIE statistics
+            [*]     IP: policy routing
+            [*]     IP: equal cost multipath
+            [*]     IP: verbose route monitoring
+            [ ]   IP: kernel level autoconfiguration
+               IP: tunneling
+               IP: GRE demultiplexer
+                 IP: GRE tunnels over IP
+            [*]       IP: broadcast GRE over IP
+            [*]   IP: multicast routing
+            [*]     IP: multicast policy routing
+            [*]     IP: PIM-SM version 1 support
+            [*]     IP: PIM-SM version 2 support
+            [ ]   IP: ARP daemon support
+            [*]   IP: TCP syncookie support
+            < >   Virtual (secure) IP: tunneling
+               IP: AH transformation
+               IP: ESP transformation
+               IP: IPComp transformation
+               IP: IPsec transport mode
+               IP: IPsec tunnel mode
+               IP: IPsec BEET mode
+               Large Receive Offload (ipv4/tcp)
+               INET: socket monitoring interface
+            < >     UDP: socket monitoring interface
+            [*]   TCP: advanced congestion control  --->
+            [*]   TCP: MD5 Signature Option support (RFC2385)
+            <*>   The IPv6 protocol  --->
+            [ ]   NetLabel subsystem support
+            [*] Security Marking
+            [ ] Timestamping in PHY devices
+            [*] Network packet filtering framework (Netfilter)  --->
+            The DCCP Protocol  --->
+            {M} The SCTP Protocol  --->
+            The RDS Protocol
+               RDS over TCP
+            [ ]   RDS debugging messages
+            The TIPC Protocol  --->
+            < > Asynchronous Transfer Mode (ATM)    ATM网络支持
+            <*> DNS Resolver support
+            B.A.T.M.A.N. Advanced Meshing Protocol
+            [*]   Bridge Loop Avoidance
+            [ ]   Distributed ARP Table
+            [ ]   B.A.T.M.A.N. debugging
+            < > Open vSwitch
+            < > Virtual Socket protocol
+            < > Network priority cgroup
+            [*] enable BPF Just In Time compiler
+                Network testing  --->
+        [ ]   Amateur Radio support  --->    无线电设别的支持
+           CAN bus subsystem support  --->
+        < >   IrDA (infrared) subsystem support  --->    红外传输设备的支持
+        < >   Bluetooth subsystem support  --->    蓝牙设备
+        {M}   RxRPC session sockets
+        [ ]     RxRPC dynamic debugging
+             RxRPC Kerberos security
+        -*-   Wireless  --->
+        < >   WiMAX Wireless Broadband support  --->    没有WiMAX设备，所以不选
+           RF switch subsystem support  --->
+           Plan 9 Resource Sharing Support (9P2000)  --->
+        < >   CAIF support  --->
+        {M}   Ceph core library (EXPERIMENTAL)
+        [ ]     Include file:line in ceph debug output
+        [ ]     Use in-kernel support for DNS lookup
+           NFC subsystem support  --->
+   Device Drivers  --->
+            Generic Driver Options  --->
+            Bus devices  --->     3.7.0:里面就一个选项，都不选 3.8.0:里面没有选项
+        <*> Connector - unified userspace <-> kernelspace linker  --->
+        Memory Technology Device (MTD) support  --->
+        < > Parallel port support  --->     并口支持,除非确认需要并口，否则不选
+        -*- Plug and Play support  --->
+        [*] Block devices  --->
+            --- Block devices
+            < >   Normal floppy disk support     软驱支持    似乎现在没有用软驱的了吧？除非确认，否则不选
+            < >   Block Device Driver for Micron PCIe SSDs    不存在的设备，不需要支持
+            < >   Compaq SMART2 support     不存在的设备，不需要支持
+            < >   Compaq Smart Array 5xxx support     不存在的设备，不需要支持
+            < >   Mylex DAC960/DAC1100 PCI RAID Controller support     不存在的设备，不需要支持
+            < >   Micro Memory MM5415 Battery Backed RAM support     不存在的设备，不需要支持
+               Loopback device support
+            (8)     Number of loop devices to pre-create at init time
+            < >     Cryptoloop Support
+               DRBD Distributed Replicated Block Device support
+            [ ]     DRBD fault injection
+               Network block device support
+            < >   NVM Express block device
+               OSD object-as-blkdev support
+            < >   Promise SATA SX8 support     不存在的设备，不需要支持
+               RAM block device support
+            (16)    Default number of RAM disks
+            (65536) Default RAM disk size (kbytes)
+            [ ]     Support XIP filesystems on RAM block device
+            < >   Packet writing on CD/DVD media    这个是刻录机的支持？不需要
+               ATA over Ethernet support
+            < >   Xen virtual block device support    不需要支持XEN
+            < >   Xen block-device backend driver    不需要支持XEN
+               Virtio block driver
+            [ ]   Very old hard disk (MFM/RLL/IDE) driver
+               Rados block device (RBD)
+            < >   RamSam PCIe Flash SSD Device Driver     不存在的设备，不需要支持
+         Misc devices  --->
+     < > ATA/ATAPI/MFM/RLL support (DEPRECATED)  --->    IDE=y|n,IDE设备(废除)
+         SCSI device support  --->    SCSI设备支持
+            < > RAID Transport Class    不使用RAID
+            -*- SCSI device support
+            < > SCSI target support    不使用此设备功能
+            [*] legacy /proc/scsi/ support
+                *** SCSI support type (disk, tape, CD-ROM) ***
+            <*> SCSI disk support    这个必选!否则SATA硬盘起不来.
+            < > SCSI tape support    不存在SCSI磁带机,所以不选
+            < > SCSI OnStream SC-x0 tape support    不存在OnStream磁带机设备
+            < > SCSI CDROM support    支持SCSI CDROM,这个选项基本可以忽略了，本身SCSI CDROM就很少，使用的就更少了。
+            < > SCSI generic support
+            < > SCSI media changer support
+            < > SCSI Enclosure Support
+            [ ] Probe all LUNs on each SCSI device
+            [ ] Verbose SCSI error reporting (kernel size +=12K)
+            [ ] SCSI logging facility
+            [ ] Asynchronous SCSI scanning
+                SCSI Transports  --->
+                  < > Parallel SCSI (SPI) Transport Attributes
+                  < > FiberChannel Transport Attributes    光纤通道传输属性
+                  [ ]   SCSI target support for FiberChannel Transport Attributes    没有SCSI设备,不选
+                  < > iSCSI Transport Attributes     没有SCSI设备,不选
+                  < > SAS Transport Attributes
+                  < > SAS Domain Transport Attributes
+                  [ ]   ATA support for libsas (requires libata)     没有SCSI设备,不选
+                  [ ]   Support for SMP interpretation for SAS hosts     没有SCSI设备,不选
+                  < > SRP Transport Attributes
+            [ ] SCSI low-level drivers  --->    SCSI设备驱动
+            [ ] PCMCIA SCSI adapter support  --->    不存在PCMCIA设备，所以不选
+            < > SCSI Device Handlers  --->    对SCSI存储盘柜的支持，这个不选
+            OSD-Initiator library
+               OSD Upper Level driver
+            (1)   (0-2) When sense is returned, DEBUG print all sense descriptors
+            [ ]   Compile All OSD modules with lots of DEBUG prints  
+        <*> Serial ATA and Parallel ATA drivers  --->
+            [*]   Verbose ATA error reporting
+            [*]   ATA ACPI Support
+            [ ] SATA Zero Power Optical Disc Drive (ZPODD) support
+            [*]   SATA Port Multiplier support
+                  *** Controllers with non-SFF native interface ***
+            <*>   AHCI SATA support    AHCI支持
+            < >   Platform AHCI SATA support
+            < >   Initio 162x SATA support    在当前环境下不存在的设备
+            < >   ACard AHCI variant (ATP 8620)    在当前环境下不存在的设备
+            < >   Silicon Image 3124/3132 SATA support     设备驱动   SiliconImage 3124是一款PCI/PCI-X转4口SATA1/2芯片，详细信息: http://cn.siliconimage.com/cn/products/steelvine-storage-products/sata-controllers/sii3124-pcipci-xata300.html    SiliconImage 3132是一款PCI-E转2口SATA2的芯片，详细信息：http://cn.siliconimage.com/cn/products /steelvine-storage-products/sata-controllers/sii3132-sii3531-pci-express1x-ata300.html
+            [*]   ATA SFF support (for legacy IDE and PATA)    SATA硬盘的支持
+                    *** SFF controllers with custom DMA interface ***
+            < >     Pacific Digital ADMA support
+            < >     Pacific Digital SATA QStor support
+            < >     Promise SATA SX4 support (Experimental)
+            [*]     ATA BMDMA support
+                      *** SATA SFF controllers with BMDMA ***
+            <*>       Intel ESB, ICH, PIIX3, PIIX4 PATA/SATA support     在使用VMWare10的IDE/SATA设备时，这个必须选择*
+            < >       Calxeda.config for Kernel-3.10.10-xxx.x86_64 of Linux
+
+*一级配色
+*二级配色
+*三级配色
+*四级配色
+*五级配色
+*注释配色
+
+    [*] 64-bit kernel
+        General setup  ---> 常规设置
+        ()  Cross-compiler tool prefix    CONFIG_CROSS_COMPILE="" 交叉编译工具前缀
+        ()  Local version - append to kernel release    CONFIG_LOCALVERSION="" 在内核版本后面附加上你指定的版本信息,这个信息在uname -a命令里面可以看到
+        [ ] Automatically append version information to the version string    CONFIG_LOCALVERSION_AUTO=y 自动根据源代码中的git版本信息附加一个-gxxxxxxxx这样的版本号
+            Kernel compression mode (Gzip)  --->    内核压缩模式。注意，这几种压缩方式只能选择一种使用。
+            (X) Gzip    HAVE_KERNEL_GZIP=y 用于UNIX系统的文件压缩格式
+            ( ) Bzip2    HAVE_KERNEL_BZIP2=y    bzip2 是一个基于Burrows-Wheeler变换的无损压缩软件，压缩效果比传统的LZ77/LZ78压缩算法来得好。bzip2比传统的gzip或者 ZIP的压缩效率更高，但是它的压缩速度较慢。参考:http://zh.wikipedia.org/wiki/Gzip
+            ( ) LZMA    HAVE_KERNEL_LZMA=y    是一个Deflate和LZ77算法改良和优化后的压缩算法。它使用类似于LZ77的字典编码机制，在一般的情况下压缩率比bzip2为高，用于压缩的可变字典最大小可达4GB。参考:http://zh.wikipedia.org/wiki/LZMA
+            ( ) XZ    HAVE_KERNEL_XZ=y     是一个使用 LZMA压缩算法的无损数据压缩文件格式。和gzip与bzip2一样，同样支持多文件压缩，但是约定不能将多于一个的目标文件压缩进同一个档案文件。 相反，xz通常作为一种归档文件自身的压缩格式，例如使用tar或cpioUnix程序创建的归档。参 考:http://zh.wikipedia.org/wiki/Xz
+            ( ) LZO    HAVE_KERNEL_LZO=y      是致力于解压速度的一种数据压缩算法，LZO是Lempel-Ziv-Oberhumer的缩写。参考:http://zh.wikipedia.org/wiki/LZO
+        ((none)) Default hostname    CONFIG_DEFAULT_HOSTNAME="(none)"
+            指定一个默认的主机名。指定了这个以后，可以省去使用sethostname命令设置主机名称。在制作最小系统时比较有用。
+        [*] Support for paging of anonymous memory (swap)    CONFIG_SWAP=y 是否支持交换分区
+        [*] System V IPC    CONFIG_SYSVIPC=y 支持System V IPC     这个主要是为了兼容使用了System V IPC的UNIX程序而设的，如果不考虑兼容性，则可以忽略这个参数。参考:http://www.eefocus.com/article/09-06/75167s.html
+        [*] POSIX Message Queues    CONFIG_POSIX_MQUEUE=y 是否支持POSIX Message Queues，这个是为了兼容POSIX标准而设的。这个只有在CONFIG_EXPERIMENTAL=y时显示。
+        [*] open by fhandle syscalls    CONFIG_FHANDLE=y
+        -*- Auditing support    CONFIG_AUDIT=y 支持审计功能
+        [*]   Enable system-call auditing support    CONFIG_AUDITSYSCALL=y 开启系统调用的审计功能
+        [ ]   Make audit loginuid immutable
+            IRQ subsystem  --->    中断子系统
+            Timers subsystem  --->
+            CPU/Task time and stats accounting  --->
+            RCU Subsystem  --->    非对称读写锁系统    一种新的kernel锁机制，适用于读多写少环境。对于被RCU保护的共享数据结构，读者不需要获得任何锁就可以访问它，但写者在访问它时首先拷贝一个副 本，然后对副本进行修改，最后使用一个回调（callback）机制在适当的时机把指向原来数据的指针重新指向新的被修改的数据。这个时机就是所有引用该 数据的CPU都退出对共享数据的操作。
+        < > Kernel .config support    CONFIG_IKCONFIG=y|m 把编译内核时使用的.config文件保存在编译好的内核中。
+        (17) Kernel log buffer size (16 => 64KB, 17 => 128KB)    CONFIG_LOG_BUF_SHIFT=17 内核日志缓存的大小。这个值是以2的平方取的，取值范围12-21。
+        [ ] Memory placement aware NUMA scheduler
+        -*- Control Group support  --->    CGROUPS=y|n 支持组控制
+        [ ] Checkpoint/restore support
+        [*] Namespaces support  --->
+        [*] Automatic process group scheduling
+        [ ] Enable deprecated sysfs features to support old userspace tools    在某些文件系统上(比如debugfs)提供从内核空间向用户空间传递大量数据的接口
+        -*- Kernel->user space relay support (formerly relayfs)    内核系统区和用户区进行传递通讯的支持。这个选项在特定的文 件系统中提供数据传递接口支持，它可以提供从内核空间到用户空间的大批量的数据传递工具和设施。
+        [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support    CONFIG_BLK_DEV_INITRD=y|n 支持初始化RAM文件系统和RAM盘。
+        ()    Initramfs source file(s)    CONFIG_INITRAMFS_SOURCE="" 指定initramfs的文件名称
+        [*]   Support initial ramdisks compressed using gzip    CONFIG_RD_GZIP=y 支持GZIP压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using bzip2    CONFIG_RD_BZIP2=y 支持BZip2压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using LZMA    CONFIG_RD_LZMA=y 支持LZMA压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using XZ    CONFIG_RD_XZ=y 支持XZ压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using LZO    CONFIG_RD_LZO=y 支持LZO压缩的RAM盘文件
+        [*] Optimize for size    CONFIG_CC_OPTIMIZE_FOR_SIZE=y 这个仅仅是标识在编译内核时增加-Os参数，如果不选择则增加-O2参数。这个选项对内核功能性没有影响。
+        [*] Configure standard kernel features (expert users)  --->    显示高级选项,选上这个才会出现高级选项
+        [*] Enable 16-bit UID system calls    启用16位UID。系统模式使用的UID是32位。
+        [ ] Sysctl syscall support
+        -*- Load all symbols for debugging/ksymoops    装载所有调试符号
+        [ ]   Include all symbols in kallsyms    所有符号装入kallsyms
+        [*] Enable support for printk
+        [*] BUG() support
+        [*] Enable ELF core dumps
+        [*] Enable PC-Speaker support    开启PC喇叭
+        [*] Enable full-sized data structures for core
+        [*] Enable futex support
+        [*] Enable eventpoll support
+        [*] Enable signalfd() system call
+        [*] Enable timerfd() system call
+        -*- Enable eventfd() system call
+        -*- Use full shmem filesystem
+        [*] Enable AIO support
+        [ ] Embedded system
+            Kernel Performance Events And Counters  --->  
+        [*] Enable VM event counters for /proc/vmstat
+        [*] Enable PCI quirk workarounds
+        [ ] Disable heap randomization
+            Choose SLAB allocator (SLUB)  --->    选择内存分配管理器
+            ( ) SLAB    通用内存分配管理器
+            (X) SLUB (Unqueued Allocator)    比SLAB性能更好的内存分配器
+            ( ) SLOB (Simple Allocator)    简单的内存分配器
+        [*] Profiling support
+        OProfile system profiling
+        [ ]   OProfile multiplexing support (EXPERIMENTAL)
+        [*] Kprobes
+        [ ] Optimize very unlikely/likely branches
+            GCOV-based kernel profiling  --->
+    [*] Enable loadable module support  --->
+    [*] Enable the block layer  --->
+        Processor type and features  --->    处理器类型和特性
+        [*] DMA memory allocation support    CONFIG_ZONE_DMA=y   支持DMA内存分配低于16MB的地址空间，如果不分配的话，这部分内存也不会被使用。从网上查到的信息，这个前16MB是原来ISA设备遗留的问 题，ISA设备的DMA只能访问前16M的内存。估计之前这16MB是为了兼容ISA设备而预留的，现在已经几乎找不到ISA设备了，所以这块内存又拿回 来使用。参考:http://blog.csdn.net/supperwangli/article/details/5207918
+        [*] Symmetric multi-processing support    对称多处理器支持
+        [*] Support x2apic
+        [*] Enable MPS table
+        [ ] Support for extended (non-PC) x86 platforms    支持非PC的x86平台
+        [*] Intel Low Power Subsystem Support
+        [*] Numascale NumaChip
+        [ ] ScaleMP vSMP
+        [ ] SGI Ultraviolet
+        [*] Single-depth WCHAN output
+        [*] Paravirtualized guest support  --->    虚拟化客户端支持
+        [ ] paravirt-ops debugging
+        [ ] Memtest    启用内存测试
+            Processor family (Intel Atom)  --->    Atom专用    选择Atom CPU
+        [*] Supported processor vendors  --->    这个选项，里面只选Intel,其他的不选
+            --- Supported processor vendors
+            [*]   Support Intel processors
+            [ ]   Support AMD processors
+            [ ]   Support Centaur processors
+        [*] Enable DMI scanning
+        [*] GART IOMMU support
+        [ ] IBM Calgary IOMMU support    这个是IBM专用的，所以不选
+        [ ] Enable Maximum number of SMP Processors and NUMA Nodes
+        (4) Maximum number of CPUs    NR_CPUS=4 N2600是双核4线程的，所以改为4 (我不确认这个选择4还是选择2还是选择1，因为CPU是一个CPU、2个核心、4个线程)
+        [*] SMT (Hyperthreading) scheduler support    SCHED_SMT=y|n 支持Intel HT超线程,N2600支持HT，所以选择
+        [*] Multi-core scheduler support    SCHED_MC=y|n 多核调度程序支持
+        [ ] Fine granularity task level IRQ time accounting
+            Preemption Model (Voluntary Kernel Preemption (Desktop))  --->
+        [*] Reroute for broken boot IRQs
+        [*] Machine Check / overheating reporting
+        [*]   Intel MCE features
+        [ ]   AMD MCE features    这个对Atom CPU没有作用
+        Machine check injector support
+        < > Dell laptop support    这个是DELL专用的，所以不选
+        <*> /dev/cpu/microcode - microcode support
+        [*]   Intel microcode patch loading support
+        [ ]   AMD microcode patch loading support    这个对AMD专用
+        /dev/cpu/*/msr - Model-specific register support
+        /dev/cpu/*/cpuid - CPU information support
+        [*] Enable 1GB pages for kernel pagetables
+        [ ] Numa Memory Allocation and Scheduler Support 是否支持NUMA，只有在多物理CPU条件下才选择
+        [ ] Old style AMD Opteron NUMA detection    AMD专用的，所以不选
+        [*] ACPI NUMA detection
+        [ ] NUMA emulation
+        (6) Maximum NUMA Nodes (as a power of 2)
+            Memory model (Sparse Memory)  --->
+        [*] Sparse Memory virtual memmap
+        [ ] Enable to assign a node which has only movable memory
+        [ ] Allow for memory hot-add    内存热插拔支持，这个需要硬件的支持,所以一般不需要。除非确认硬件支持。
+        -*- Allow for memory compaction
+        -*- Page migration
+        [*] Enable KSM for page merging
+        (65536) Low address space to protect from user allocation
+        [*] Enable recovery from hardware memory errors
+        < >   HWPoison pages injector
+        [*] Transparent Hugepage Support
+              Transparent Hugepage Support sysfs defaults (madvise)  --->
+        [*] Cross Memory Support
+        [*] Enable cleancache driver to cache clean pages if tmem is present
+        [ ] Enable frontswap to cache swap pages if tmem is present
+        [*] Check for low memory corruption
+        [*]   Set the default setting of memory_corruption_check
+        (64) Amount of low memory, in kilobytes, to reserve for the BIOS
+        [*] MTRR (Memory Type Range Register) support
+        [*]   MTRR cleanup support
+        (1)     MTRR cleanup enable value (0-1)
+        (1)     MTRR cleanup spare reg num (0-7)
+        [*]   x86 PAT support 这个选项只有在32bit时出现
+        [*] x86 architectural random number generator
+        [ ] EFI runtime service support    没有使用EFI
+        [*] Enable seccomp to safely compute untrusted bytecode
+        [*] Enable -fstack-protector buffer overflow detection (EXPERIMENTAL)
+            Timer frequency (250 HZ)  --->
+        [*] kexec system call
+        [*] kernel crash dumps
+        [*] kexec jump (EXPERIMENTAL)
+        (0x1000000) Physical address where the kernel is loaded
+        [*] Build a relocatable kernel
+        -*- Support for hot-pluggable CPUs
+        [ ] Compat VDSO support
+        [ ] Built-in kernel command line
+    Power management and ACPI options  --->
+    Bus options (PCI etc.)  --->
+        [*] PCI support
+        [*]   Support mmconfig PCI config space access
+        [*]   PCI Express support
+        [*]     Root Port Advanced Error Reporting support
+        [ ]       PCI Express ECRC settings control
+               PCIe AER error injector support
+        -*-     PCI Express ASPM control
+        [ ]       Debug PCI Express ASPM
+                  Default ASPM policy (BIOS default)  --->
+        -*- Message Signaled Interrupts (MSI and MSI-X)
+        [ ] PCI Debugging
+        [ ] Enable PCI resource re-allocation detection
+        PCI Stub driver
+        < > Xen PCI Frontend    不需要Xen的支持，所以不取
+        [*] Interrupts on hypertransport devices
+        [ ] PCI IOV support    这个是PCI Express接口IO虚拟化技术的支持
+        -*- PCI PRI support
+        -*- PCI PASID support
+        <*> PCI IO-APIC hotplug support
+        < > PCCard (PCMCIA/CardBus) support  --->    没有PCCard设备
+        < > Support for PCI Hotplug  --->    PCI热插支持,除非确定需要支持，否则不选
+        [ ] RapidIO support
+    Executable file formats / Emulations  --->
+        [*] Kernel support for ELF binaries
+        [*] Write ELF core dumps with partial segments
+        < > Kernel support for MISC binaries    支持Mono .NET代码
+        [*] Enable core dump support
+        [ ] IA32 Emulation    不需要兼容IA32的代码,所以不选
+    -*- Networking support  --->
+        --- Networking support
+              Networking options  --->
+            <*> Packet socket
+            < >   Packet: sockets monitoring interface
+            <*> Unix domain sockets
+            < >   UNIX: socket monitoring interface
+            Transformation user configuration interface
+            [*] Transformation sub policy support
+            -*- Transformation migrate database
+            [ ] Transformation statistics
+            PF_KEY sockets
+            [*]   PF_KEY MIGRATE
+            [*] TCP/IP networking
+            [*]   IP: multicasting
+            [*]   IP: advanced router
+            [*]     FIB TRIE statistics
+            [*]     IP: policy routing
+            [*]     IP: equal cost multipath
+            [*]     IP: verbose route monitoring
+            [ ]   IP: kernel level autoconfiguration
+               IP: tunneling
+               IP: GRE demultiplexer
+                 IP: GRE tunnels over IP
+            [*]       IP: broadcast GRE over IP
+            [*]   IP: multicast routing
+            [*]     IP: multicast policy routing
+            [*]     IP: PIM-SM version 1 support
+            [*]     IP: PIM-SM version 2 support
+            [ ]   IP: ARP daemon support
+            [*]   IP: TCP syncookie support
+            < >   Virtual (secure) IP: tunneling
+               IP: AH transformation
+               IP: ESP transformation
+               IP: IPComp transformation
+               IP: IPsec transport mode
+               IP: IPsec tunnel mode
+               IP: IPsec BEET mode
+               Large Receive Offload (ipv4/tcp)
+               INET: socket monitoring interface
+            < >     UDP: socket monitoring interface
+            [*]   TCP: advanced congestion control  --->
+            [*]   TCP: MD5 Signature Option support (RFC2385)
+            <*>   The IPv6 protocol  --->
+            [ ]   NetLabel subsystem support
+            [*] Security Marking
+            [ ] Timestamping in PHY devices
+            [*] Network packet filtering framework (Netfilter)  --->
+            The DCCP Protocol  --->
+            {M} The SCTP Protocol  --->
+            The RDS Protocol
+               RDS over TCP
+            [ ]   RDS debugging messages
+            The TIPC Protocol  --->
+            < > Asynchronous Transfer Mode (ATM)    ATM网络支持
+            <*> DNS Resolver support
+            B.A.T.M.A.N. Advanced Meshing Protocol
+            [*]   Bridge Loop Avoidance
+            [ ]   Distributed ARP Table
+            [ ]   B.A.T.M.A.N. debugging
+            < > Open vSwitch
+            < > Virtual Socket protocol
+            < > Network priority cgroup
+            [*] enable BPF Just In Time compiler
+                Network testing  --->
+        [ ]   Amateur Radio support  --->    无线电设别的支持
+           CAN bus subsystem support  --->
+        < >   IrDA (infrared) subsystem support  --->    红外传输设备的支持
+        < >   Bluetooth subsystem support  --->    蓝牙设备
+        {M}   RxRPC session sockets
+        [ ]     RxRPC dynamic debugging
+             RxRPC Kerberos security
+        -*-   Wireless  --->
+        < >   WiMAX Wireless Broadband support  --->    没有WiMAX设备，所以不选
+           RF switch subsystem support  --->
+           Plan 9 Resource Sharing Support (9P2000)  --->
+        < >   CAIF support  --->
+        {M}   Ceph core library (EXPERIMENTAL)
+        [ ]     Include file:line in ceph debug output
+        [ ]     Use in-kernel support for DNS lookup
+           NFC subsystem support  --->
+   Device Drivers  --->
+            Generic Driver Options  --->
+            Bus devices  --->     3.7.0:里面就一个选项，都不选 3.8.0:里面没有选项
+        <*> Connector - unified userspace <-> kernelspace linker  --->
+        Memory Technology Device (MTD) support  --->
+        < > Parallel port support  --->     并口支持,除非确认需要并口，否则不选
+        -*- Plug and Play support  --->
+        [*] Block devices  --->
+            --- Block devices
+            < >   Normal floppy disk support     软驱支持    似乎现在没有用软驱的了吧？除非确认，否则不选
+            < >   Block Device Driver for Micron PCIe SSDs    不存在的设备，不需要支持
+            < >   Compaq SMART2 support     不存在的设备，不需要支持
+            < >   Compaq Smart Array 5xxx support     不存在的设备，不需要支持
+            < >   Mylex DAC960/DAC1100 PCI RAID Controller support     不存在的设备，不需要支持
+            < >   Micro Memory MM5415 Battery Backed RAM support     不存在的设备，不需要支持
+               Loopback device support
+            (8)     Number of loop devices to pre-create at init time
+            < >     Cryptoloop Support
+               DRBD Distributed Replicated Block Device support
+            [ ]     DRBD fault injection
+               Network block device support
+            < >   NVM Express block device
+               OSD object-as-blkdev support
+            < >   Promise SATA SX8 support     不存在的设备，不需要支持
+               RAM block device support
+            (16)    Default number of RAM disks
+            (65536) Default RAM disk size (kbytes)
+            [ ]     Support XIP filesystems on RAM block device
+            < >   Packet writing on CD/DVD media    这个是刻录机的支持？不需要
+               ATA over Ethernet support
+            < >   Xen virtual block device support    不需要支持XEN
+            < >   Xen block-device backend driver    不需要支持XEN
+               Virtio block driver
+            [ ]   Very old hard disk (MFM/RLL/IDE) driver
+               Rados block device (RBD)
+            < >   RamSam PCIe Flash SSD Device Driver     不存在的设备，不需要支持
+         Misc devices  --->
+     < > ATA/ATAPI/MFM/RLL support (DEPRECATED)  --->    IDE=y|n,IDE设备(废除)
+         SCSI device support  --->    SCSI设备支持
+            < > RAID Transport Class    不使用RAID
+            -*- SCSI device support
+            < > SCSI target support    不使用此设备功能
+            [*] legacy /proc/scsi/ support
+                *** SCSI support type (disk, tape, CD-ROM) ***
+            <*> SCSI disk support    这个必选!否则SATA硬盘起不来.
+            < > SCSI tape support    不存在SCSI磁带机,所以不选
+            < > SCSI OnStream SC-x0 tape support    不存在OnStream磁带机设备
+            < > SCSI CDROM support    支持SCSI CDROM,这个选项基本可以忽略了，本身SCSI CDROM就很少，使用的就更少了。
+            < > SCSI generic support
+            < > SCSI media changer support
+            < > SCSI Enclosure Support
+            [ ] Probe all LUNs on each SCSI device
+            [ ] Verbose SCSI error reporting (kernel size +=12K)
+            [ ] SCSI logging facility
+            [ ] Asynchronous SCSI scanning
+                SCSI Transports  --->
+                  < > Parallel SCSI (SPI) Transport Attributes
+                  < > FiberChannel Transport Attributes    光纤通道传输属性
+                  [ ]   SCSI target support for FiberChannel Transport Attributes    没有SCSI设备,不选
+                  < > iSCSI Transport Attributes     没有SCSI设备,不选
+                  < > SAS Transport Attributes
+                  < > SAS Domain Transport Attributes
+                  [ ]   ATA support for libsas (requires libata)     没有SCSI设备,不选
+                  [ ]   Support for SMP interpretation for SAS hosts     没有SCSI设备,不选
+                  < > SRP Transport Attributes
+            [ ] SCSI low-level drivers  --->    SCSI设备驱动
+            [ ] PCMCIA SCSI adapter support  --->    不存在PCMCIA设备，所以不选
+            < > SCSI Device Handlers  --->    对SCSI存储盘柜的支持，这个不选
+            OSD-Initiator library
+               OSD Upper Level driver
+            (1)   (0-2) When sense is returned, DEBUG print all sense descriptors
+            [ ]   Compile All OSD modules with lots of DEBUG prints  
+        <*> Serial ATA and Parallel ATA drivers  --->
+            [*]   Verbose ATA error reporting
+            [*]   ATA ACPI Support
+            [ ] SATA Zero Power Optical Disc Drive (ZPODD) support
+            [*]   SATA Port Multiplier support
+                  *** Controllers with non-SFF native interface ***
+            <*>   AHCI SATA support    AHCI支持
+            < >   Platform AHCI SATA support
+            < >   Initio 162x SATA support    在当前环境下不存在的设备
+            < >   ACard AHCI variant (ATP 8620)    在当前环境下不存在的设备
+            < >   Silicon Image 3124/3132 SATA support     设备驱动   SiliconImage 3124是一款PCI/PCI-X转4口SATA1/2芯片，详细信息: http://cn.siliconimage.com/cn/products/steelvine-storage-products/sata-controllers/sii3124-pcipci-xata300.html    SiliconImage 3132是一款PCI-E转2口SATA2的芯片，详细信息：http://cn.siliconimage.com/cn/products /steelvine-storage-products/sata-controllers/sii3132-sii3531-pci-express1x-ata300.html
+            [*]   ATA SFF support (for legacy IDE and PATA)    SATA硬盘的支持
+                    *** SFF controllers with custom DMA interface ***
+            < >     Pacific Digital ADMA support
+            < >     Pacific Digital SATA QStor support
+            < >     Promise SATA SX4 support (Experimental)
+            [*]     ATA BMDMA support
+                      *** SATA SFF controllers with BMDMA ***
+            <*>       Intel ESB, ICH, PIIX3, PIIX4 PATA/SATA support     在使用VMWare10的IDE/SATA设备时，这个必须选择*
+            < >       Calxeda Highbank SATA support
+            < >       Marvell SATA support
+            < >       NVIDIA SATA support
+            < >       Promise SATA TX2/TX4 support     设备驱动
+            < >       Silicon Image SATA support
+            < >       SiS 964/965/966/180 SATA support
+            < >       ServerWorks Frodo / Apple K2 SATA support
+            < >       ULi Electronics SATA support
+            < >       VIA SATA support
+            < >       VITESSE VSC-7174 / INTEL 31244 SATA support
+                      *** PATA SFF controllers with BMDMA ***
+            < >       ALi PATA support        Ali芯片组的PATA驱动，现在好像都见不到这个芯片组的主板了。
+            < >       AMD/NVidia PATA support
+            < >       ARASAN CompactFlash PATA Controller Support
+            < >       ARTOP 6210/6260 PATA support
+            < >       ATI PATA support
+            < >       ARTOP/Acard ATP867X PATA support
+            < >       CMD64x PATA support
+            < >       CS5510/5520 PATA support
+            < >       CS5530 PATA support
+            < >       CS5536 PATA support
+            < >       Cypress CY82C693 PATA support (Very Experimental)
+            < >       EFAR SLC90E66 support
+            < >       HPT 366/368 PATA support
+            < >       HPT 370/370A/371/372/374/302 PATA support
+            < >       HPT 371N/372N/302N PATA support
+            < >       HPT 343/363 PATA support
+            < >       IT8213 PATA support (Experimental)
+            < >       IT8211/2 PATA support
+            < >       JMicron PATA support
+            < >       Marvell PATA support via legacy mode
+            < >       NETCELL Revolution RAID support
+            < >       Ninja32/Delkin Cardbus ATA support
+            < >       Nat Semi NS87415 PATA support
+            < >       Intel PATA old PIIX support
+            < >       OPTI FireStar PATA support (Very Experimental)
+            < >       Promise PATA 2027x support
+            < >       Older Promise PATA controller support
+            < >       RADISYS 82600 PATA support (Experimental)
+            < >       RDC PATA support
+            < >       SC1200 PATA support
+            < >       Intel SCH PATA support
+            < >       SERVERWORKS OSB4/CSB5/CSB6/HT1000 PATA support
+            < >       CMD / Silicon Image 680 PATA support
+            < >       SiS PATA support     SiS芯片组主板的PATA驱动
+            < >       Toshiba Piccolo support (Experimental)
+            < >       Compaq Triflex PATA support
+            < >       VIA PATA support     VIA芯片组的PATA驱动
+            < >       Winbond SL82C105 PATA support
+                    *** PIO-only SFF controllers ***
+            < >     CMD640 PCI PATA support (Experimental)
+            < >     Intel PATA MPIIX support
+            < >     Nat Semi NS87410 PATA support
+            < >     OPTI621/6215 PATA support (Very Experimental)
+            < >     PCMCIA PATA support
+            < >     Generic platform device PATA support
+            < >     PC Tech RZ1000 PATA support
+                    *** Generic fallback / legacy drivers ***
+            < >     ACPI firmware driver for PATA
+            < >     Generic ATA support
+            < >     Legacy ISA PATA support (Experimental)
+        [*] Multiple devices driver support (RAID and LVM)  --->     RAID支持
+
+        Generic Target Core Mod (TCM) and ConfigFS Infrastructure  --->
+        [ ] Fusion MPT device support  --->        当前环境不存在的设备，所以不选
+            IEEE 1394 (FireWire) support  --->        IEEE1394(火线)驱动,AOD270不存在1394设备，所以里面都不选
+            < > FireWire driver stack        CONFIG_FIREWIRE=y|m 火线驱动
+                < >   OHCI-1394 controllers        CONFIG_FIREWIRE_OHCI=y|m OHCI1394标准控制器驱动
+                < >   Storage devices (SBP-2 protocol)        CONFIG_FIREWIRE_SBP2=y|m SBP-2协议的存储设备驱动
+                < >   IP networking over 1394        CONFIG_FIREWIRE_NET=y|m 提供1394接口支持IP传输的驱动
+            < > Nosy - a FireWire traffic sniffer for PCILynx cards        CONFIG_FIREWIRE_NOSY=y|m 提供PCILynx卡的协议分析等功能。这个主要是用于1394驱动开发及相关的应用程序开发使用的。
+        I2O device support  --->
+        [ ] Macintosh device drivers  --->    不存在这个设备，所以不选
+        -*- Network device support  --->
+            --- Network device support
+            -*-   Network core driver support
+                 Bonding driver support
+                 Dummy net driver support
+                 EQL (serial line load balancing) support
+            [ ]     Fibre Channel driver support        不存在光纤网卡，所以不选择
+            {*}     Generic Media Independent Interface device support
+                 IEEE 802.15.4 drivers  --->
+                 Intermediate Functional Block support
+            < >     Ethernet team driver support (EXPERIMENTAL)  --->
+                 MAC-VLAN support (EXPERIMENTAL)
+                   MAC-VLAN based tap driver (EXPERIMENTAL)
+                 Network console logging support
+            [*]       Dynamic reconfiguration of logging targets
+            [ ]     Netpoll traffic trapping
+                 RapidIO Ethernet over messaging driver support
+            (128)     Number of outbound queue entries
+            (128)     Number of inbound queue entries
+            <*>     Universal TUN/TAP device driver support
+                 Virtual ethernet pair device
+            <*>     Virtio network driver (EXPERIMENTAL)
+            < >   ARCnet support  --->        不存在ARCnet设备，所以不选（这是一种令牌总线的网络）
+            [ ]   ATM drivers  --->        不存在ATM设备，所以不选
+                  *** CAIF transport drivers ***
+               CAIF TTY transport driver
+               CAIF SPI transport driver for slave interface
+            [ ]     Next command and length in start of frame
+               CAIF HSI transport driver
+                  Distributed Switch Architecture drivers  --->
+            -*-   Ethernet driver support  --->     机器内置RTL8101/RTL8102的网卡，所以除此之外都不选择
+                [*]   Realtek devices
+                <*>     Realtek 8169 gigabit ethernet support        AOD270使用这个驱动
+            < >   FDDI driver support        光线分布数据接口支持.没有FDDI设备，所以不选
+            [ ]   HIPPI driver support        高性能并行接口的支持，不存在此设备
+            < >   General Instruments Surfboard 1000        不存在的设备，网上查说是很早期的设备
+            {*}   PHY Device support and infrastructure  --->
+            < >   Micrel KS8995MA 5-ports 10/100 managed Ethernet switch
+            < >   PLIP (parallel port) support        机器上没有并口，所以不选
+            {*}   PPP (point-to-point protocol) support
+                 PPP BSD-Compress compression
+                 PPP Deflate compression
+            [*]     PPP filtering
+                 PPP MPPE compression (encryption) (EXPERIMENTAL)
+            [*]     PPP multilink support (EXPERIMENTAL)
+                 PPP over ATM
+                 PPP over Ethernet (EXPERIMENTAL)
+                 PPP over IPv4 (PPTP) (EXPERIMENTAL)
+                 PPP over L2TP (EXPERIMENTAL)
+                 PPP support for async serial ports
+                 PPP support for sync tty ports
+            < >   SLIP (serial line) support        串口网络的支持
+                  USB Network Adapters  --->        因为机器带有无线和有线网卡,所以这个USB网卡应该用不到,所以里面的都不选
+            [*]   Wireless LAN  --->            机器本身带Atheros无线网卡，所以其他的都不选择
+                   --- Wireless LAN
+                      Atheros Wireless Cards  --->      不知道为什么，这个只能选择为模块
+                        --- Atheros Wireless Cards
+                        [ ]   Atheros wireless debugging
+                        < >   Atheros 5xxx wireless cards support
+                        [ ]   Atheros 5xxx PCI bus support        不存在的设备
+                        [ ]   Atheros bluetooth coexistence support
+                           Atheros 802.11n wireless cards support
+                        [*]     Atheros ath9k PCI/PCIe bus support
+                        [ ]     Atheros ath9k AHB bus support
+                        [*]     Atheros ath9k debugging
+                        [ ]     Atheros DFS support for certified platforms        新版没有这个选项了
+                        [*]   Atheros MAC statistics     新版没有这个选项了
+                        [*]   Atheros ath9k rate control
+                        < >   Atheros HTC based wireless cards support
+                        < >   Linux Community AR9170 802.11n USB support
+                        < >   Atheros mobile chipsets support          因为AOD270内置的AR9485，所以除Atheros,其他无线网卡的驱动就都不选了
+                  *** Enable WiMAX (Networking options) to see the WiMAX drivers ***
+                  WiMAX Wireless Broadband devices  --->        WiMAX设备支持 3.9.0-rc1中没有了
+            [ ]   Wan interfaces support  --->        没有此类设备
+            < >   IEEE 802.15.4 drivers  --->        没有此类设备
+            < >   Xen network device frontend driver      指定机型定制的，所以不需要Xen驱动的支 3.9.0-rc1中没有了
+            < >   Xen backend network device       指定机型定制的，所以不需要Xen驱动的支持 3.9.0-rc1中没有了
+            < >   VMware VMXNET3 ethernet driver       指定机型定制的，所以不需要VMware驱动的支持
+            < >   Microsoft Hyper-V virtual network driver       指定机型定制的，所以不需要Hyper-V驱动的支持 3.9.0-rc1中没有了
+            [ ] ISDN support  --->        ISDN设备，好像我现在永不着，所以不选了。之前这个是在上一层的，3.8.0-rc7移到网络这层了。本身这个ISDN是一个过时的技术了,估计现在使用的很少了
+         Input device support  --->
+            -*- Generic input layer (needed for keyboard, mouse, ...)
+            {M}   Support for memoryless force-feedback devices
+            {M}   Polled input device skeleton
+            {M}   Sparse keymap support library
+            < >   Matrix keymap support library
+                  *** Userland interfaces ***
+            -*-   Mouse interface
+            [*]     Provide legacy /dev/psaux device
+            (1024)  Horizontal screen resolution
+            (768)   Vertical screen resolution
+            < >   Joystick interface        不存在摇杆设备
+               Event interface
+            < >   Event debugging
+                  *** Input Device Drivers ***
+            -*-   Keyboards  --->
+            [*]   Mice  --->
+            [ ]   Joysticks/Gamepads  --->        不存在摇杆设备
+            [ ]   Tablets  --->        不存在平板设备
+            [*]   Touchscreens  --->
+            [*]   Miscellaneous devices  --->
+                Hardware I/O ports  --->
+                -*- Serial I/O support
+                {M}   Serial port line discipline
+                   ct82c710 Aux port controller
+                < >   Parallel port keyboard adapter
+                   PCI PS/2 keyboard and PS/2 mouse controller
+                   Raw access to serio ports
+                   Altera UP PS/2 controller
+                < >   TQC PS/2 multiplexer
+                < >   ARC PS/2 support
+                < > Gameport support    不存在的设备
+        Character devices  --->
+            -*- Virtual terminal
+            [*]   Support for binding and unbinding console drivers
+            -*- Unix98 PTY support
+            [*]   Support multiple instances of devpts
+            [ ] Legacy (BSD) PTY support
+            [ ] Non-standard serial port support        没有非标准串口设备的存在
+            < > HSDPA Broadband Wireless Data Card - Globe Trotter        不存在3G上网设备的支持
+            < > GSM MUX line discipline support (EXPERIMENTAL)       不需要支持GSM设备
+            < > Trace data sink for MIPI P1149.7 cJTAG standard
+            [ ] /dev/kmem virtual device support
+                Serial drivers  --->
+                {*} 8250/16550 and compatible serial support
+                [*]   Console on 8250/16550 and compatible serial port
+                < > 8250/16550 PCMCIA device support
+                (32) Maximum number of 8250/16550 serial ports
+                (4) Number of 8250/16550 serial ports to register at runtime
+                [*] Extended 8250/16550 serial driver options
+                [*]   Support more than 4 legacy serial ports
+                [*]   Support for sharing serial interrupts
+                [ ]   Autodetect IRQ on standard ports (unsafe)
+                [*]   Support RSA serial ports
+                    *** Non-8250 serial port support ***
+                < > MAX3100 support
+                [ ] MAX310X support
+                < > Medfield High Speed UART support
+                < > Digi International NEO PCI Support
+                < > SCCNXP serial port support
+                < > Support for timberdale UART
+                < > Altera JTAG UART support
+                < > Altera UART support
+                < > SPI protocol driver for Infineon 6x60 modem (EXPERIMENTAL)
+                < > Intel EG20T PCH/LAPIS Semicon IOH(ML7213/ML7223/ML7831) UART
+                < > ARC UART driver support  
+            < > Parallel printer support        不需要对并口打印机进行支持
+            < > Support for user-space parallel port device drivers        不需要对并口设备进行支持
+            [ ] Xen Hypervisor Console support        不需要对XEN进行支持
+            < > Virtio console        不需要对IO虚拟化进行支持
+            IPMI top-level message handler  --->
+            <*> Hardware Random Number Generator Core support        对硬件随机数生成的支持，这个需要编译到内核中。这个会加快随机数的生成
+            <*>   Timer IOMEM HW Random Number Generator support
+            <*>   Intel HW Random Number Generator support
+            < >   AMD HW Random Number Generator support        不存在的设备
+            < >   VIA HW Random Number Generator support        不存在的设备
+            < >   VirtIO Random Number Generator support        不需要对IO虚拟化进行支持
+            TPM HW Random Number Generator support
+            {M} /dev/nvram support
+            < > Siemens R3964 line discipline        西门子3964协议设备的支持，例如PLC等。
+            Applicom intelligent fieldbus card support
+                PCMCIA character devices  --->        PCMCIA字符设备的支持，这个都不选
+            ACP Modem (Mwave) support
+            RAW driver (/dev/raw/rawN)
+            (256) Maximum number of RAW devices to support (1-65536)
+            [*] HPET - High Precision Event Timer
+            [*]   Allow mmap of HPET
+            Hangcheck timer
+            TPM Hardware Support  --->
+            Telecom clock driver for ATCA SBC
+        {*} I2C support  --->
+        [*] SPI support  --->
+        < > HSI support  --->
+            PPS support  --->
+            PTP clock support  --->
+        -*- GPIO Support  --->
+        {M} Dallas's 1-wire support  --->
+        -*- Power supply class support  --->
+        {*} Hardware Monitoring support  --->
+        -*- Generic Thermal sysfs driver  --->
+        [*] Watchdog Timer Support  --->
+            Sonics Silicon Backplane  --->
+            Broadcom specific AMBA  --->      不存在这个设备，所以里面都不选择
+            Multifunction device drivers  --->
+        -*- Voltage and Current Regulator Support  --->
+        < > Multimedia support  --->        不存在这类设备
+            Graphics support  --->
+            <*> /dev/agpgart (AGP Support)  --->
+                --- /dev/agpgart (AGP Support)
+                <*>   Intel 440LX/BX/GX, I8xx and E7x05 chipset support
+                < >   SiS chipset support        不存在的设备
+                < >   VIA chipset support        不存在的设备
+            -*- VGA Arbitration
+            (16)  Maximum number of GPUs
+            [ ] Laptop Hybrid Graphics - GPU switching support        这个是在集成显卡和显卡切换用的
+            Direct Rendering Manager (XFree86 4.1.0 and higher DRI support)  --->
+            < > 3dfx Banshee/Voodoo3+         不存在的设备
+            < > ATI Rage 128         不存在的设备
+            < > ATI Radeon         不存在的设备
+            < > Nouveau (nVidia) cards      不存在的设备
+                I2C encoder or helper chips  --->
+            < > Intel I810
+            Intel 8xx/9xx/G3x/G4x/HD Graphics
+            [*]   Enable modesetting on intel by default
+            < > Matrox g200/g400         不存在的设备
+            < > SiS video cards         不存在的设备
+            < > Via unichrome video cards         不存在的设备
+            < > Savage video cards         不存在的设备
+            < > DRM driver for VMware Virtual GPU
+            <*> Intel GMA5/600 KMS Framebuffer    AOD270必选!
+                [ ]   Intel GMA600 support (Experimental)
+                [*]   Intel GMA3600/3650 support (Experimental)        AOD270必选!AOD270是GMA3600的显卡
+            < > DisplayLink
+            < > AST server chips
+            < > Kernel modesetting driver for MGA G200 server engines
+            < > Cirrus driver for QEMU emulated device
+            < > Intel GMA500 Stub Driver        新版没有这个选项了
+            {M} Lowlevel video output switch controls
+            {*} Support for frame buffer devices  --->
+            [ ] Exynos Video driver support  --->
+            -*- Backlight & LCD device support  --->
+                Console display driver support  --->
+            [ ] Bootup logo  --->  
+        <*> Sound card support  --->      声卡支持
+            --- Sound card support
+            [*]   Preclaim OSS device numbers
+            <*>   Advanced Linux Sound Architecture  --->
+                --- Advanced Linux Sound Architecture
+                   Sequencer support
+                     Sequencer dummy client
+                   OSS Mixer API
+                < >   OSS PCM (digital audio) API
+                [ ]   OSS Sequencer API
+                   HR-timer backend support
+                [*]     Use HR-timer as default sequencer timer
+                -*-   Dynamic device file minor numbers
+                [*]   Support old ALSA API
+                [*]   Verbose procfs contents
+                [ ]   Verbose printk
+                [ ]   Debug
+                [*]   Generic sound devices  --->
+                [*]   PCI sound devices  --->
+                       Intel HD Audio  --->
+                       Intel/SiS/nVidia/AMD/ALi AC97 Controller
+                [ ]   SPI sound devices  --->
+                [ ]   USB sound devices  --->
+                [*]   PCMCIA sound devices  --->
+                < >   ALSA for SoC audio support  --->
+            < >   Open Sound System (DEPRECATED) --->    不使用OSS,这个已经被ALSA替代了
+            HID support  --->
+        [*] USB support  --->
+            --- USB support
+            {*}   Support for Host-side USB
+            [ ]     USB verbose debug messages
+            [*]     USB announce new devices
+                    *** Miscellaneous USB options ***
+            [*]     Dynamic USB minor allocation
+            [*]     USB runtime power management (autosuspend) and wakeup
+            [ ]       OTG support
+            [ ]   Rely on OTG Targeted Peripherals List
+            [ ]   Disable external hubs
+            < >   DesignWare USB3 DRD Core Support
+               USB Monitor
+               Support WUSB Cable Based Association (CBA)
+            [ ]     Enable CBA debug messages
+                  *** USB Host Controller Drivers ***
+            < >   Cypress C67x00 HCD support
+            < >   xHCI HCD (USB 3.0) support
+            <*>   EHCI HCD (USB 2.0) support        如果用USB口,必选
+            [*]   Root Hub Transaction Translators
+            [*]   Improved Transaction Translator scheduling
+            < >   OXU210HP HCD support
+            < >   ISP116X HCD support
+            < >   ISP 1760 HCD support
+            < >   ISP1362 HCD support
+            < >   OHCI HCD support
+            < >   Generic EHCI driver for a platform device
+               UHCI HCD (most Intel and VIA) support
+            < >   SL811HS HCD support
+            < >   R8A66597 HCD support
+            < >   Inventra Highspeed Dual Role Controller (TI, ADI, ...)
+            < >   ChipIdea Highspeed Dual Role Controller
+            < >   Renesas USBHS controller
+                  *** USB Device Class drivers ***
+            < >   USB Modem (CDC ACM) support
+            < >   USB Printer support
+            < >   USB Wireless Device Management support
+            < >   USB Test and Measurement Class support
+                  *** NOTE: USB_STORAGE depends on SCSI but BLK_DEV_SD may ***
+                  *** also be needed; see USB_STORAGE Help for more info ***
+               USB Mass Storage support
+            [ ]     USB Mass Storage verbose debug
+                 Realtek Card Reader support
+            [*]       Realtek Card Reader autosuspend support
+            < >     Datafab Compact Flash Reader support
+            < >     Freecom USB/ATAPI Bridge support
+            < >     ISD-200 USB/ATA Bridge support
+            < >     USBAT/USBAT02-based storage support
+            < >     SanDisk SDDR-09 (and other SmartMedia, including DPCM) support
+            < >     SanDisk SDDR-55 SmartMedia support
+            < >     Lexar Jumpshot Compact Flash Reader
+            < >     Olympus MAUSB-10/Fuji DPC-R1 support
+            < >     Support OneTouch Button on Maxtor Hard Drives
+            < >     Support for Rio Karma music player
+            < >     SAT emulation on Cypress USB/ATA Bridge with ATACB
+            < >     USB ENE card reader support
+                  *** USB Imaging devices ***
+            < >   USB Mustek MDC800 Digital Camera support
+            < >   Microtek X6USB scanner support
+                  *** USB port drivers ***
+            < >   USB Serial Converter support  --->
+                  *** USB Miscellaneous drivers ***
+            < >   EMI 6|2m USB Audio interface support
+            < >   EMI 2|6 USB Audio interface support
+            < >   ADU devices from Ontrak Control Systems
+            < >   USB 7-Segment LED Display
+            < >   USB Diamond Rio500 support
+            < >   USB Lego Infrared Tower support
+            < >   USB LCD driver support
+            < >   USB LED driver support
+            < >   Cypress CY7C63xxx USB driver support
+            < >   Cypress USB thermometer driver support
+            < >   Siemens ID USB Mouse Fingerprint sensor support
+            < >   Elan PCMCIA CardBus Adapter USB Client
+            < >   Apple Cinema Display support
+            < >   USB 2.0 SVGA dongle support (Net2280/SiS315)
+               USB LD driver
+            < >   PlayStation 2 Trance Vibrator driver support
+               IO Warrior driver support
+               USB testing driver
+               iSight firmware loading support
+               USB YUREX driver support
+            < >   Functions for loading firmware on EZUSB chips
+            < >   USB3503 HSIC to USB20 Driver
+                  *** USB Physical Layer drivers ***
+            < >   OMAP USB3 PHY Driver
+            < >   OMAP CONTROL USB Driver
+            < >   NXP ISP1301 USB transceiver support
+            < >   Renesas R-Car USB phy support
+               USB Gadget Support  --->
+                  *** OTG and related infrastructure ***
+            < >   GPIO based peripheral-only VBUS sensing 'transceiver'
+               NOP USB Transceiver Driver
+        < > Ultra Wideband devices  --->      UWB设备,不选
+        <*> MMC/SD/SDIO card support  --->
+        < > Sony MemoryStick card support  --->      对SONY记忆棒的支持
+        -*- LED Support  --->
+        [ ] Accessibility support  --->
+        < > InfiniBand support  --->      AOD270永远也不会有这种互联设备啊~~
+        [*] EDAC (Error Detection And Correction) reporting  --->
+        [*] Real Time Clock  --->
+        [*] DMA Engine support  --->
+        [*] Auxiliary Display support  --->
+        {M} Userspace I/O drivers  --->
+            Virtio drivers  --->
+            < > PCI driver for virtio devices (EXPERIMENTAL)
+            < > Platform bus driver for memory mapped virtio devices (EXPERIMENTAL)
+            Microsoft Hyper-V guest support  --->        不要要支持Hyper-V，所以里面什么都不选
+            Xen driver support  --->        因为不需要支持XEN，所以里面什么都不选
+        [*] Staging drivers  --->
+        [*] X86 Platform Specific Device Drivers  --->
+            Hardware Spinlock drivers  --->      这个选项里面是空的，估计是其他平台的选项
+        [*] IOMMU Hardware Support  --->
+            --- IOMMU Hardware Support
+            [ ]   AMD IOMMU support
+            [*]   Support for Intel IOMMU using DMA Remapping Devices
+            [ ]     Enable Intel DMA Remapping Devices by default
+            [*]   Support for Interrupt Remapping (EXPERIMENTAL)
+            Remoteproc drivers (EXPERIMENTAL)  --->
+            Rpmsg drivers (EXPERIMENTAL)  --->
+        [ ] Virtualization drivers  --->      不需要支持虚拟化，所以不选
+        [*] Generic Dynamic Voltage and Frequency Scaling (DVFS) support  --->
+        < > External Connector Class (extcon) support  --->
+        [ ] Memory Controller drivers  --->
+        Industrial I/O support  --->
+        VME bridge support  --->
+      Firmware Drivers  --->
+        BIOS Enhanced Disk Drive calls determine boot disk
+        [ ]   Sets default behavior for EDD detection to off
+        EFI Variable Support via sysfs
+        < > BIOS update support for DELL systems via sysfs        非DELL机器,不选
+        < > Dell Systems Management Base Driver        非DELL机器,不选
+        [*] Export DMI identification via sysfs to userspace
+        < > DMI table support in sysfs
+        [ ] iSCSI Boot Firmware Table Attributes        不使用iSCSI,不选
+        [ ] Google Firmware Drivers        非google设备，不选
+      File systems  --->    文件系统
+        < > Second extended fs support      决定使用Ext4了，这个就不需要单独支持了
+        < > Ext3 journalling file system support       决定使用Ext4了，这个就不需要单独支持了
+        <*> The Extended 4 (ext4) filesystem
+        [*]   Ext4 extended attributes
+        [*]     Ext4 POSIX Access Control Lists
+        [*]     Ext4 Security Labels
+        [ ]   EXT4 debugging support
+        [ ] JBD (ext3) debugging support        3.9.0-rc1不存在了
+        [ ] JBD2 (ext4) debugging support
+        < > Reiserfs support      因为选用了Ext4作为文件系统，所以不选这个
+        < > JFS filesystem support       因为选用了Ext4作为文件系统，所以不选这个
+        < > XFS filesystem support       因为选用了Ext4作为文件系统，所以不选这个
+        < > GFS2 file system support       因为选用了Ext4作为文件系统，所以不选这个
+        < > OCFS2 file system support       因为选用了Ext4作为文件系统，所以不选这个
+        < > Btrfs filesystem Unstable disk format   因为选用了Ext4作为文件系统，所以不选这个
+        < > NILFS2 file system support       因为选用了Ext4作为文件系统，所以不选这个
+        [*] Enable POSIX file locking API
+        [*] Dnotify support
+        [*] Inotify support for userspace
+        [*] Filesystem wide access notification
+        [*]   fanotify permissions checking
+        [ ] Quota support      因为自己使用的机器，所以磁盘限额没有什么用处
+        Kernel automounter version 4 support (also supports v3)
+        <*> FUSE (Filesystem in Userspace) support
+           Character device in Userspace support
+            Caches  --->
+            CD-ROM/DVD Filesystems  --->        里面的都不选
+            DOS/FAT/NT Filesystems  --->        里面的都不选
+            Pseudo filesystems  --->
+        -*- Miscellaneous filesystems  --->
+            --- Miscellaneous filesystems
+            < >   ADFS file system support        不需要支持
+            < >   Apple Extended HFS file system support     不需要支持
+            < >   BeOS file system (BeFS) support (read only)     不需要支持
+            < >   BFS file system support         不需要支持
+            < >   EFS file system support (read only)         不需要支持
+            < >   Journalling Flash File System v2 (JFFS2) support         不需要支持
+            < >   UBIFS file system support         不需要支持
+            < >   LogFS file system
+               Compressed ROM file system support (cramfs)
+               SquashFS 4.0 - Squashed file system support
+            [*]     Squashfs XATTR support
+            [*]     Include support for ZLIB compressed file systems
+            [*]     Include support for LZO compressed file systems
+            [*]     Include support for XZ compressed file systems
+            [ ]     Use 4K device block size?
+            [ ]     Additional option for memory-constrained systems
+            < >   FreeVxFS file system support (VERITAS VxFS(TM) compatible)
+            < >   Minix file system support          不需要支持
+            < >   SonicBlue Optimized MPEG File System support        SonicBlue设备的支持
+            < >   OS/2 HPFS file system support           IBM OS/2操作系统的文件系统，这个系统是90年代的产物，早就没有用的了。
+            < >   QNX4 file system support (read only)
+            < >   QNX6 file system support (read only) (NEW)
+               ROM file system support
+                    RomFS backing stores (Both the above)  --->
+            -*-   Persistent store support
+            [ ]     Log kernel console messages (NEW)
+            < >     Log panic/oops to a RAM buffer (NEW)
+            < >   System V/Xenix/V7/Coherent file system support      不需要支持
+            < >   UFS file system support (read only)         FreeBSD系统使用的文件系统,这里不需要支持
+            < >   exofs: OSD based file system support  
+            < >   F2FS filesystem support (EXPERIMENTAL) (NEW)
+        [ ] Network File Systems  --->        不使用NFS
+        -*- Native language support  --->
+        Distributed Lock Manager (DLM)  --->
+      Kernel hacking  --->
+      Security options  --->        安全选项
+        -*- Enable access key retention support
+        <*>   TRUSTED KEYS
+        -*-   ENCRYPTED KEYS
+        [ ]   Enable the /proc/keys file by which keys may be viewed
+        [ ] Restrict unprivileged access to the kernel syslog
+        [*] Enable different security models
+        -*- Enable the securityfs filesystem
+        -*- Socket and Networking Security Hooks
+        [ ]   XFRM (IPSec) Networking Security Hooks
+        -*- Security hooks for pathname based access control
+        [*] Enable Intel(R) Trusted Execution Technology (Intel(R) TXT)          开启Intel TXT技术支持。TXT为Trusted Execution Technology(可信执行技术)的缩写。
+        [ ] NSA SELinux Support        不需要那么高的安全性，所以不选
+        [*] Simplified Mandatory Access Control Kernel Support
+        [ ] TOMOYO Linux Support        不需要支持
+        (2048) Default maximal count for learning mode
+        (1024) Default maximal count for audit log
+        [ ]   Activate without calling userspace policy loader
+        (/sbin/tomoyo-init) Location of userspace policy loader
+        (/sbin/init) Trigger for calling userspace policy loader
+        [*] AppArmor support
+        (1)   AppArmor boot parameter default value
+        [*] Yama support
+        [ ] Digital signature verification using multiple keyrings
+        [ ] Integrity Measurement Architecture(IMA)
+        [*] EVM support
+            Default security module (AppArmor)  --->
+    -*- Cryptographic API  --->
+    [ ] Virtualization  --->       是否支持虚拟化
+        Library routines  ---> Highbank SATA support
+            < >       Marvell SATA support
+            < >       NVIDIA SATA support
+            < >       Promise SATA TX2/TX4 support     设备驱动
+            < >       Silicon Image SATA support
+            < >       SiS 964/965/966/180 SATA support
+            < >       ServerWorks Frodo / Apple K2 SATA support
+            < >       ULi Electronics SATA support
+            < >       VIA SATA support
+            < >       VITESSE VSC-7174 / INTEL 31244 SATA support
+                      *** PATA SFF controllers with BMDMA ***
+            < >       ALi PATA support        Ali芯片组的PATA驱动，现在好像都见不到这个芯片组的主板了。
+            < >       AMD/NVidia PATA support
+            < >       ARASAN CompactFlash PATA Controller Support
+            < >       ARTOP 6210/6260 PATA support
+            < >       ATI PATA support
+            < >       ARTOP/Acard ATP867X PATA support
+            < >       CMD64x PATA support
+            < >       CS5510/5520 PATA support
+            < >       CS5530 PATA support
+            < >       CS5536 PATA support
+            < >       Cypress CY82C693 PATA support (Very Experimental)
+            < >       EFAR SLC90E66 support
+            < >       HPT 366/368 PATA support
+            < >       HPT 370/370A/371/372/374/302 PATA support
+            < >       HPT 371N/372N/302N PATA support
+            < >       HPT 343/363 PATA support
+            < >       IT8213 PATA support (Experimental)
+            < >       IT8211/2 PATA support
+            < >       JMicron PATA support
+            < >       Marvell PATA support via legacy mode
+            < >       NETCELL Revolution RAID support
+            < >       Ninja32/Delkin Cardbus ATA support
+            < >       Nat Semi NS87415 PATA support
+            < >       Intel PATA old PIIX support
+            < >       OPTI FireStar PATA support (Very Experimental)
+            < >       Promise PATA 2027x support
+            < >       Older Promise PATA controller support
+            < >       RADISYS 82600 PATA support (Experimental)
+            < >       RDC PATA support
+            < >       SC1200 PATA support
+            < >       Intel SCH PATA support
+            < >       SERVERWORKS OSB4/CSB5/CSB6/HT1000 PATA support
+            < >       CMD / Silicon Image 680 PATA support
+            < >       SiS PATA support     SiS芯片组主板的PATA驱动
+            < >       Toshiba Piccolo support (Experimental)
+            < >       Compaq Triflex PATA support
+            < >       VIA PATA support     VIA芯片组的PATA驱动
+            < >       Winbond SL82C105 PATA support
+                    *** PIO-only SFF controllers ***
+            < >     CMD640 PCI PATA support (Experimental)
+            < >     Intel PATA MPIIX support
+            < >     Nat Semi NS87410 PATA support
+            < >     OPTI621/6215 PATA support (Very Experimental)
+            < >     PCMCIA PATA support
+            < >     Generic platform device PATA support
+            < >     PC Tech RZ1000 PATA support
+                    *** Generic fallback / legacy drivers ***
+            < >     ACPI firmware driver for PATA
+            < >     Generic ATA support
+            < >     Legacy ISA PATA support (Experimental)
+        [*] Multiple devices driver support (RAID and LVM)  --->     RAID支持
+
+        Generic Target Core Mod (TCM) and ConfigFS Infrastructure  --->
+        [ ] Fusion MPT device support  --->        当前环境不存在的设备，所以不选
+            IEEE 1394 (FireWire) support  --->        IEEE1394(火线)驱动,AOD270不存在1394设备，所以里面都不选
+            < > FireWire driver stack        CONFIG_FIREWIRE=y|m 火线驱动
+                < >   OHCI-1394 controllers        CONFIG_FIREWIRE_OHCI=y|m OHCI1394标准控制器驱动
+                < >   Storage devices (SBP-2 protocol)        CONFIG_FIREWIRE_SBP2=y|m SBP-2协议的存储设备驱动
+                < >   IP networking over 1394        CONFIG_FIREWIRE_NET=y|m 提供1394接口支持IP传输的驱动
+            < > Nosy - a FireWire traffic sniffer for PCILynx cards        CONFIG_FIREWIRE_NOSY=y|m 提供PCILynx卡的协议分析等功能。这个主要是用于1394驱动开发及相关的应用程序开发使用的。
+        I2O device support  --->
+        [ ] Macintosh device drivers  --->    不存在这个设备，所以不选
+        -*- Network device support  --->
+            --- Network device support
+            -*-   Network core driver support
+                 Bonding driver support
+                 Dummy net driver support
+                 EQL (serial line load balancing) support
+            [ ]     Fibre Channel driver support        不存在光纤网卡，所以不选择
+            {*}     Generic Media Independent Interface device support
+                 IEEE 802.15.4 drivers  --->
+                 Intermediate Functional Block support
+            < >     Ethernet team driver support (EXPERIMENTAL)  --->
+                 MAC-VLAN support (EXPERIMENTAL)
+                   MAC-VLAN based tap driver (EXPERIMENTAL)
+                 Network console logging support
+            [*]       Dynamic reconfiguration of logging targets
+            [ ]     Netpoll traffic trapping
+                 RapidIO Ethernet over messaging driver support
+            (128)     Number of outbound queue entries
+            (128)     Number of inbound queue entries
+            <*>     Universal TUN/TAP device driver support
+                 Virtual ethernet pair device
+            <*>     Virtio network driver (EXPERIMENTAL)
+            < >   ARCnet support  --->        不存在ARCnet设备，所以不选（这是一种令牌总线的网络）
+            [ ]   ATM drivers  --->        不存在ATM设备，所以不选
+                  *** CAIF transport drivers ***
+               CAIF TTY transport driver
+               CAIF SPI transport driver for slave interface
+            [ ]     Next command and length in start of frame
+               CAIF HSI transport driver
+                  Distributed Switch Architecture drivers  --->
+            -*-   Ethernet driver support  --->     机器内置RTL8101/RTL8102的网卡，所以除此之外都不选择
+                [*]   Realtek devices
+                <*>     Realtek 8169 gigabit ethernet support        AOD270使用这个驱动
+            < >   FDDI driver support        光线分布数据接口支持.没有FDDI设备，所以不选
+            [ ]   HIPPI driver support        高性能并行接口的支持，不存在此设备
+            < >   General Instruments Surfboard 1000        不存在的设备，网上查说是很早期的设备
+            {*}   PHY Device support and infrastructure  --->
+            < >   Micrel KS8995MA 5-ports 10/100 managed Ethernet switch
+            < >   PLIP (parallel port) support        机器上没有并口，所以不选
+            {*}   PPP (point-to-point protocol) support
+                 PPP BSD-Compress compression
+                 PPP Deflate compression
+            [*]     PPP filtering
+                 PPP MPPE compression (encryption) (EXPERIMENTAL)
+            [*]     PPP multilink support (EXPERIMENTAL)
+                 PPP over ATM
+                 PPP over Ethernet (EXPERIMENTAL)
+                 PPP over IPv4 (PPTP) (EXPERIMENTAL)
+                 PPP over L2TP (EXPERIMENTAL)
+                 PPP support for async serial ports
+                 PPP support for sync tty ports
+            < >   SLIP (serial line) support        串口网络的支持
+                  USB Network Adapters  --->        因为机器带有无线和有线网卡,所以这个USB网卡应该用不到,所以里面的都不选
+            [*]   Wireless LAN  --->            机器本身带Atheros无线网卡，所以其他的都不选择
+                   --- Wireless LAN
+                      Atheros Wireless Cards  --->      不知道为什么，这个只能选择为模块
+                        --- Atheros Wireless Cards
+                        [ ]   Atheros wireless debugging
+                        < >   Atheros 5xxx wireless cards support
+                        [ ]   Atheros 5xxx PCI bus support        不存在的设备
+                        [ ]   Atheros bluetooth coexistence support
+                           Atheros 802.11n wireless cards support
+                        [*]     Atheros ath9k PCI/PCIe bus support
+                        [ ]     Atheros ath9k AHB bus support
+                        [*]     Atheros ath9k debugging
+                        [ ]     Atheros DFS support for certified platforms        新版没有这个选项了
+                        [*]   Atheros MAC statistics     新版没有这个选项了
+                        [*]   Atheros ath9k rate control
+                        < >   Atheros HTC based wireless cards support
+                        < >   Linux Community AR9170 802.11n USB support
+                        < >   Atheros mobile chipsets support          因为AOD270内置的AR9485，所以除Atheros,其他无线网卡的驱动就都不选了
+                  *** Enable WiMAX (Networking options) to see the WiMAX drivers ***
+                  WiMAX Wireless Broadband devices  --->        WiMAX设备支持 3.9.0-rc1中没有了
+            [ ]   Wan interfaces support  --->        没有此类设备
+            < >   IEEE 802.15.4 drivers  --->        没有此类设备
+            < >   Xen network device frontend driver      指定机型定制的，所以不需要Xen驱动的支 3.9.0-rc1中没有了
+            < >   Xen backend network device       指定机型定制的，所以不需要Xen驱动的支持 3.9.0-rc1中没有了
+            < >   VMware VMXNET3 ethernet driver       指定机型定制的，所以不需要VMware驱动的支持
+            < >   Microsoft Hyper-V virtual network driver       指定机型定制的，所以不需要Hyper-V驱动的支持 3.9.0-rc1中没有了
+            [ ] ISDN support  --->        ISDN设备，好像我现在永不着，所以不选了。之前这个是在上一层的，3.8.0-rc7移到网络这层了。本身这个ISDN是一个过时的技术了,估计现在使用的很少了
+         Input device support  --->
+            -*- Generic input layer (needed for keyboard, mouse, ...)
+            {M}   Support for memoryless force-feedback devices
+            {M}   Polled input device skeleton
+            {M}   Sparse keymap support library
+            < >   Matrix keymap support library
+                  *** Userland interfaces ***
+            -*-   Mouse interface
+            [*]     Provide legacy /dev/psaux device
+            (1024)  Horizontal screen resolution
+            (768)   Vertical screen resolution
+            < >   Joystick interface        不存在摇杆设备
+               Event interface
+            < >   Event debugging
+                  *** Input Device Drivers ***
+            -*-   Keyboards  --->
+            [*]   Mice  --->
+            [ ]   Joysticks/Gamepads  --->        不存在摇杆设备
+            [ ]   Tablets  --->        不存在平板设备
+            [*]   Touchscreens  --->
+            [*]   Miscellaneous devices  --->
+                Hardware I/O ports  --->
+                -*- Serial I/O support
+                {M}   Serial port line discipline
+                   ct82c710 Aux port controller
+                < >   Parallel port keyboard adapter
+                   PCI PS/2 keyboard and PS/2 mouse controller
+                   Raw access to serio ports
+                   Altera UP PS/2 controller
+                < >   TQC PS/2 multiplexer
+                < >   ARC PS/2 support
+                < > Gameport support    不存在的设备
+        Character devices  --->
+            -*- Virtual terminal
+            [*]   Support for binding and unbinding console drivers
+            -*- Unix98 PTY support
+            [*]   Support multiple instances of devpts
+            [ ] Legacy (BSD) PTY support
+            [ ] Non-standard serial port support        没有非标准串口设备的存在
+            < > HSDPA Broadband Wireless Data Card - Globe Trotter        不存在3G上网设备的支持
+            < > GSM MUX line discipline support (EXPERIMENTAL)       不需要支持GSM设备
+            < > Trace data sink for MIPI P1149.7 cJTAG standard
+            [ ] /dev/kmem virtual device support
+                Serial drivers  --->
+                {*} 8250/16550 and compatible serial support
+                [*]   Console on 8250/16550 and compatible serial port
+                < > 8250/16550 PCMCIA device support
+                (32) Maximum number of 8250/16550 serial ports
+                (4) Number of 8250/16550 serial ports to register at runtime
+                [*] Extended 8250/16550 serial driver options
+                [*]   Support more than 4 legacy serial ports
+                [*]   Support for sharing serial interrupts
+                [ ]   Autodetect IRQ on standard ports (unsafe)
+                [*]   Support RSA serial ports
+                    *** Non-8250 serial port support ***
+                < > MAX3100 support
+                [ ] MAX310X support
+                < > Medfield High Speed UART support
+                < > Digi International NEO PCI Support
+                < > SCCNXP serial port support
+                < > Support for timberdale UART
+                < > Altera JTAG UART support
+                < > Altera UART support
+                < > SPI protocol driver for Infineon 6x60 modem (EXPERIMENTAL)
+                < > Intel EG20T PCH/LAPIS Semicon IOH(ML7213/ML7223/ML7831) UART
+                < > ARC UART driver support  
+            < > Parallel printer support        不需要对并口打印机进行支持
+            < > Support for user-space parallel port device drivers        不需要对并口设备进行支持
+            [ ] Xen Hypervisor Console support        不需要对XEN进行支持
+            < > Virtio console        不需要对IO虚拟化进行支持
+            IPMI top-level message handler  --->
+            <*> Hardware Random Number Generator Core support        对硬件随机数生成的支持，这个需要编译到内核中。这个会加快随机数的生成
+            <*>   Timer IOMEM HW Random Number Generator support
+            <*>   Intel HW Random Number Generator support
+            < >   AMD HW Random Number Generator support        不存在的设备
+            < >   VIA HW Random Number Generator support        不存在的设备
+            < >   VirtIO Random Number Generator support        不需要对IO虚拟化进行支持
+            TPM HW Random Number Generator support
+            {M} /dev/nvram support
+            < > Siemens R3964 line discipline        西门子3964协议设备的支持，例如PLC等。
+            Applicom intelligent fieldbus card support
+                PCMCIA character devices  --->        PCMCIA字符设备的支持，这个都不选
+            ACP Modem (Mwave) support
+            RAW driver (/dev/raw/rawN)
+            (256) Maximum number of RAW devices to support (1-65536)
+            [*] HPET - High Precision Event Timer
+            [*]   Allow mmap of HPET
+            Hangcheck timer
+            TPM Hardware Support  --->
+            Telecom clock driver for ATCA SBC
+        {*} I2C support  --->
+        [*] SPI support  --->
+        < > HSI support  --->
+            PPS support  --->
+            PTP clock support  --->
+        -*- GPIO Support  --->
+        {M} Dallas's 1-wire support  --->
+        -*- Power supply class support  --->
+        {*} Hardware Monitoring support  --->
+        -*- Generic Thermal sysfs driver  --->
+        [*] Watchdog Timer Support  --->
+            Sonics Silicon Backplane  --->
+            Broadcom specific AMBA  --->      不存在这个设备，所以里面都不选择
+            Multifunction device drivers  --->
+        -*- Voltage and Current Regulator Support  --->
+        < > Multimedia support  --->        不存在这类设备
+            Graphics support  --->
+            <*> /dev/agpgart (AGP Support)  --->
+                --- /dev/agpgart (AGP Support)
+                <*>   Intel 440LX/BX/GX, I8xx and E7x05 chipset support
+                < >   SiS chipset support        不存在的设备
+                < >   VIA chipset support        不存在的设备
+            -*- VGA Arbitration
+            (16)  Maximum number of GPUs
+            [ ] Laptop Hybrid Graphics - GPU switching support        这个是在集成显卡和显卡切换用的
+            Direct Rendering Manager (XFree86 4.1.0 and higher DRI support)  --->
+            < > 3dfx Banshee/Voodoo3+         不存在的设备
+            < > ATI Rage 128         不存在的设备
+            < > ATI Radeon         不存在的设备
+            < > Nouveau (nVidia) cards      不存在的设备
+                I2C encoder or helper chips  --->
+            < > Intel I810
+            Intel 8xx/9xx/G3x/G4x/HD Graphics
+            [*]   Enable modesetting on intel by default
+            < > Matrox g200/g400         不存在的设备
+            < > SiS video cards         不存在的设备
+            < > Via unichrome video cards         不存在的设备
+            < > Savage video cards         不存在的设备
+            < > DRM driver for VMware Virtual GPU
+            <*> Intel GMA5/600 KMS Framebuffer    AOD270必选!
+                [ ]   Intel GMA600 support (Experimental)
+                [*]   Intel GMA3600/3650 support (Experimental)        AOD270必选!AOD270是GMA3600的显卡
+            < > DisplayLink
+            < > AST server chips
+            < > Kernel modesetting driver for MGA G200 server engines
+            < > Cirrus driver for QEMU emulated device
+            < > Intel GMA500 Stub Driver        新版没有这个选项了
+            {M} Lowlevel video output switch controls
+            {*} Support for frame buffer devices  --->
+            [ ] Exynos Video driver support  --->
+            -*- Backlight & LCD device support  --->
+                Console display driver support  --->
+            [ ] Bootup logo  --->  
+        <*> Sound card support  --->      声卡支持
+            --- Sound card support
+            [*]   Preclaim OSS device numbers
+            <*>   Advanced Linux Sound Architecture  --->
+                --- Advanced Linux Sound Architecture
+                   Sequencer support
+                     Sequencer dummy client
+                   OSS Mixer API
+                < >   OSS PCM (digital audio) API
+                [ ]   OSS Sequencer API
+                   HR-timer backend support
+                [*]     Use HR-timer as default sequencer timer
+                -*-   Dynamic device file minor numbers
+                [*]   Support old ALSA API
+                [*]   Verbose procfs contents
+                [ ]   Verbose printk
+                [ ]   Debug
+                [*]   Generic sound devices  --->
+                [*]   PCI sound devices  --->
+                       Intel HD Audio  --->
+                       Intel/SiS/nVidia/AMD/ALi AC97 Controller
+                [ ]   SPI sound devices  --->
+                [ ]   USB sound devices  --->
+                [*]   PCMCIA sound devices  --->
+                < >   ALSA for SoC audio support  --->
+            < >   Open Sound System (DEPRECATED) --->    不使用OSS,这个已经被ALSA替代了
+            HID support  --->
+        [*] USB support  --->
+            --- USB support
+            {*}   Support for Host-side USB
+            [ ]     USB verbose debug messages
+            [*]     USB announce new devices
+                    *** Miscellaneous USB options ***
+            [*]     Dynamic USB minor allocation
+            [*]     USB runtime power management (autosuspend) and wakeup
+            [ ]       OTG support
+            [ ]   Rely on OTG Targeted Peripherals List
+            [ ]   Disable external hubs
+            < >   DesignWare USB3 DRD Core Support
+               USB Monitor
+               Support WUSB Cable Based Association (CBA)
+            [ ]     Enable CBA debug messages
+                  *** USB Host Controller Drivers ***
+            < >   Cypress C67x00 HCD support
+            < >   xHCI HCD (USB 3.0) support
+            <*>   EHCI HCD (USB 2.0) support        如果用USB口,必选
+            [*]   Root Hub Transaction Translators
+            [*]   Improved Transaction Translator scheduling
+            < >   OXU210HP HCD support
+            < >   ISP116X HCD support
+            < >   ISP 1760 HCD support
+            < >   ISP1362 HCD support
+            < >   OHCI HCD support
+            < >   Generic EHCI driver for a platform device
+               UHCI HCD (most Intel and VIA) support
+            < >   SL811HS HCD support
+            < >   R8A66597 HCD support
+            < >   Inventra Highspeed Dual Role Controller (TI, ADI, ...)
+            < >   ChipIdea Highspeed Dual Role Controller
+            < >   Renesas USBHS controller
+                  *** USB Device Class drivers ***
+            < >   USB Modem (CDC ACM) support
+            < >   USB Printer support
+            < >   USB Wireless Device Management support
+            < >   USB Test and Measurement Class support
+                  *** NOTE: USB_STORAGE depends on SCSI but BLK_DEV_SD may ***
+                  *** also be needed; see USB_STORAGE Help for more info ***
+               USB Mass Storage support
+            [ ]     USB Mass Storage verbose debug
+                 Realtek Card Reader support
+            [*]       Realtek Card Reader autosuspend support
+            < >     Datafab Compact Flash Reader support
+            < >     Freecom USB/ATAPI Bridge support
+            < >     ISD-200 USB/ATA Bridge support
+            < >     USBAT/USBAT02-based storage support
+            < >     SanDisk SDDR-09 (and other SmartMedia, including DPCM) support
+            < >     SanDisk SDDR-55 SmartMedia support
+            < >     Lexar Jumpshot Compact Flash Reader
+            < >     Olympus MAUSB-10/Fuji DPC-R1 support
+            < >     Support OneTouch Button on Maxtor Hard Drives
+            < >     Support for Rio Karma music player
+            < >     SAT emulation on Cypress USB/ATA Bridge with ATACB
+            < >     USB ENE card reader support
+                  *** USB Imaging devices ***
+            < >   USB Mustek MDC800 Digital Camera support
+            < >   Microtek X6USB scanner support
+                  *** USB port drivers ***
+            < >   USB Serial Converter support  --->
+                  *** USB Miscellaneous drivers ***
+            < >   EMI 6|2m USB Audio interface support
+            < >   EMI 2|6 USB Audio interface support
+            < >   ADU devices from Ontrak Control Systems
+            < >   USB 7-Segment LED Display
+            < >   USB Diamond Rio500 support
+            < >   USB Lego Infrared Tower support
+            < >   USB LCD driver support
+            < >   USB LED driver support
+            < >   Cypress CY7C63xxx USB driver support
+            < >   Cypress USB thermometer driver support
+            < >   Siemens ID USB Mouse Fingerprint sensor support
+            < >   Elan PCMCIA CardBus Adapter USB Client
+            < >   Apple Cinema Display support
+            < >   USB 2.0 SVGA dongle support (Net2280/SiS315)
+               USB LD driver
+            < >   PlayStation 2 Trance Vibrator driver support
+               IO Warrior driver support
+               USB testing driver
+               iSight firmware loading support
+               USB YUREX driver support
+            < >   Functions for loading firmware on EZUSB chips
+            < >   USB3503 HSIC to USB20 Driver
+                  *** USB Physical Layer drivers ***
+            < >   OMAP USB3 PHY Driver
+            < >   OMAP CONTROL USB Driver
+            < >   NXP ISP1301 USB transceiver support
+            < >   Renesas R-Car USB phy support
+               USB Gadget Support  --->
+                  *** OTG and related infrastructure ***
+            < >   GPIO based peripheral-only VBUS sensing 'transceiver'
+               NOP USB Transceiver Driver
+        < > Ultra Wideband devices  --->      UWB设备,不选
+        <*> MMC/SD/SDIO card support  --->
+        < > Sony MemoryStick card support  --->      对SONY记忆棒的支持
+        -*- LED Support  --->
+        [ ] Accessibility support  --->
+        < > InfiniBand support  --->      AOD270永远也不会有这种互联设备啊~~
+        [*] EDAC (Error Detection And Correction) reporting  --->
+        [*] Real Time Clock  --->
+        [*] DMA Engine support  --->
+        [*] Auxiliary Display support  --->
+        {M} Userspace I/O drivers  --->
+            Virtio drivers  --->
+            < > PCI driver for virtio devices (EXPERIMENTAL)
+            < > Platform bus driver for memory mapped virtio devices (EXPERIMENTAL)
+            Microsoft Hyper-V guest support  --->        不要要支持Hyper-V，所以里面什么都不选
+            Xen driver support  --->        因为不需要支持XEN，所以里面什么都不选
+        [*] Staging drivers  --->
+        [*] X86 Platform Specific Device Drivers  --->
+            Hardware Spinlock drivers  --->      这个选项里面是空的，估计是其他平台的选项
+        [*] IOMMU Hardware Support  --->
+            --- IOMMU Hardware Support
+            [ ]   AMD IOMMU support
+            [*]   Support for Intel IOMMU using DMA Remapping Devices
+            [ ]     Enable Intel DMA Remapping Devices by default
+            [*]   Support for Interrupt Remapping (EXPERIMENTAL)
+            Remoteproc drivers (EXPERIMENTAL)  --->
+            Rpmsg drivers (EXPERIMENTAL)  --->
+        [ ] Virtualization drivers  --->      不需要支持虚拟化，所以不选
+        [*] Generic Dynamic Voltage and Frequency Scaling (DVFS) support  --->
+        < > External Connector Class (extcon) support  --->
+        [ ] Memory Controller drivers  --->
+        Industrial I/O support  --->
+        VME bridge support  --->
+      Firmware Drivers  --->
+        BIOS Enhanced Disk Drive calls determine boot disk
+        [ ]   Sets default behavior for EDD detection to off
+        EFI Variable Support via sysfs
+        < > BIOS update support for DELL systems via sysfs        非DELL机器,不选
+        < > Dell Systems Management Base Driver        非DELL机器,不选
+        [*] Export DMI identification via sysfs to userspace
+        < > DMI table support in sysfs
+        [ ] iSCSI Boot Firmware Table Attributes        不使用iSCSI,不选
+        [ ] Google Firmware Drivers        非google设备，不选
+      File systems  --->    文件系统
+        < > Second extended fs support      决定使用Ext4了，这个就不需要单独支持了
+        < > Ext3 journalling file system support       决定使用Ext4了，这个就不需要单独支持了
+        <*> The Extended 4 (ext4) filesystem
+        [*]   Ext4 extended attributes
+        [*]     Ext4 POSIX Access Control Lists
+        [*]     Ext4 Security Labels
+        [ ]   EXT4 debugging support
+        [ ] JBD (ext3) debugging support        3.9.0-rc1不存在了
+        [ ] JBD2 (ext4) debugging support
+        < > Reiserfs support      因为选用了Ext4作为文件系统，所以不选这个
+        < > JFS filesystem support       因为选用了Ext4作为文件系统，所以不选这个
+        < > XFS filesystem support       因为选用了Ext4作为文件系统，所以不选这个
+        < > GFS2 file system support       因为选用了Ext4作为文件系统，所以不选这个
+        < > OCFS2 file system support       因为选用了Ext4作为文件系统，所以不选这个
+        < > Btrfs filesystem Unstable disk format   因为选用了Ext4作为文件系统，所以不选这个
+        < > NILFS2 file system support       因为选用了Ext4作为文件系统，所以不选这个
+        [*] Enable POSIX file locking API
+        [*] Dnotify support
+        [*] Inotify support for userspace.config for Kernel-3.10.10-xxx.x86_64 of Linux
+
+*一级配色
+*二级配色
+*三级配色
+*四级配色
+*五级配色
+*注释配色
+
+    [*] 64-bit kernel
+        General setup  ---> 常规设置
+        ()  Cross-compiler tool prefix    CONFIG_CROSS_COMPILE="" 交叉编译工具前缀
+        ()  Local version - append to kernel release    CONFIG_LOCALVERSION="" 在内核版本后面附加上你指定的版本信息,这个信息在uname -a命令里面可以看到
+        [ ] Automatically append version information to the version string    CONFIG_LOCALVERSION_AUTO=y 自动根据源代码中的git版本信息附加一个-gxxxxxxxx这样的版本号
+            Kernel compression mode (Gzip)  --->    内核压缩模式。注意，这几种压缩方式只能选择一种使用。
+            (X) Gzip    HAVE_KERNEL_GZIP=y 用于UNIX系统的文件压缩格式
+            ( ) Bzip2    HAVE_KERNEL_BZIP2=y    bzip2 是一个基于Burrows-Wheeler变换的无损压缩软件，压缩效果比传统的LZ77/LZ78压缩算法来得好。bzip2比传统的gzip或者 ZIP的压缩效率更高，但是它的压缩速度较慢。参考:http://zh.wikipedia.org/wiki/Gzip
+            ( ) LZMA    HAVE_KERNEL_LZMA=y    是一个Deflate和LZ77算法改良和优化后的压缩算法。它使用类似于LZ77的字典编码机制，在一般的情况下压缩率比bzip2为高，用于压缩的可变字典最大小可达4GB。参考:http://zh.wikipedia.org/wiki/LZMA
+            ( ) XZ    HAVE_KERNEL_XZ=y     是一个使用 LZMA压缩算法的无损数据压缩文件格式。和gzip与bzip2一样，同样支持多文件压缩，但是约定不能将多于一个的目标文件压缩进同一个档案文件。 相反，xz通常作为一种归档文件自身的压缩格式，例如使用tar或cpioUnix程序创建的归档。参 考:http://zh.wikipedia.org/wiki/Xz
+            ( ) LZO    HAVE_KERNEL_LZO=y      是致力于解压速度的一种数据压缩算法，LZO是Lempel-Ziv-Oberhumer的缩写。参考:http://zh.wikipedia.org/wiki/LZO
+        ((none)) Default hostname    CONFIG_DEFAULT_HOSTNAME="(none)"
+            指定一个默认的主机名。指定了这个以后，可以省去使用sethostname命令设置主机名称。在制作最小系统时比较有用。
+        [*] Support for paging of anonymous memory (swap)    CONFIG_SWAP=y 是否支持交换分区
+        [*] System V IPC    CONFIG_SYSVIPC=y 支持System V IPC     这个主要是为了兼容使用了System V IPC的UNIX程序而设的，如果不考虑兼容性，则可以忽略这个参数。参考:http://www.eefocus.com/article/09-06/75167s.html
+        [*] POSIX Message Queues    CONFIG_POSIX_MQUEUE=y 是否支持POSIX Message Queues，这个是为了兼容POSIX标准而设的。这个只有在CONFIG_EXPERIMENTAL=y时显示。
+        [*] open by fhandle syscalls    CONFIG_FHANDLE=y
+        -*- Auditing support    CONFIG_AUDIT=y 支持审计功能
+        [*]   Enable system-call auditing support    CONFIG_AUDITSYSCALL=y 开启系统调用的审计功能
+        [ ]   Make audit loginuid immutable
+            IRQ subsystem  --->    中断子系统
+            Timers subsystem  --->
+            CPU/Task time and stats accounting  --->
+            RCU Subsystem  --->    非对称读写锁系统    一种新的kernel锁机制，适用于读多写少环境。对于被RCU保护的共享数据结构，读者不需要获得任何锁就可以访问它，但写者在访问它时首先拷贝一个副 本，然后对副本进行修改，最后使用一个回调（callback）机制在适当的时机把指向原来数据的指针重新指向新的被修改的数据。这个时机就是所有引用该 数据的CPU都退出对共享数据的操作。
+        < > Kernel .config support    CONFIG_IKCONFIG=y|m 把编译内核时使用的.config文件保存在编译好的内核中。
+        (17) Kernel log buffer size (16 => 64KB, 17 => 128KB)    CONFIG_LOG_BUF_SHIFT=17 内核日志缓存的大小。这个值是以2的平方取的，取值范围12-21。
+        [ ] Memory placement aware NUMA scheduler
+        -*- Control Group support  --->    CGROUPS=y|n 支持组控制
+        [ ] Checkpoint/restore support
+        [*] Namespaces support  --->
+        [*] Automatic process group scheduling
+        [ ] Enable deprecated sysfs features to support old userspace tools    在某些文件系统上(比如debugfs)提供从内核空间向用户空间传递大量数据的接口
+        -*- Kernel->user space relay support (formerly relayfs)    内核系统区和用户区进行传递通讯的支持。这个选项在特定的文 件系统中提供数据传递接口支持，它可以提供从内核空间到用户空间的大批量的数据传递工具和设施。
+        [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support    CONFIG_BLK_DEV_INITRD=y|n 支持初始化RAM文件系统和RAM盘。
+        ()    Initramfs source file(s)    CONFIG_INITRAMFS_SOURCE="" 指定initramfs的文件名称
+        [*]   Support initial ramdisks compressed using gzip    CONFIG_RD_GZIP=y 支持GZIP压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using bzip2    CONFIG_RD_BZIP2=y 支持BZip2压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using LZMA    CONFIG_RD_LZMA=y 支持LZMA压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using XZ    CONFIG_RD_XZ=y 支持XZ压缩的RAM盘文件
+        [*]   Support initial ramdisks compressed using LZO    CONFIG_RD_LZO=y 支持LZO压缩的RAM盘文件
+        [*] Optimize for size    CONFIG_CC_OPTIMIZE_FOR_SIZE=y 这个仅仅是标识在编译内核时增加-Os参数，如果不选择则增加-O2参数。这个选项对内核功能性没有影响。
+        [*] Configure standard kernel features (expert users)  --->    显示高级选项,选上这个才会出现高级选项
+        [*] Enable 16-bit UID system calls    启用16位UID。系统模式使用的UID是32位。
+        [ ] Sysctl syscall support
+        -*- Load all symbols for debugging/ksymoops    装载所有调试符号
+        [ ]   Include all symbols in kallsyms    所有符号装入kallsyms
+        [*] Enable support for printk
+        [*] BUG() support
+        [*] Enable ELF core dumps
+        [*] Enable PC-Speaker support    开启PC喇叭
+        [*] Enable full-sized data structures for core
+        [*] Enable futex support
+        [*] Enable eventpoll support
+        [*] Enable signalfd() system call
+        [*] Enable timerfd() system call
+        -*- Enable eventfd() system call
+        -*- Use full shmem filesystem
+        [*] Enable AIO support
+        [ ] Embedded system
+            Kernel Performance Events And Counters  --->  
+        [*] Enable VM event counters for /proc/vmstat
+        [*] Enable PCI quirk workarounds
+        [ ] Disable heap randomization
+            Choose SLAB allocator (SLUB)  --->    选择内存分配管理器
+            ( ) SLAB    通用内存分配管理器
+            (X) SLUB (Unqueued Allocator)    比SLAB性能更好的内存分配器
+            ( ) SLOB (Simple Allocator)    简单的内存分配器
+        [*] Profiling support
+        OProfile system profiling
+        [ ]   OProfile multiplexing support (EXPERIMENTAL)
+        [*] Kprobes
+        [ ] Optimize very unlikely/likely branches
+            GCOV-based kernel profiling  --->
+    [*] Enable loadable module support  --->
+    [*] Enable the block layer  --->
+        Processor type and features  --->    处理器类型和特性
+        [*] DMA memory allocation support    CONFIG_ZONE_DMA=y   支持DMA内存分配低于16MB的地址空间，如果不分配的话，这部分内存也不会被使用。从网上查到的信息，这个前16MB是原来ISA设备遗留的问 题，ISA设备的DMA只能访问前16M的内存。估计之前这16MB是为了兼容ISA设备而预留的，现在已经几乎找不到ISA设备了，所以这块内存又拿回 来使用。参考:http://blog.csdn.net/supperwangli/article/details/5207918
+        [*] Symmetric multi-processing support    对称多处理器支持
+        [*] Support x2apic
+        [*] Enable MPS table
+        [ ] Support for extended (non-PC) x86 platforms    支持非PC的x86平台
+        [*] Intel Low Power Subsystem Support
+        [*] Numascale NumaChip
+        [ ] ScaleMP vSMP
+        [ ] SGI Ultraviolet
+        [*] Single-depth WCHAN output
+        [*] Paravirtualized guest support  --->    虚拟化客户端支持
+        [ ] paravirt-ops debugging
+        [ ] Memtest    启用内存测试
+            Processor family (Intel Atom)  --->    Atom专用    选择Atom CPU
+        [*] Supported processor vendors  --->    这个选项，里面只选Intel,其他的不选
+            --- Supported processor vendors
+            [*]   Support Intel processors
+            [ ]   Support AMD processors
+            [ ]   Support Centaur processors
+        [*] Enable DMI scanning
+        [*] GART IOMMU support
+        [ ] IBM Calgary IOMMU support    这个是IBM专用的，所以不选
+        [ ] Enable Maximum number of SMP Processors and NUMA Nodes
+        (4) Maximum number of CPUs    NR_CPUS=4 N2600是双核4线程的，所以改为4 (我不确认这个选择4还是选择2还是选择1，因为CPU是一个CPU、2个核心、4个线程)
+        [*] SMT (Hyperthreading) scheduler support    SCHED_SMT=y|n 支持Intel HT超线程,N2600支持HT，所以选择
+        [*] Multi-core scheduler support    SCHED_MC=y|n 多核调度程序支持
+        [ ] Fine granularity task level IRQ time accounting
+            Preemption Model (Voluntary Kernel Preemption (Desktop))  --->
+        [*] Reroute for broken boot IRQs
+        [*] Machine Check / overheating reporting
+        [*]   Intel MCE features
+        [ ]   AMD MCE features    这个对Atom CPU没有作用
+        Machine check injector support
+        < > Dell laptop support    这个是DELL专用的，所以不选
+        <*> /dev/cpu/microcode - microcode support
+        [*]   Intel microcode patch loading support
+        [ ]   AMD microcode patch loading support    这个对AMD专用
+        /dev/cpu/*/msr - Model-specific register support
+        /dev/cpu/*/cpuid - CPU information support
+        [*] Enable 1GB pages for kernel pagetables
+        [ ] Numa Memory Allocation and Scheduler Support 是否支持NUMA，只有在多物理CPU条件下才选择
+        [ ] Old style AMD Opteron NUMA detection    AMD专用的，所以不选
+        [*] ACPI NUMA detection
+        [ ] NUMA emulation
+        (6) Maximum NUMA Nodes (as a power of 2)
+            Memory model (Sparse Memory)  --->
+        [*] Sparse Memory virtual memmap
+        [ ] Enable to assign a node which has only movable memory
+        [ ] Allow for memory hot-add    内存热插拔支持，这个需要硬件的支持,所以一般不需要。除非确认硬件支持。
+        -*- Allow for memory compaction
+        -*- Page migration
+        [*] Enable KSM for page merging
+        (65536) Low address space to protect from user allocation
+        [*] Enable recovery from hardware memory errors
+        < >   HWPoison pages injector
+        [*] Transparent Hugepage Support
+              Transparent Hugepage Support sysfs defaults (madvise)  --->
+        [*] Cross Memory Support
+        [*] Enable cleancache driver to cache clean pages if tmem is present
+        [ ] Enable frontswap to cache swap pages if tmem is present
+        [*] Check for low memory corruption
+        [*]   Set the default setting of memory_corruption_check
+        (64) Amount of low memory, in kilobytes, to reserve for the BIOS
+        [*] MTRR (Memory Type Range Register) support
+        [*]   MTRR cleanup support
+        (1)     MTRR cleanup enable value (0-1)
+        (1)     MTRR cleanup spare reg num (0-7)
+        [*]   x86 PAT support 这个选项只有在32bit时出现
+        [*] x86 architectural random number generator
+        [ ] EFI runtime service support    没有使用EFI
+        [*] Enable seccomp to safely compute untrusted bytecode
+        [*] Enable -fstack-protector buffer overflow detection (EXPERIMENTAL)
+            Timer frequency (250 HZ)  --->
+        [*] kexec system call
+        [*] kernel crash dumps
+        [*] kexec jump (EXPERIMENTAL)
+        (0x1000000) Physical address where the kernel is loaded
+        [*] Build a relocatable kernel
+        -*- Support for hot-pluggable CPUs
+        [ ] Compat VDSO support
+        [ ] Built-in kernel command line
+    Power management and ACPI options  --->
+    Bus options (PCI etc.)  --->
+        [*] PCI support
+        [*]   Support mmconfig PCI config space access
+        [*]   PCI Express support
+        [*]     Root Port Advanced Error Reporting support
+        [ ]       PCI Express ECRC settings control
+               PCIe AER error injector support
+        -*-     PCI Express ASPM control
+        [ ]       Debug PCI Express ASPM
+                  Default ASPM policy (BIOS default)  --->
+        -*- Message Signaled Interrupts (MSI and MSI-X)
+        [ ] PCI Debugging
+        [ ] Enable PCI resource re-allocation detection
+        PCI Stub driver
+        < > Xen PCI Frontend    不需要Xen的支持，所以不取
+        [*] Interrupts on hypertransport devices
+        [ ] PCI IOV support    这个是PCI Express接口IO虚拟化技术的支持
+        -*- PCI PRI support
+        -*- PCI PASID support
+        <*> PCI IO-APIC hotplug support
+        < > PCCard (PCMCIA/CardBus) support  --->    没有PCCard设备
+        < > Support for PCI Hotplug  --->    PCI热插支持,除非确定需要支持，否则不选
+        [ ] RapidIO support
+    Executable file formats / Emulations  --->
+        [*] Kernel support for ELF binaries
+        [*] Write ELF core dumps with partial segments
+        < > Kernel support for MISC binaries    支持Mono .NET代码
+        [*] Enable core dump support
+        [ ] IA32 Emulation    不需要兼容IA32的代码,所以不选
+    -*- Networking support  --->
+        --- Networking support
+              Networking options  --->
+            <*> Packet socket
+            < >   Packet: sockets monitoring interface
+            <*> Unix domain sockets
+            < >   UNIX: socket monitoring interface
+            Transformation user configuration interface
+            [*] Transformation sub policy support
+            -*- Transformation migrate database
+            [ ] Transformation statistics
+            PF_KEY sockets
+            [*]   PF_KEY MIGRATE
+            [*] TCP/IP networking
+            [*]   IP: multicasting
+            [*]   IP: advanced router
+            [*]     FIB TRIE statistics
+            [*]     IP: policy routing
+            [*]     IP: equal cost multipath
+            [*]     IP: verbose route monitoring
+            [ ]   IP: kernel level autoconfiguration
+               IP: tunneling
+               IP: GRE demultiplexer
+                 IP: GRE tunnels over IP
+            [*]       IP: broadcast GRE over IP
+            [*]   IP: multicast routing
+            [*]     IP: multicast policy routing
+            [*]     IP: PIM-SM version 1 support
+            [*]     IP: PIM-SM version 2 support
+            [ ]   IP: ARP daemon support
+            [*]   IP: TCP syncookie support
+            < >   Virtual (secure) IP: tunneling
+               IP: AH transformation
+               IP: ESP transformation
+               IP: IPComp transformation
+               IP: IPsec transport mode
+               IP: IPsec tunnel mode
+               IP: IPsec BEET mode
+               Large Receive Offload (ipv4/tcp)
+               INET: socket monitoring interface
+            < >     UDP: socket monitoring interface
+            [*]   TCP: advanced congestion control  --->
+            [*]   TCP: MD5 Signature Option support (RFC2385)
+            <*>   The IPv6 protocol  --->
+            [ ]   NetLabel subsystem support
+            [*] Security Marking
+            [ ] Timestamping in PHY devices
+            [*] Network packet filtering framework (Netfilter)  --->
+            The DCCP Protocol  --->
+            {M} The SCTP Protocol  --->
+            The RDS Protocol
+               RDS over TCP
+            [ ]   RDS debugging messages
+            The TIPC Protocol  --->
+            < > Asynchronous Transfer Mode (ATM)    ATM网络支持
+            <*> DNS Resolver support
+            B.A.T.M.A.N. Advanced Meshing Protocol
+            [*]   Bridge Loop Avoidance
+            [ ]   Distributed ARP Table
+            [ ]   B.A.T.M.A.N. debugging
+            < > Open vSwitch
+            < > Virtual Socket protocol
+            < > Network priority cgroup
+            [*] enable BPF Just In Time compiler
+                Network testing  --->
+        [ ]   Amateur Radio support  --->    无线电设别的支持
+           CAN bus subsystem support  --->
+        < >   IrDA (infrared) subsystem support  --->    红外传输设备的支持
+        < >   Bluetooth subsystem support  --->    蓝牙设备
+        {M}   RxRPC session sockets
+        [ ]     RxRPC dynamic debugging
+             RxRPC Kerberos security
+        -*-   Wireless  --->
+        < >   WiMAX Wireless Broadband support  --->    没有WiMAX设备，所以不选
+           RF switch subsystem support  --->
+           Plan 9 Resource Sharing Support (9P2000)  --->
+        < >   CAIF support  --->
+        {M}   Ceph core library (EXPERIMENTAL)
+        [ ]     Include file:line in ceph debug output
+        [ ]     Use in-kernel support for DNS lookup
+           NFC subsystem support  --->
+   Device Drivers  --->
+            Generic Driver Options  --->
+            Bus devices  --->     3.7.0:里面就一个选项，都不选 3.8.0:里面没有选项
+        <*> Connector - unified userspace <-> kernelspace linker  --->
+        Memory Technology Device (MTD) support  --->
+        < > Parallel port support  --->     并口支持,除非确认需要并口，否则不选
+        -*- Plug and Play support  --->
+        [*] Block devices  --->
+            --- Block devices
+            < >   Normal floppy disk support     软驱支持    似乎现在没有用软驱的了吧？除非确认，否则不选
+            < >   Block Device Driver for Micron PCIe SSDs    不存在的设备，不需要支持
+            < >   Compaq SMART2 support     不存在的设备，不需要支持
+            < >   Compaq Smart Array 5xxx support     不存在的设备，不需要支持
+            < >   Mylex DAC960/DAC1100 PCI RAID Controller support     不存在的设备，不需要支持
+            < >   Micro Memory MM5415 Battery Backed RAM support     不存在的设备，不需要支持
+               Loopback device support
+            (8)     Number of loop devices to pre-create at init time
+            < >     Cryptoloop Support
+               DRBD Distributed Replicated Block Device support
+            [ ]     DRBD fault injection
+               Network block device support
+            < >   NVM Express block device
+               OSD object-as-blkdev support
+            < >   Promise SATA SX8 support     不存在的设备，不需要支持
+               RAM block device support
+            (16)    Default number of RAM disks
+            (65536) Default RAM disk size (kbytes)
+            [ ]     Support XIP filesystems on RAM block device
+            < >   Packet writing on CD/DVD media    这个是刻录机的支持？不需要
+               ATA over Ethernet support
+            < >   Xen virtual block device support    不需要支持XEN
+            < >   Xen block-device backend driver    不需要支持XEN
+               Virtio block driver
+            [ ]   Very old hard disk (MFM/RLL/IDE) driver
+               Rados block device (RBD)
+            < >   RamSam PCIe Flash SSD Device Driver     不存在的设备，不需要支持
+         Misc devices  --->
+     < > ATA/ATAPI/MFM/RLL support (DEPRECATED)  --->    IDE=y|n,IDE设备(废除)
+         SCSI device support  --->    SCSI设备支持
+            < > RAID Transport Class    不使用RAID
+            -*- SCSI device support
+            < > SCSI target support    不使用此设备功能
+            [*] legacy /proc/scsi/ support
+                *** SCSI support type (disk, tape, CD-ROM) ***
+            <*> SCSI disk support    这个必选!否则SATA硬盘起不来.
+            < > SCSI tape support    不存在SCSI磁带机,所以不选
+            < > SCSI OnStream SC-x0 tape support    不存在OnStream磁带机设备
+            < > SCSI CDROM support    支持SCSI CDROM,这个选项基本可以忽略了，本身SCSI CDROM就很少，使用的就更少了。
+            < > SCSI generic support
+            < > SCSI media changer support
+            < > SCSI Enclosure Support
+            [ ] Probe all LUNs on each SCSI device
+            [ ] Verbose SCSI error reporting (kernel size +=12K)
+            [ ] SCSI logging facility
+            [ ] Asynchronous SCSI scanning
+                SCSI Transports  --->
+                  < > Parallel SCSI (SPI) Transport Attributes
+                  < > FiberChannel Transport Attributes    光纤通道传输属性
+                  [ ]   SCSI target support for FiberChannel Transport Attributes    没有SCSI设备,不选
+                  < > iSCSI Transport Attributes     没有SCSI设备,不选
+                  < > SAS Transport Attributes
+                  < > SAS Domain Transport Attributes
+                  [ ]   ATA support for libsas (requires libata)     没有SCSI设备,不选
+                  [ ]   Support for SMP interpretation for SAS hosts     没有SCSI设备,不选
+                  < > SRP Transport Attributes
+            [ ] SCSI low-level drivers  --->    SCSI设备驱动
+            [ ] PCMCIA SCSI adapter support  --->    不存在PCMCIA设备，所以不选
+            < > SCSI Device Handlers  --->    对SCSI存储盘柜的支持，这个不选
+            OSD-Initiator library
+               OSD Upper Level driver
+            (1)   (0-2) When sense is returned, DEBUG print all sense descriptors
+            [ ]   Compile All OSD modules with lots of DEBUG prints  
+        <*> Serial ATA and Parallel ATA drivers  --->
+            [*]   Verbose ATA error reporting
+            [*]   ATA ACPI Support
+            [ ] SATA Zero Power Optical Disc Drive (ZPODD) support
+            [*]   SATA Port Multiplier support
+                  *** Controllers with non-SFF native interface ***
+            <*>   AHCI SATA support    AHCI支持
+            < >   Platform AHCI SATA support
+            < >   Initio 162x SATA support    在当前环境下不存在的设备
+            < >   ACard AHCI variant (ATP 8620)    在当前环境下不存在的设备
+            < >   Silicon Image 3124/3132 SATA support     设备驱动   SiliconImage 3124是一款PCI/PCI-X转4口SATA1/2芯片，详细信息: http://cn.siliconimage.com/cn/products/steelvine-storage-products/sata-controllers/sii3124-pcipci-xata300.html    SiliconImage 3132是一款PCI-E转2口SATA2的芯片，详细信息：http://cn.siliconimage.com/cn/products /steelvine-storage-products/sata-controllers/sii3132-sii3531-pci-express1x-ata300.html
+            [*]   ATA SFF support (for legacy IDE and PATA)    SATA硬盘的支持
+                    *** SFF controllers with custom DMA interface ***
+            < >     Pacific Digital ADMA support
+            < >     Pacific Digital SATA QStor support
+            < >     Promise SATA SX4 support (Experimental)
+            [*]     ATA BMDMA support
+                      *** SATA SFF controllers with BMDMA ***
+            <*>       Intel ESB, ICH, PIIX3, PIIX4 PATA/SATA support     在使用VMWare10的IDE/SATA设备时，这个必须选择*
+            < >       Calxeda Highbank SATA support
+            < >       Marvell SATA support
+            < >       NVIDIA SATA support
+            < >       Promise SATA TX2/TX4 support     设备驱动
+            < >       Silicon Image SATA support
+            < >       SiS 964/965/966/180 SATA support
+            < >       ServerWorks Frodo / Apple K2 SATA support
+            < >       ULi Electronics SATA support
+            < >       VIA SATA support
+            < >       VITESSE VSC-7174 / INTEL 31244 SATA support
+                      *** PATA SFF controllers with BMDMA ***
+            < >       ALi PATA support        Ali芯片组的PATA驱动，现在好像都见不到这个芯片组的主板了。
+            < >       AMD/NVidia PATA support
+            < >       ARASAN CompactFlash PATA Controller Support
+            < >       ARTOP 6210/6260 PATA support
+            < >       ATI PATA support
+            < >       ARTOP/Acard ATP867X PATA support
+            < >       CMD64x PATA support
+            < >       CS5510/5520 PATA support
+            < >       CS5530 PATA support
+            < >       CS5536 PATA support
+            < >       Cypress CY82C693 PATA support (Very Experimental)
+            < >       EFAR SLC90E66 support
+            < >       HPT 366/368 PATA support
+            < >       HPT 370/370A/371/372/374/302 PATA support
+            < >       HPT 371N/372N/302N PATA support
+            < >       HPT 343/363 PATA support
+            < >       IT8213 PATA support (Experimental)
+            < >       IT8211/2 PATA support
+            < >       JMicron PATA support
+            < >       Marvell PATA support via legacy mode
+            < >       NETCELL Revolution RAID support
+            < >       Ninja32/Delkin Cardbus ATA support
+            < >       Nat Semi NS87415 PATA support
+            < >       Intel PATA old PIIX support
+            < >       OPTI FireStar PATA support (Very Experimental)
+            < >       Promise PATA 2027x support
+            < >       Older Promise PATA controller support
+            < >       RADISYS 82600 PATA support (Experimental)
+            < >       RDC PATA support
+            < >       SC1200 PATA support
+            < >       Intel SCH PATA support
+            < >       SERVERWORKS OSB4/CSB5/CSB6/HT1000 PATA support
+            < >       CMD / Silicon Image 680 PATA support
+            < >       SiS PATA support     SiS芯片组主板的PATA驱动
+            < >       Toshiba Piccolo support (Experimental)
+            < >       Compaq Triflex PATA support
+            < >       VIA PATA support     VIA芯片组的PATA驱动
+            < >       Winbond SL82C105 PATA support
+                    *** PIO-only SFF controllers ***
+            < >     CMD640 PCI PATA support (Experimental)
+            < >     Intel PATA MPIIX support
+            < >     Nat Semi NS87410 PATA support
+            < >     OPTI621/6215 PATA support (Very Experimental)
+            < >     PCMCIA PATA support
+            < >     Generic platform device PATA support
+            < >     PC Tech RZ1000 PATA support
+                    *** Generic fallback / legacy drivers ***
+            < >     ACPI firmware driver for PATA
+            < >     Generic ATA support
+            < >     Legacy ISA PATA support (Experimental)
+        [*] Multiple devices driver support (RAID and LVM)  --->     RAID支持
+
+        Generic Target Core Mod (TCM) and ConfigFS Infrastructure  --->
+        [ ] Fusion MPT device support  --->        当前环境不存在的设备，所以不选
+            IEEE 1394 (FireWire) support  --->        IEEE1394(火线)驱动,AOD270不存在1394设备，所以里面都不选
+            < > FireWire driver stack        CONFIG_FIREWIRE=y|m 火线驱动
+                < >   OHCI-1394 controllers        CONFIG_FIREWIRE_OHCI=y|m OHCI1394标准控制器驱动
+                < >   Storage devices (SBP-2 protocol)        CONFIG_FIREWIRE_SBP2=y|m SBP-2协议的存储设备驱动
+                < >   IP networking over 1394        CONFIG_FIREWIRE_NET=y|m 提供1394接口支持IP传输的驱动
+            < > Nosy - a FireWire traffic sniffer for PCILynx cards        CONFIG_FIREWIRE_NOSY=y|m 提供PCILynx卡的协议分析等功能。这个主要是用于1394驱动开发及相关的应用程序开发使用的。
+        I2O device support  --->
+        [ ] Macintosh device drivers  --->    不存在这个设备，所以不选
+        -*- Network device support  --->
+            --- Network device support
+            -*-   Network core driver support
+                 Bonding driver support
+                 Dummy net driver support
+                 EQL (serial line load balancing) support
+            [ ]     Fibre Channel driver support        不存在光纤网卡，所以不选择
+            {*}     Generic Media Independent Interface device support
+                 IEEE 802.15.4 drivers  --->
+                 Intermediate Functional Block support
+            < >     Ethernet team driver support (EXPERIMENTAL)  --->
+                 MAC-VLAN support (EXPERIMENTAL)
+                   MAC-VLAN based tap driver (EXPERIMENTAL)
+                 Network console logging support
+            [*]       Dynamic reconfiguration of logging targets
+            [ ]     Netpoll traffic trapping
+                 RapidIO Ethernet over messaging driver support
+            (128)     Number of outbound queue entries
+            (128)     Number of inbound queue entries
+            <*>     Universal TUN/TAP device driver support
+                 Virtual ethernet pair device
+            <*>     Virtio network driver (EXPERIMENTAL)
+            < >   ARCnet support  --->        不存在ARCnet设备，所以不选（这是一种令牌总线的网络）
+            [ ]   ATM drivers  --->        不存在ATM设备，所以不选
+                  *** CAIF transport drivers ***
+               CAIF TTY transport driver
+               CAIF SPI transport driver for slave interface
+            [ ]     Next command and length in start of frame
+               CAIF HSI transport driver
+                  Distributed Switch Architecture drivers  --->
+            -*-   Ethernet driver support  --->     机器内置RTL8101/RTL8102的网卡，所以除此之外都不选择
+                [*]   Realtek devices
+                <*>     Realtek 8169 gigabit ethernet support        AOD270使用这个驱动
+            < >   FDDI driver support        光线分布数据接口支持.没有FDDI设备，所以不选
+            [ ]   HIPPI driver support        高性能并行接口的支持，不存在此设备
+            < >   General Instruments Surfboard 1000        不存在的设备，网上查说是很早期的设备
+            {*}   PHY Device support and infrastructure  --->
+            < >   Micrel KS8995MA 5-ports 10/100 managed Ethernet switch
+            < >   PLIP (parallel port) support        机器上没有并口，所以不选
+            {*}   PPP (point-to-point protocol) support
+                 PPP BSD-Compress compression
+                 PPP Deflate compression
+            [*]     PPP filtering
+                 PPP MPPE compression (encryption) (EXPERIMENTAL)
+            [*]     PPP multilink support (EXPERIMENTAL)
+                 PPP over ATM
+                 PPP over Ethernet (EXPERIMENTAL)
+                 PPP over IPv4 (PPTP) (EXPERIMENTAL)
+                 PPP over L2TP (EXPERIMENTAL)
+                 PPP support for async serial ports
+                 PPP support for sync tty ports
+            < >   SLIP (serial line) support        串口网络的支持
+                  USB Network Adapters  --->        因为机器带有无线和有线网卡,所以这个USB网卡应该用不到,所以里面的都不选
+            [*]   Wireless LAN  --->            机器本身带Atheros无线网卡，所以其他的都不选择
+                   --- Wireless LAN
+                      Atheros Wireless Cards  --->      不知道为什么，这个只能选择为模块
+                        --- Atheros Wireless Cards
+                        [ ]   Atheros wireless debugging
+                        < >   Atheros 5xxx wireless cards support
+                        [ ]   Atheros 5xxx PCI bus support        不存在的设备
+                        [ ]   Atheros bluetooth coexistence support
+                           Atheros 802.11n wireless cards support
+                        [*]     Atheros ath9k PCI/PCIe bus support
+                        [ ]     Atheros ath9k AHB bus support
+                        [*]     Atheros ath9k debugging
+                        [ ]     Atheros DFS support for certified platforms        新版没有这个选项了
+                        [*]   Atheros MAC statistics     新版没有这个选项了
+                        [*]   Atheros ath9k rate control
+                        < >   Atheros HTC based wireless cards support
+                        < >   Linux Community AR9170 802.11n USB support
+                        < >   Atheros mobile chipsets support          因为AOD270内置的AR9485，所以除Atheros,其他无线网卡的驱动就都不选了
+                  *** Enable WiMAX (Networking options) to see the WiMAX drivers ***
+                  WiMAX Wireless Broadband devices  --->        WiMAX设备支持 3.9.0-rc1中没有了
+            [ ]   Wan interfaces support  --->        没有此类设备
+            < >   IEEE 802.15.4 drivers  --->        没有此类设备
+            < >   Xen network device frontend driver      指定机型定制的，所以不需要Xen驱动的支 3.9.0-rc1中没有了
+            < >   Xen backend network device       指定机型定制的，所以不需要Xen驱动的支持 3.9.0-rc1中没有了
+            < >   VMware VMXNET3 ethernet driver       指定机型定制的，所以不需要VMware驱动的支持
+            < >   Microsoft Hyper-V virtual network driver       指定机型定制的，所以不需要Hyper-V驱动的支持 3.9.0-rc1中没有了
+            [ ] ISDN support  --->        ISDN设备，好像我现在永不着，所以不选了。之前这个是在上一层的，3.8.0-rc7移到网络这层了。本身这个ISDN是一个过时的技术了,估计现在使用的很少了
+         Input device support  --->
+            -*- Generic input layer (needed for keyboard, mouse, ...)
+            {M}   Support for memoryless force-feedback devices
+            {M}   Polled input device skeleton
+            {M}   Sparse keymap support library
+            < >   Matrix keymap support library
+                  *** Userland interfaces ***
+            -*-   Mouse interface
+            [*]     Provide legacy /dev/psaux device
+            (1024)  Horizontal screen resolution
+            (768)   Vertical screen resolution
+            < >   Joystick interface        不存在摇杆设备
+               Event interface
+            < >   Event debugging
+                  *** Input Device Drivers ***
+            -*-   Keyboards  --->
+            [*]   Mice  --->
+            [ ]   Joysticks/Gamepads  --->        不存在摇杆设备
+            [ ]   Tablets  --->        不存在平板设备
+            [*]   Touchscreens  --->
+            [*]   Miscellaneous devices  --->
+                Hardware I/O ports  --->
+                -*- Serial I/O support
+                {M}   Serial port line discipline
+                   ct82c710 Aux port controller
+                < >   Parallel port keyboard adapter
+                   PCI PS/2 keyboard and PS/2 mouse controller
+                   Raw access to serio ports
+                   Altera UP PS/2 controller
+                < >   TQC PS/2 multiplexer
+                < >   ARC PS/2 support
+                < > Gameport support    不存在的设备
+        Character devices  --->
+            -*- Virtual terminal
+            [*]   Support for binding and unbinding console drivers
+            -*- Unix98 PTY support
+            [*]   Support multiple instances of devpts
+            [ ] Legacy (BSD) PTY support
+            [ ] Non-standard serial port support        没有非标准串口设备的存在
+            < > HSDPA Broadband Wireless Data Card - Globe Trotter        不存在3G上网设备的支持
+            < > GSM MUX line discipline support (EXPERIMENTAL)       不需要支持GSM设备
+            < > Trace data sink for MIPI P1149.7 cJTAG standard
+            [ ] /dev/kmem virtual device support
+                Serial drivers  --->
+                {*} 8250/16550 and compatible serial support
+                [*]   Console on 8250/16550 and compatible serial port
+                < > 8250/16550 PCMCIA device support
+                (32) Maximum number of 8250/16550 serial ports
+                (4) Number of 8250/16550 serial ports to register at runtime
+                [*] Extended 8250/16550 serial driver options
+                [*]   Support more than 4 legacy serial ports
+                [*]   Support for sharing serial interrupts
+                [ ]   Autodetect IRQ on standard ports (unsafe)
+                [*]   Support RSA serial ports
+                    *** Non-8250 serial port support ***
+                < > MAX3100 support
+                [ ] MAX310X support
+                < > Medfield High Speed UART support
+                < > Digi International NEO PCI Support
+                < > SCCNXP serial port support
+                < > Support for timberdale UART
+                < > Altera JTAG UART support
+                < > Altera UART support
+                < > SPI protocol driver for Infineon 6x60 modem (EXPERIMENTAL)
+                < > Intel EG20T PCH/LAPIS Semicon IOH(ML7213/ML7223/ML7831) UART
+                < > ARC UART driver support  
+            < > Parallel printer support        不需要对并口打印机进行支持
+            < > Support for user-space parallel port device drivers        不需要对并口设备进行支持
+            [ ] Xen Hypervisor Console support        不需要对XEN进行支持
+            < > Virtio console        不需要对IO虚拟化进行支持
+            IPMI top-level message handler  --->
+            <*> Hardware Random Number Generator Core support        对硬件随机数生成的支持，这个需要编译到内核中。这个会加快随机数的生成
+            <*>   Timer IOMEM HW Random Number Generator support
+            <*>   Intel HW Random Number Generator support
+            < >   AMD HW Random Number Generator support        不存在的设备
+            < >   VIA HW Random Number Generator support        不存在的设备
+            < >   VirtIO Random Number Generator support        不需要对IO虚拟化进行支持
+            TPM HW Random Number Generator support
+            {M} /dev/nvram support
+            < > Siemens R3964 line discipline        西门子3964协议设备的支持，例如PLC等。
+            Applicom intelligent fieldbus card support
+                PCMCIA character devices  --->        PCMCIA字符设备的支持，这个都不选
+            ACP Modem (Mwave) support
+            RAW driver (/dev/raw/rawN)
+            (256) Maximum number of RAW devices to support (1-65536)
+            [*] HPET - High Precision Event Timer
+            [*]   Allow mmap of HPET
+            Hangcheck timer
+            TPM Hardware Support  --->
+            Telecom clock driver for ATCA SBC
+        {*} I2C support  --->
+        [*] SPI support  --->
+        < > HSI support  --->
+            PPS support  --->
+            PTP clock support  --->
+        -*- GPIO Support  --->
+        {M} Dallas's 1-wire support  --->
+        -*- Power supply class support  --->
+        {*} Hardware Monitoring support  --->
+        -*- Generic Thermal sysfs driver  --->
+        [*] Watchdog Timer Support  --->
+            Sonics Silicon Backplane  --->
+            Broadcom specific AMBA  --->      不存在这个设备，所以里面都不选择
+            Multifunction device drivers  --->
+        -*- Voltage and Current Regulator Support  --->
+        < > Multimedia support  --->        不存在这类设备
+            Graphics support  --->
+            <*> /dev/agpgart (AGP Support)  --->
+                --- /dev/agpgart (AGP Support)
+                <*>   Intel 440LX/BX/GX, I8xx and E7x05 chipset support
+                < >   SiS chipset support        不存在的设备
+                < >   VIA chipset support        不存在的设备
+            -*- VGA Arbitration
+            (16)  Maximum number of GPUs
+            [ ] Laptop Hybrid Graphics - GPU switching support        这个是在集成显卡和显卡切换用的
+            Direct Rendering Manager (XFree86 4.1.0 and higher DRI support)  --->
+            < > 3dfx Banshee/Voodoo3+         不存在的设备
+            < > ATI Rage 128         不存在的设备
+            < > ATI Radeon         不存在的设备
+            < > Nouveau (nVidia) cards      不存在的设备
+                I2C encoder or helper chips  --->
+            < > Intel I810
+            Intel 8xx/9xx/G3x/G4x/HD Graphics
+            [*]   Enable modesetting on intel by default
+            < > Matrox g200/g400         不存在的设备
+            < > SiS video cards         不存在的设备
+            < > Via unichrome video cards         不存在的设备
+            < > Savage video cards         不存在的设备
+            < > DRM driver for VMware Virtual GPU
+            <*> Intel GMA5/600 KMS Framebuffer    AOD270必选!
+                [ ]   Intel GMA600 support (Experimental)
+                [*]   Intel GMA3600/3650 support (Experimental)        AOD270必选!AOD270是GMA3600的显卡
+            < > DisplayLink
+            < > AST server chips
+            < > Kernel modesetting driver for MGA G200 server engines
+            < > Cirrus driver for QEMU emulated device
+            < > Intel GMA500 Stub Driver        新版没有这个选项了
+            {M} Lowlevel video output switch controls
+            {*} Support for frame buffer devices  --->
+            [ ] Exynos Video driver support  --->
+            -*- Backlight & LCD device support  --->
+                Console display driver support  --->
+            [ ] Bootup logo  --->  
+        <*> Sound card support  --->      声卡支持
+            --- Sound card support
+            [*]   Preclaim OSS device numbers
+            <*>   Advanced Linux Sound Architecture  --->
+                --- Advanced Linux Sound Architecture
+                   Sequencer support
+                     Sequencer dummy client
+                   OSS Mixer API
+                < >   OSS PCM (digital audio) API
+                [ ]   OSS Sequencer API
+                   HR-timer backend support
+                [*]     Use HR-timer as default sequencer timer
+                -*-   Dynamic device file minor numbers
+                [*]   Support old ALSA API
+                [*]   Verbose procfs contents
+                [ ]   Verbose printk
+                [ ]   Debug
+                [*]   Generic sound devices  --->
+                [*]   PCI sound devices  --->
+                       Intel HD Audio  --->
+                       Intel/SiS/nVidia/AMD/ALi AC97 Controller
+                [ ]   SPI sound devices  --->
+                [ ]   USB sound devices  --->
+                [*]   PCMCIA sound devices  --->
+                < >   ALSA for SoC audio support  --->
+            < >   Open Sound System (DEPRECATED) --->    不使用OSS,这个已经被ALSA替代了
+            HID support  --->
+        [*] USB support  --->
+            --- USB support
+            {*}   Support for Host-side USB
+            [ ]     USB verbose debug messages
+            [*]     USB announce new devices
+                    *** Miscellaneous USB options ***
+            [*]     Dynamic USB minor allocation
+            [*]     USB runtime power management (autosuspend) and wakeup
+            [ ]       OTG support
+            [ ]   Rely on OTG Targeted Peripherals List
+            [ ]   Disable external hubs
+            < >   DesignWare USB3 DRD Core Support
+               USB Monitor
+               Support WUSB Cable Based Association (CBA)
+            [ ]     Enable CBA debug messages
+                  *** USB Host Controller Drivers ***
+            < >   Cypress C67x00 HCD support
+            < >   xHCI HCD (USB 3.0) support
+            <*>   EHCI HCD (USB 2.0) support        如果用USB口,必选
+            [*]   Root Hub Transaction Translators
+            [*]   Improved Transaction Translator scheduling
+            < >   OXU210HP HCD support
+            < >   ISP116X HCD support
+            < >   ISP 1760 HCD support
+            < >   ISP1362 HCD support
+            < >   OHCI HCD support
+            < >   Generic EHCI driver for a platform device
+               UHCI HCD (most Intel and VIA) support
+            < >   SL811HS HCD support
+            < >   R8A66597 HCD support
+            < >   Inventra Highspeed Dual Role Controller (TI, ADI, ...)
+            < >   ChipIdea Highspeed Dual Role Controller
+            < >   Renesas USBHS controller
+                  *** USB Device Class drivers ***
+            < >   USB Modem (CDC ACM) support
+            < >   USB Printer support
+            < >   USB Wireless Device Management support
+            < >   USB Test and Measurement Class support
+                  *** NOTE: USB_STORAGE depends on SCSI but BLK_DEV_SD may ***
+                  *** also be needed; see USB_STORAGE Help for more info ***
+               USB Mass Storage support
+            [ ]     USB Mass Storage verbose debug
+                 Realtek Card Reader support
+            [*]       Realtek Card Reader autosuspend support
+            < >     Datafab Compact Flash Reader support
+            < >     Freecom USB/ATAPI Bridge support
+            < >     ISD-200 USB/ATA Bridge support
+            < >     USBAT/USBAT02-based storage support
+            < >     SanDisk SDDR-09 (and other SmartMedia, including DPCM) support
+            < >     SanDisk SDDR-55 SmartMedia support
+            < >     Lexar Jumpshot Compact Flash Reader
+            < >     Olympus MAUSB-10/Fuji DPC-R1 support
+            < >     Support OneTouch Button on Maxtor Hard Drives
+            < >     Support for Rio Karma music player
+            < >     SAT emulation on Cypress USB/ATA Bridge with ATACB
+            < >     USB ENE card reader support
+                  *** USB Imaging devices ***
+            < >   USB Mustek MDC800 Digital Camera support
+            < >   Microtek X6USB scanner support
+                  *** USB port drivers ***
+            < >   USB Serial Converter support  --->
+                  *** USB Miscellaneous drivers ***
+            < >   EMI 6|2m USB Audio interface support
+            < >   EMI 2|6 USB Audio interface support
+            < >   ADU devices from Ontrak Control Systems
+            < >   USB 7-Segment LED Display
+            < >   USB Diamond Rio500 support
+            < >   USB Lego Infrared Tower support
+            < >   USB LCD driver support
+            < >   USB LED driver support
+            < >   Cypress CY7C63xxx USB driver support
+            < >   Cypress USB thermometer driver support
+            < >   Siemens ID USB Mouse Fingerprint sensor support
+            < >   Elan PCMCIA CardBus Adapter USB Client
+            < >   Apple Cinema Display support
+            < >   USB 2.0 SVGA dongle support (Net2280/SiS315)
+               USB LD driver
+            < >   PlayStation 2 Trance Vibrator driver support
+               IO Warrior driver support
+               USB testing driver
+               iSight firmware loading support
+               USB YUREX driver support
+            < >   Functions for loading firmware on EZUSB chips
+            < >   USB3503 HSIC to USB20 Driver
+                  *** USB Physical Layer drivers ***
+            < >   OMAP USB3 PHY Driver
+            < >   OMAP CONTROL USB Driver
+            < >   NXP ISP1301 USB transceiver support
+            < >   Renesas R-Car USB phy support
+               USB Gadget Support  --->
+                  *** OTG and related infrastructure ***
+            < >   GPIO based peripheral-only VBUS sensing 'transceiver'
+               NOP USB Transceiver Driver
+        < > Ultra Wideband devices  --->      UWB设备,不选
+        <*> MMC/SD/SDIO card support  --->
+        < > Sony MemoryStick card support  --->      对SONY记忆棒的支持
+        -*- LED Support  --->
+        [ ] Accessibility support  --->
+        < > InfiniBand support  --->      AOD270永远也不会有这种互联设备啊~~
+        [*] EDAC (Error Detection And Correction) reporting  --->
+        [*] Real Time Clock  --->
+        [*] DMA Engine support  --->
+        [*] Auxiliary Display support  --->
+        {M} Userspace I/O drivers  --->
+            Virtio drivers  --->
+            < > PCI driver for virtio devices (EXPERIMENTAL)
+            < > Platform bus driver for memory mapped virtio devices (EXPERIMENTAL)
+            Microsoft Hyper-V guest support  --->        不要要支持Hyper-V，所以里面什么都不选
+            Xen driver support  --->        因为不需要支持XEN，所以里面什么都不选
+        [*] Staging drivers  --->
+        [*] X86 Platform Specific Device Drivers  --->
+            Hardware Spinlock drivers  --->      这个选项里面是空的，估计是其他平台的选项
+        [*] IOMMU Hardware Support  --->
+            --- IOMMU Hardware Support
+            [ ]   AMD IOMMU support
+            [*]   Support for Intel IOMMU using DMA Remapping Devices
+            [ ]     Enable Intel DMA Remapping Devices by default
+            [*]   Support for Interrupt Remapping (EXPERIMENTAL)
+            Remoteproc drivers (EXPERIMENTAL)  --->
+            Rpmsg drivers (EXPERIMENTAL)  --->
+        [ ] Virtualization drivers  --->      不需要支持虚拟化，所以不选
+        [*] Generic Dynamic Voltage and Frequency Scaling (DVFS) support  --->
+        < > External Connector Class (extcon) support  --->
+        [ ] Memory Controller drivers  --->
+        Industrial I/O support  --->
+        VME bridge support  --->
+      Firmware Drivers  --->
+        BIOS Enhanced Disk Drive calls determine boot disk
+        [ ]   Sets default behavior for EDD detection to off
+        EFI Variable Support via sysfs
+        < > BIOS update support for DELL systems via sysfs        非DELL机器,不选
+        < > Dell Systems Management Base Driver        非DELL机器,不选
+        [*] Export DMI identification via sysfs to userspace
+        < > DMI table support in sysfs
+        [ ] iSCSI Boot Firmware Table Attributes        不使用iSCSI,不选
+        [ ] Google Firmware Drivers        非google设备，不选
+      File systems  --->    文件系统
+        < > Second extended fs support      决定使用Ext4了，这个就不需要单独支持了
+        < > Ext3 journalling file system support       决定使用Ext4了，这个就不需要单独支持了
+        <*> The Extended 4 (ext4) filesystem
+        [*]   Ext4 extended attributes
+        [*]     Ext4 POSIX Access Control Lists
+        [*]     Ext4 Security Labels
+        [ ]   EXT4 debugging support
+        [ ] JBD (ext3) debugging support        3.9.0-rc1不存在了
+        [ ] JBD2 (ext4) debugging support
+        < > Reiserfs support      因为选用了Ext4作为文件系统，所以不选这个
+        < > JFS filesystem support       因为选用了Ext4作为文件系统，所以不选这个
+        < > XFS filesystem support       因为选用了Ext4作为文件系统，所以不选这个
+        < > GFS2 file system support       因为选用了Ext4作为文件系统，所以不选这个
+        < > OCFS2 file system support       因为选用了Ext4作为文件系统，所以不选这个
+        < > Btrfs filesystem Unstable disk format   因为选用了Ext4作为文件系统，所以不选这个
+        < > NILFS2 file system support       因为选用了Ext4作为文件系统，所以不选这个
+        [*] Enable POSIX file locking API
+        [*] Dnotify support
+        [*] Inotify support for userspace
+        [*] Filesystem wide access notification
+        [*]   fanotify permissions checking
+        [ ] Quota support      因为自己使用的机器，所以磁盘限额没有什么用处
+        Kernel automounter version 4 support (also supports v3)
+        <*> FUSE (Filesystem in Userspace) support
+           Character device in Userspace support
+            Caches  --->
+            CD-ROM/DVD Filesystems  --->        里面的都不选
+            DOS/FAT/NT Filesystems  --->        里面的都不选
+            Pseudo filesystems  --->
+        -*- Miscellaneous filesystems  --->
+            --- Miscellaneous filesystems
+            < >   ADFS file system support        不需要支持
+            < >   Apple Extended HFS file system support     不需要支持
+            < >   BeOS file system (BeFS) support (read only)     不需要支持
+            < >   BFS file system support         不需要支持
+            < >   EFS file system support (read only)         不需要支持
+            < >   Journalling Flash File System v2 (JFFS2) support         不需要支持
+            < >   UBIFS file system support         不需要支持
+            < >   LogFS file system
+               Compressed ROM file system support (cramfs)
+               SquashFS 4.0 - Squashed file system support
+            [*]     Squashfs XATTR support
+            [*]     Include support for ZLIB compressed file systems
+            [*]     Include support for LZO compressed file systems
+            [*]     Include support for XZ compressed file systems
+            [ ]     Use 4K device block size?
+            [ ]     Additional option for memory-constrained systems
+            < >   FreeVxFS file system support (VERITAS VxFS(TM) compatible)
+            < >   Minix file system support          不需要支持
+            < >   SonicBlue Optimized MPEG File System support        SonicBlue设备的支持
+            < >   OS/2 HPFS file system support           IBM OS/2操作系统的文件系统，这个系统是90年代的产物，早就没有用的了。
+            < >   QNX4 file system support (read only)
+            < >   QNX6 file system support (read only) (NEW)
+               ROM file system support
+                    RomFS backing stores (Both the above)  --->
+            -*-   Persistent store support
+            [ ]     Log kernel console messages (NEW)
+            < >     Log panic/oops to a RAM buffer (NEW)
+            < >   System V/Xenix/V7/Coherent file system support      不需要支持
+            < >   UFS file system support (read only)         FreeBSD系统使用的文件系统,这里不需要支持
+            < >   exofs: OSD based file system support  
+            < >   F2FS filesystem support (EXPERIMENTAL) (NEW)
+        [ ] Network File Systems  --->        不使用NFS
+        -*- Native language support  --->
+        Distributed Lock Manager (DLM)  --->
+      Kernel hacking  --->
+      Security options  --->        安全选项
+        -*- Enable access key retention support
+        <*>   TRUSTED KEYS
+        -*-   ENCRYPTED KEYS
+        [ ]   Enable the /proc/keys file by which keys may be viewed
+        [ ] Restrict unprivileged access to the kernel syslog
+        [*] Enable different security models
+        -*- Enable the securityfs filesystem
+        -*- Socket and Networking Security Hooks
+        [ ]   XFRM (IPSec) Networking Security Hooks
+        -*- Security hooks for pathname based access control
+        [*] Enable Intel(R) Trusted Execution Technology (Intel(R) TXT)          开启Intel TXT技术支持。TXT为Trusted Execution Technology(可信执行技术)的缩写。
+        [ ] NSA SELinux Support        不需要那么高的安全性，所以不选
+        [*] Simplified Mandatory Access Control Kernel Support
+        [ ] TOMOYO Linux Support        不需要支持
+        (2048) Default maximal count for learning mode
+        (1024) Default maximal count for audit log
+        [ ]   Activate without calling userspace policy loader
+        (/sbin/tomoyo-init) Location of userspace policy loader
+        (/sbin/init) Trigger for calling userspace policy loader
+        [*] AppArmor support
+        (1)   AppArmor boot parameter default value
+        [*] Yama support
+        [ ] Digital signature verification using multiple keyrings
+        [ ] Integrity Measurement Architecture(IMA)
+        [*] EVM support
+            Default security module (AppArmor)  --->
+    -*- Cryptographic API  --->
+    [ ] Virtualization  --->       是否支持虚拟化
+        Library routines  --->
+        [*] Filesystem wide access notification
+        [*]   fanotify permissions checking
+        [ ] Quota support      因为自己使用的机器，所以磁盘限额没有什么用处
+        Kernel automounter version 4 support (also supports v3)
+        <*> FUSE (Filesystem in Userspace) support
+           Character device in Userspace support
+            Caches  --->
+            CD-ROM/DVD Filesystems  --->        里面的都不选
+            DOS/FAT/NT Filesystems  --->        里面的都不选
+            Pseudo filesystems  --->
+        -*- Miscellaneous filesystems  --->
+            --- Miscellaneous filesystems
+            < >   ADFS file system support        不需要支持
+            < >   Apple Extended HFS file system support     不需要支持
+            < >   BeOS file system (BeFS) support (read only)     不需要支持
+            < >   BFS file system support         不需要支持
+            < >   EFS file system support (read only)         不需要支持
+            < >   Journalling Flash File System v2 (JFFS2) support         不需要支持
+            < >   UBIFS file system support         不需要支持
+            < >   LogFS file system
+               Compressed ROM file system support (cramfs)
+               SquashFS 4.0 - Squashed file system support
+            [*]     Squashfs XATTR support
+            [*]     Include support for ZLIB compressed file systems
+            [*]     Include support for LZO compressed file systems
+            [*]     Include support for XZ compressed file systems
+            [ ]     Use 4K device block size?
+            [ ]     Additional option for memory-constrained systems
+            < >   FreeVxFS file system support (VERITAS VxFS(TM) compatible)
+            < >   Minix file system support          不需要支持
+            < >   SonicBlue Optimized MPEG File System support        SonicBlue设备的支持
+            < >   OS/2 HPFS file system support           IBM OS/2操作系统的文件系统，这个系统是90年代的产物，早就没有用的了。
+            < >   QNX4 file system support (read only)
+            < >   QNX6 file system support (read only) (NEW)
+               ROM file system support
+                    RomFS backing stores (Both the above)  --->
+            -*-   Persistent store support
+            [ ]     Log kernel console messages (NEW)
+            < >     Log panic/oops to a RAM buffer (NEW)
+            < >   System V/Xenix/V7/Coherent file system support      不需要支持
+            < >   UFS file system support (read only)         FreeBSD系统使用的文件系统,这里不需要支持
+            < >   exofs: OSD based file system support  
+            < >   F2FS filesystem support (EXPERIMENTAL) (NEW)
+        [ ] Network File Systems  --->        不使用NFS
+        -*- Native language support  --->
+        Distributed Lock Manager (DLM)  --->
+      Kernel hacking  --->
+      Security options  --->        安全选项
+        -*- Enable access key retention support
+        <*>   TRUSTED KEYS
+        -*-   ENCRYPTED KEYS
+        [ ]   Enable the /proc/keys file by which keys may be viewed
+        [ ] Restrict unprivileged access to the kernel syslog
+        [*] Enable different security models
+        -*- Enable the securityfs filesystem
+        -*- Socket and Networking Security Hooks
+        [ ]   XFRM (IPSec) Networking Security Hooks
+        -*- Security hooks for pathname based access control
+        [*] Enable Intel(R) Trusted Execution Technology (Intel(R) TXT)          开启Intel TXT技术支持。TXT为Trusted Execution Technology(可信执行技术)的缩写。
+        [ ] NSA SELinux Support        不需要那么高的安全性，所以不选
+        [*] Simplified Mandatory Access Control Kernel Support
+        [ ] TOMOYO Linux Support        不需要支持
+        (2048) Default maximal count for learning mode
+        (1024) Default maximal count for audit log
+        [ ]   Activate without calling userspace policy loader
+        (/sbin/tomoyo-init) Location of userspace policy loader
+        (/sbin/init) Trigger for calling userspace policy loader
+        [*] AppArmor support
+        (1)   AppArmor boot parameter default value
+        [*] Yama support
+        [ ] Digital signature verification using multiple keyrings
+        [ ] Integrity Measurement Architecture(IMA)
+        [*] EVM support
+            Default security module (AppArmor)  --->
+    -*- Cryptographic API  --->
+    [ ] Virtualization  --->       是否支持虚拟化
+        Library routines  --->

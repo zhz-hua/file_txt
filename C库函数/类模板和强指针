@@ -1,0 +1,222 @@
+类的基本用法
+	template <class T>  
+	inline T square(T x)  
+	{  
+	   T result;  
+	   result = x * x;  
+	   return result;  
+	};  
+	  
+	  
+	 
+	main()  
+	{  
+	   int    i, ii;  
+	   float  x, xx;  
+	   double y, yy;  
+	  
+	   i = 2;  
+	   x = 2.2;  
+	   y = 2.2;  
+	  
+	   ii = square<int>(i);  
+	   cout << i << ": " << ii << endl;  
+	  
+	   xx = square<float>(x);  
+	   cout << x << ": " << xx << endl;  
+	  
+	   // Explicit use of template  
+	   yy = square<double>(y);// 显式使用模板  
+	   cout << y << ": " << yy << endl;  
+	  
+	   yy = square(y);	//隐含的方式使用模板  
+	   cout << y << ": " << yy << endl;  
+	}  
+
+	注明：模板的关键字可以用class或者typename.
+
+	    template<class T>
+	    template<typename T> 
+
+	两者表达的意思是一样的，但是我更喜欢使用后者。
+轻量级智能指针和强指针实现类
+
+	template <typename T>
+	class sp//轻量级智能指针和强指针实现类
+	{
+	public:
+	    typedef typename RefBase::weakref_type weakref_type;		//声明weakref_type为RefBase::weakref_type类型
+	    //typename的作用是声明RefBase::weakref_type是一个类型
+	    inline sp() : m_ptr(0) { }
+
+	    sp(T* other);
+	    sp(const sp<T>& other);			//other表示引用
+	    template<typename U> sp(U* other);
+	    template<typename U> sp(const sp<U>& other);
+
+	    ~sp();
+	    // Assignment
+	    sp& operator = (T* other);
+	    sp& operator = (const sp<T>& other);
+	    
+	    template<typename U> sp& operator = (const sp<U>& other);
+	    template<typename U> sp& operator = (U* other);
+	    
+	    //! Special optimization for use by ProcessState (and nobody else).
+	    void force_set(T* other);
+	    
+	    // Reset
+	    
+	    void clear();
+	    
+	    // Accessors
+
+	    inline T& operator* () const { return *m_ptr; }
+	    inline T* operator-> () const { return m_ptr; }
+	    inline T* get() const { return m_ptr; }
+
+	    // Operators
+		
+	    COMPARE(==)
+	    COMPARE(!=)
+	    COMPARE(>)
+	    COMPARE(<)
+	    COMPARE(<=)
+	    COMPARE(>=)
+
+	private:
+	    template<typename Y> friend class sp;
+	    template<typename Y> friend class wp;
+
+	    // Optimization for wp::promote().
+	    sp(T* p, weakref_type* refs);
+	    
+	    T* m_ptr;//指向具体的引用对象
+	}; 
+1, 什么地方使用？用在模板定义里，标明其后的模板参数是类型参数。
+
+		例如
+		 
+		template<typename  T, typename Y>
+		T foo(const T& t, const Y& y){//....};
+
+		templace<typename T>
+		class CTest
+		{
+		private:
+		 T t;
+		public:
+		 //...
+		}
+
+
+	其实，这里最常用的是使用关键字class，而且二者功能完全相同，这里的class和定义类时的class完全是两回事，C++当时就是为了减少关键字，才使用了class。但最终却不得不引入了typename，究竟是
+
+	什么原因呢？请看第二条，也就是typename的第二个用法。
+
+2, 模板中标明“内嵌依赖类型名”
+	这里有三个词，内嵌（变量）、依赖（模板）、类型名。那么什么是“内嵌依赖类型名(nested dependent type name)”？
+
+	请看SGI STL里的一个例子, 只是STL中count范型算法的实现：
+
+		template <class _InputIter, class _Tp>
+		typename iterator_traits<_InputIter>::difference_type
+
+		count(_InputIter __first, _InputIter __last, const _Tp& __value) {
+		  __STL_REQUIRES(_InputIter, _InputIterator);
+		  __STL_REQUIRES(typename iterator_traits<_InputIter>::value_type,
+				 _EqualityComparable);
+		  __STL_REQUIRES(_Tp, _EqualityComparable);
+		  typename iterator_traits<_InputIter>::difference_type __n = 0;
+
+		  for ( ; __first != __last; ++__first)
+		    if (*__first == __value)
+		      ++__n;
+		  return __n;
+		}
+
+	这里有三个地方用到了typename：返回值、参数、变量定义。分别是：
+
+	typename iterator_traits<_InputIter>::difference_type
+	typename iterator_traits<_InputIter>::value_type
+	typename iterator_traits<_InputIter>::difference_type __n = 0;
+
+		difference_type， value_type就是依赖于_InputIter（模板类型参数）的类型名。源码如下：
+
+		template <class _Iterator>
+		struct iterator_traits {
+		  typedef typename _Iterator::iterator_category iterator_category;
+		  typedef typename _Iterator::value_type        value_type;
+		  typedef typename _Iterator::difference_type   difference_type;
+		  typedef typename _Iterator::pointer           pointer;
+		  typedef typename _Iterator::reference         reference;
+		};
+
+	内嵌是指定义在类名的定义中的。以上difference_type和value_type都是定义在iterator_traits中的。
+	依赖是指依赖于一个模板参数。typename iterator_traits<_InputIter>::difference_type中difference_type依赖于模板参数_InputIter。
+	类型名是指这里最终要指出的是个类型名，而不是变量。例如iterator_traits<_InputIter>::difference_type完全有可能是类iterator_traits<_InputIter>类里的一个static对
+
+	象。而且当我们这样写的时候，C＋＋默认就是解释为一个变量的。所以，为了和变量区分，必须使用typename告诉编译器。
+
+	那么是不是所有的T::type_or_variable, 或者tmpl<T>:type_or_variable都需要使用typename呢？不是，有以下两个例外。
+	3 例外
+	（1）类模板定义中的基类列表。
+	例如
+
+	template<class T>
+	class Derived: public Base<T>::XXX
+	{
+	...
+	}
+
+	（2）类模板定义中的初始化列表。
+
+	Derived(int x) : Base<T>::xxx(x)
+	{
+	...
+	}
+
+	为什么这里不需要呢？因为编译器知道这里需要的是类型还是变量，（1）基类列表里肯定是类型名，（2）初始化列表里肯定是成员变量名。
+
+4
+	using namespace android;  
+	  
+	class LightClass : public LightRefBase<LightClass>  
+	{  
+	public:  
+		LightClass()  
+		{  
+		        printf("Construct LightClass Object.");  
+		}  
+	  
+		virtual ~LightClass()  
+		{  
+		        printf("Destory LightClass Object.");  
+		}  
+	};  
+	  
+	int main(int argc, char** argv)  
+	{  
+		LightClass* pLightClass = new LightClass();  
+		sp<LightClass> lpOut = pLightClass;  
+	  
+		printf("Light Ref Count: %d.\n", pLightClass->getStrongCount());  
+	  
+		{  
+		        sp<LightClass> lpInner = lpOut;  
+	  
+		        printf("Light Ref Count: %d.\n", pLightClass->getStrongCount());  
+		}  
+	  
+		printf("Light Ref Count: %d.\n", pLightClass->getStrongCount());  
+	  
+		return 0;  
+	}
+	我们创建一个自己的类LightClass，继承了LightRefBase模板类，这样类LightClass就具有引用计数的功能了。
+	在main函数里面，我们首先new一个LightClass对象，然后把这个对象赋值给智能指针lpOut，这时候通过一个printf语句来将当前对象的引用计数值打印出来，
+	从前面的分析可以看出，如果一切正常的话，这里打印出来的引用计数值为1。接着，我们又在两个大括号里面定义了另外一个智能指针lpInner，
+	它通过lpOut间接地指向了前面我们所创建的对象，这时候再次将当前对象的引用计数值打印出来，从前面 的分析也可以看出，如果一切正常的话，这里打印出来的引用计数值应该为2。
+	程序继承往下执行，当出了大括号的范围的时候，智能指针对象lpInner就被析构了，从前面的分析可以知道，智能指针在析构的时候，会减少当前对象的引用计数值，
+	因此，最后一个printf语句打印出来的引用计数器值应该为1。当main函数执行完毕后，智能指针lpOut也会被析构，被析构时，它会再次减少当前对象的引用计数，这时候，对象的引用计数值就为0了，于是，它就会被delete了。
+
+

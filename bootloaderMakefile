@@ -1,0 +1,65 @@
+ 494 ifeq ($(config-targets),1)
+ 451 # ===========================================================================
+ 452 # *config targets only - make sure prerequisites are updated, and descend
+ 453 # in scripts/kconfig to make the *config target
+ 454 
+ 455 # Read arch specific Makefile to set KBUILD_DEFCONFIG as needed.
+ 456 # KBUILD_DEFCONFIG may point out an alternative default configuration
+ 457 # used for 'make defconfig'
+ 458 
+ 459 %_config:: outputmakefile
+ 460     @$(MKCONFIG) -A $(@:_config=)
+ 461 
+ 462 else
+ 463 # ===========================================================================
+ 464 # Build targets only - this includes vmlinux, arch specific targets, clean
+ 465 # targets and others. In general all targets except *config targets.
+ 466 
+ 467 # load ARCH, BOARD, and CPU configuration
+ 468 -include include/config.mk
+ 469 
+ 470 ifeq ($(dot-config),1)
+ 471 # Read in config
+ 472 -include include/autoconf.mk	#使用这种方式时，当所要包含的文件不存在时不会有错误提示、make也不会退出；
+ 473 -include include/autoconf.mk.dep
+ 474 
+ 475 # load other configuration
+ 476 include $(srctree)/config.mk
+ 477 
+ 478 ifeq ($(wildcard include/config.mk),)		# include/config.mk文件存在 wildcard : 扩展通配符，找到所有通配的文件并返回
+ 479 $(error "System not configured - see README")
+ 480 endif
+ 481 
+ 482 # If board code explicitly specified LDSCRIPT or CONFIG_SYS_LDSCRIPT, use
+ 483 # that (or fail if absent).  Otherwise, search for a linker script in a
+ 484 # standard location.
+ 485 
+ 486 ifndef LDSCRIPT
+ 487     #LDSCRIPT := $(srctree)/board/$(BOARDDIR)/u-boot.lds.debug
+ 488     ifdef CONFIG_SYS_LDSCRIPT
+ 489         # need to strip off double quotes
+ 490         LDSCRIPT := $(srctree)/$(CONFIG_SYS_LDSCRIPT:"%"=%)
+ 491     endif
+ 492 endif
+ # If there is no specified link script, we look in a number of places for it
+ 495 ifndef LDSCRIPT
+ 496     ifeq ($(CONFIG_NAND_U_BOOT),y)
+ 497         LDSCRIPT := $(srctree)/board/$(BOARDDIR)/u-boot-nand.lds
+ 498         ifeq ($(wildcard $(LDSCRIPT)),)
+ 499             LDSCRIPT := $(srctree)/$(CPUDIR)/u-boot-nand.lds
+ 500         endif
+ 501     endif
+ 502     ifeq ($(wildcard $(LDSCRIPT)),)
+ 503         LDSCRIPT := $(srctree)/board/$(BOARDDIR)/u-boot.lds
+ 504     endif
+ 505     ifeq ($(wildcard $(LDSCRIPT)),)
+ 506         LDSCRIPT := $(srctree)/$(CPUDIR)/u-boot.lds
+ 507     endif
+ 508     ifeq ($(wildcard $(LDSCRIPT)),)
+ 509         LDSCRIPT := $(srctree)/arch/$(ARCH)/cpu/u-boot.lds
+ 510     endif
+ 511 endif
+ 512 
+ 513 else
+
+

@@ -1,0 +1,51 @@
+────────────────────────────────────────────────────────────
+ [ ] PCI support                                            
+ [ ] Message Signaled Interrupts (MSI and MSI-X) (NEW)      
+ [ ] PCI Debugging (NEW)                                    
+ [ ] Enable PCI resource re-allocation detection (NEW)      
+ < > PCI Stub driver (NEW)                                  
+ [ ] PCI IOV support (NEW)                                  
+ [ ] PCI PRI support (NEW)                                  
+ [ ] PCI PASID support (NEW)                                
+     PCI host controller drivers  --->                      
+ [ ] PCI Express support (NEW)                              
+ <*> PCCard (PCMCIA/CardBus) support  ---> 
+ ────────────────────────────────────────────────────────────  
+
+
+[ ] PCI support   
+
+	PCI支持,如果使用了PCI或PCI Express设备就必选
+[ ] Message Signaled Interrupts (MSI and MSI-X) (NEW)
+	PCI Express支持两类中断:INTx使用传统的IRQ中断,可以与现行的PCI总线的驱动程序和操作系统兼容;MSI则是通过inbound Memory Write触发和发送中断,更适合多CPU系统.可以使用"pci=nomsi"内核引导参数关闭MSI
+[ ] PCI Debugging (NEW) 
+	将PCI调试信息输出到系统日志里
+[ ] Enable PCI resource re-allocation detection (NEW) 
+	当PCI资源重新分配时，如果你需要PCI核心来检测的话，选择Y，同时你可以用pci=realloc=on和pci=realloc=off来覆盖它，如果你不确定的话，选择N  
+< > PCI Stub driver (NEW) 
+	选择Y或者M，如果你想要：当一个设备去注册其他的客户操作系统时需要保留该PCI设备
+[ ] PCI IOV support (NEW)
+ 	I / O虚拟化是由一些设备支持的PCI功能，这使得他们能够创建虚拟设备共享其物理资源。如果不确定的话，选择N  
+[ ] PCI PRI support (NEW) 
+	RIP就是PCI页面请求接口，如果不确定的话，选择N 
+[ ] PCI PASID support (NEW) 
+	不确定的话选择N  
+
+[ ] PCI Express support   
+	如果你的主板支持PCI Express，请选择Y
+<*> PCCard (PCMCIA/CardBus) support  ---> 
+    一般笔记本电脑会配备PCCard 接口( 无线网卡之类的) ，看你的硬件和使用场景吧。虽然我也是NB ，但我从来不用PCMCIA
+        16-bit PCMCIA support
+        Load CIS updates from userspace (EXPERIMENTAL)   
+        32-bit CardBus support
+    *** PC-card bridges ***
+        CardBus yenta-compatible bridge support
+        Cirrus PD6729 compatible bridge support
+        i82092 compatible bridge support 
+
+
+
+
+
+
+

@@ -1,0 +1,51 @@
+git reflog用来记录你的每一次命令
+git reflog show HEAD
+
+Git reset --hard HEAD:撤销所有的更改信息
+Git reset --soft HEAD: 只撤销commit，而保留working tree和index file的信息
+Git reset --mixed HEAD: 会撤销commit和index file，只保留working tree信息
+
+
+文件撤销
+	Git撤销修改 
+	1.场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令git checkout -- file。
+	2.场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令git reset HEAD file，就回到了场景1，第二步按场景1操作。
+		git checkout其实是用版本库里的版本替换工作区的版本，无论工作区是修改还是删除，都可以“一键还原”。
+
+	还缓冲区
+		reset --soft HEAD^
+	还工作区
+		reset HEAD device/fsl/imx6/etc/ueventd.freescale.rc
+	还最新的版本库
+		git checkout -- device/fsl/imx6/etc/ueventd.freescale.rc
+
+	#假设你已经使用git add .，将修改过的文件a、b加到暂存区  
+  
+	#现在你只想提交a文件，不想提交b文件，应该这样  
+	git reset HEAD b 
+版本撤销
+
+	git reset –hard：彻底回退到某个版本，本地的源码也会变为上一个版本的内容　　　　
+	#回退所有内容到上一个版本　　　　
+	git　　reset　　HEAD^　　　　　　
+	#回退a.py这个文件的版本到上一个版本　　　　　　
+	git　　reset　　HEAD^　　a.py　　　　　　
+	#向前回退到第3个版本　　　　　　
+	git　　reset　　–soft　　HEAD~3　
+
+	上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
+
+	git reset --hard (版本ID）
+	git reset --hard 3628164
+
+	git reset --hard commit_id
+	git reset --soft commit_id  回退到该版本的缓冲器
+
+       根据–soft –mixed –hard，会对working tree和index和HEAD进行重置:
+	    git reset --mixed：此为默认方式，不带任何参数的git reset，即时这种方式，它回退到某个版本，只保留源码，回退commit和index信息
+	    git reset --soft：回退到某个版本，只回退了commit的信息，不会恢复到index file一级。如果还要提交，直接commit即可
+	    git reset  --hard：彻底回退到某个版本，本地的源码也会变为上一个版本的内容，此命令 慎用！
+
+	$ git reset --soft 3ce072c72d948abfa
+
+	

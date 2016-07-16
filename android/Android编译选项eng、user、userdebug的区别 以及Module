@@ -1,0 +1,67 @@
+eng：debug 版本
+
+user: release 版本
+
+userDebug版本：部分debug版本
+
+
+    要了解Android编译选项eng、user和userdebug的区别，需先了解下LOCAL_MODULE_TAGS这一Android.mk文件里的配置项，一般配置形式为LOCAL_MODULE_TAGS := user eng optional test这个样子。
+    那么LOCAL_MODULE_TAGS设置为不同值有何作用呢？下面是对应不同值编译的结果：
+    1、user：只有在user版本时该模块才被编译进去；
+    2、eng：只有在eng版本时该模块才被编译进去；
+    3、test：只有在tests版本时该模块才被编译进去；
+    4、optional：在所有版本中都编译该模块进去。
+    其中的值可设置为1个或多个，分别对应编译选项的同一个或多个。那么eng、user、userdebug的区别是什么呢？接下来一一揭开：
+    1、当make eng时，也即相当于make。此时BuildType为eng，那么其编译进去的内容包括：
+      · Intended for platform-level debugging
+      · Installs modules tagged with: eng, debug, user, and/or development
+      · Installs non-APK modules that have no tags specified
+      · Installs APKs according to the product definition files, in addition to tagged APKs
+      · Sets ro.secure=1
+      · Sets ro.debuggable=0
+      · Sets ro.kernel.android.checkjni=1
+      · adbd is enabled by default
+    2、当make user时，此时BuildType为user,那么其编译进去的内容包括：
+      · Intended to be the final release
+      · Installs modules tagged as user
+      · Installs non-APK modules that have no tags specified
+      · Installs APKs according to the product definition files (tags are ignored for APK modules)
+      · Sets ro.secure=1
+      · Sets ro.debuggable=0
+      · adbd is disabled by default
+    3、当make userdebug时，此时BuildType为userdebug,那么其编译进去的内容包括：
+       the same as user, except:
+      · Intended for limited debugging
+      · Installs modules tagged with debug
+      · Sets ro.debuggable=1
+      · adbd is enabled by default 
+
+这是需要编译的单加入模块是需要用PRODUCT_PACKAGES
+LOCAL_MODULE_TAGS :=optional 的模块会被编译，但不会安装到image里面，要想让是optional的模块安装的话，需要将模块名加入到相关product的PRODUCT_PACKAGES里面
+解决方法：
+修改\build\target\product\generic.mk下面的PRODUCT_PACKAGES，加所编译的应用加入其应用包即可，
+
+安装哪些Module 只依赖与 PRODUCT_PACKAGES
+
+这里记录一种现象，不管 Module 是apk 还是 lib ，有的时候在单独 mmm 编译 的时候，
+
+是可以安装到 /out 中的system对应位置的，最后能够打包进系统的system.img
+
+ 
+
+但是 如果整体的 make -j* 编译系统，那么 对应的 apk .lib 就会生成在 /out 下的 symbols/system 对应的位置，
+
+最后是不会打包进系统system.img 的！
+
+ 
+
+这就是因为 Module 的LOCAL_MODULE_TAGS 和当前的编译的TARGET_BUILD_VARIANT 没有满足上面说到的规则，
+
+Module 并不认定为需要 install 的！
+
+可以按照上面的规则，修改Module的 LOCAL_MODULE_TAGS 或者 看下面的 在 PRODUCT_PACKAGES 中添加 Module ！
+
+ 
+
+这里只区分对Module的安装控制，可以看到在4.2 中 对Module的控制级别最高的是 PRODUCT_PACKAGES 这个变量！
+

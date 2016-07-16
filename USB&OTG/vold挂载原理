@@ -1,0 +1,412 @@
+源码的位置：                                                     
+Vold:system/vold                                           
+Framework: frameworks/base/services/java/com/android/server 
+先简要说明一下类的继承关系，vold中比较重要的有以下几个类：
+三大管理类：VolumeManager,CommandListener,NetlinkManager
+其他处理类：Volume,DirectVolume,NetlinkHandler,Fat,ResponseCode
+其他相关的类：NetlinkListener,SocketListener
+
+MountService的启动在SystemServer.java中
+
+
+1.VolumeManager管理Volume类；
+2.DirectVolume类继承于Volume类，保存着磁盘信息与操作函数；
+3.NetlinkManager类负责与内核uevent事件通信，期间，使用到了NetlinkListener和SocketListener类的函数；
+4.Fat是格式化sd卡的函数；
+5.ResponseCode保存着vold向framework反馈的值。
+
+android/system/core/rootdir/init.rc
+
+service vold /system/bin/vold                                                                    
+    class core
+    socket vold stream 0660 root mount
+    ioprio be 2
+注意这里创建了一个socket，用于vold和FrameWork层通信
+
+vold代码在system/vold目录下面，
+
+函数入口main函数
+
+int main() {
+**以下三个类声明三个指针对象：
+**VolumeManager :管理所有存储设备(volume对象)；
+**CommandListener :监听Framework下发的消息，并分析命令，调用响应的操作函数；
+**NetlinkManager :监听Linux内核的热插拔事件，uevent事件
+    VolumeManager *vm;
+    CommandListener *cl;
+    NetlinkManager *nm;
+
+    SLOGI("Vold 2.1 (the revenge) firing up");
+/**********************************************************************************
+**在Linux系统，如scsi硬盘，U盘的设备节点默认生成在/dev/目录下，Android把这些设备
+**节点改到了/dev/block/目录下。但随着热插拔事件的产生，设备节点(如sda,sdb)经常变换，
+**对于vold来说，可能有点麻烦，所以在/dev/block/下新建了一个名为vold的目录，存放sda,
+**sdb对应的设备节点，形如"8:0"。
+**eg:sda 的主次设备号分别为8,0,于是vold就会在vold目录下创建名为"8:0"的节点，基于主次设备号
+**命名，便于程序操作，增加了灵活性。
+**********************************************************************************/
+    mkdir("/dev/block/vold", 0755);
+这里建立了一个/dev/block/vold目录用于放置后面建立的vold节点
+ 
+
+/* Create our singleton managers */          
+if (!(vm = VolumeManager::Instance())) {     
+    SLOGE("Unable to create VolumeManager"); 
+    exit(1);                                 
+};                                           
+                                             
+if (!(nm = NetlinkManager::Instance())) {    
+    SLOGE("Unable to create NetlinkManager");
+    exit(1);                                 
+}   
+
+这里创建了VolumeManager和NetlinkManager两个实例，VolumeManager主要负责Voluem的一些管理，NetlinkManager主要负责管理与内核之间的通信    
+
+     cl = new CommandListener();   
+这里首先创建了CommandListener,CommandListener主要负责与FrameWork层的通信，处理从FrameWork层收到的各种命令，我们先看看他的构造函数： 
+CommandListener::CommandListener() :          
+                 FrameworkListener("vold") {  
+    registerCmd(new DumpCmd());               
+    registerCmd(new VolumeCmd());                                                       
+    registerCmd(new AsecCmd());               
+    registerCmd(new ObbCmd());                
+    registerCmd(new ShareCmd());              
+    registerCmd(new StorageCmd());            
+    registerCmd(new XwarpCmd());
+这里注册了各种命令，注意FrameworkListener("vold")，FrameworkListener又继承了SocketListener，最终"vold"传到了SocketListener里面    
+vm->setBroadcaster((SocketListener *) cl);                                 
+nm->setBroadcaster((SocketListener *) cl);                       
+                                                                 
+if (vm->start()) {                                               
+    SLOGE("Unable to start VolumeManager (%s)", strerror(errno));
+    exit(1);                                                     
+}
+设置了Broadcaster，后面给FrameWork层发送消息就跟它有关了
+
+if (process_config(vm)) {
+    SLOGE("Error reading configuration (%s)... continuing anyways", strerror(errno));
+}
+解析vold.fstab,我们看下process_config函数： 
+
+看下    process_config    函数                                                                
+                                                                                                                                                              
+static int process_config(VolumeManager *vm){                                                                                                                      
+    FILE *fp;                                                                                     
+    int n = 0;                                                                                    
+    char line[255];                                                                               
+                                                                                                  
+    if (!(fp = fopen("/etc/vold.fstab", "r"))) {                                                  
+        return -1;                                                                                
+    }                                                                                             
+                                                                                                  
+    while(fgets(line, sizeof(line), fp)) {                                                        
+        char *next = line;                                                                        
+        char *type, *label, *mount_point;                                                         
+                                                                                                  
+        n++;                                                                                      
+        line[strlen(line)-1] = '\0';                                                              
+                                                                                                  
+        if (line[0] == '#' || line[0] == '\0')                                                    
+            continue;                                                                             
+                                                                                                  
+        if (!(type = strsep(&next, " \t"))) {                                                     
+            SLOGE("Error parsing type");                                                          
+            goto out_syntax;                                                                      
+        }                                                                                         
+        if (!(label = strsep(&next, " \t"))) {          //标签                                      
+            SLOGE("Error parsing label");                                                         
+            goto out_syntax;                                                                      
+        }                                                                                         
+        if (!(mount_point = strsep(&next, " \t"))) {        //挂载点                                 
+            SLOGE("Error parsing mount point");                                                   
+            goto out_syntax;                                                                      
+        }                                                                                         
+                                                                                                  
+        if (!strcmp(type, "dev_mount")) {           //挂载命令                                        
+            DirectVolume *dv = NULL;                                                              
+            char *part, *sysfs_path;                                                              
+                                                                                                  
+            if (!(part = strsep(&next, " \t"))) {       //分区数                                     
+                SLOGE("Error parsing partition");                                                 
+                goto out_syntax;                                                                  
+            }                                                                                     
+            if (strcmp(part, "auto") && atoi(part) == 0) {      //auto则表示只有1个子分区                  
+                SLOGE("Partition must either be 'auto' or 1 based index instead of '%s'", part);  
+                goto out_syntax;                                                                  
+            }                                                                                     
+                                                                                                  
+            if (!strcmp(part, "auto")) {                                                          
+                dv = new DirectVolume(vm, label, mount_point, -1);                                
+            } else {                                                                              
+                dv = new DirectVolume(vm, label, mount_point, atoi(part));                        
+            }                                                                                     
+                                                                                                  
+            while((sysfs_path = strsep(&next, " \t"))) {                                          
+                if (dv->addPath(sysfs_path)) {       //这里的Path在挂载的时候会用到                           
+                    SLOGE("Failed to add devpath %s to volume %s", sysfs_path,                    
+                         label);                                                                  
+                    goto out_fail;                                                                
+                }                                                                                 
+            }                                                                                     
+            vm->addVolume(dv);//添加到VolumeManager，由它负责统一管理                                         
+        } else if (!strcmp(type, "map_mount")) {                                                  
+        } else {                                                                                  
+            SLOGE("Unknown type '%s'", type);                                                     
+            goto out_syntax;                                                                      
+        }                                                                                         
+    }                                                                                             
+                                                                                                  
+    fclose(fp);                                                                                   
+    return 0;                                                                                     
+                                                                                                  
+out_syntax:                                                                                       
+    SLOGE("Syntax error on config line %d", n);                                                   
+    errno = -EINVAL;                                                                              
+out_fail:                                                                                         
+    fclose(fp);                                                                                   
+    return -1;                                                                                    
+}
+解析了vold.fstab之后 ，就开始启动VolumeManager,     
+if (nm->start()) {                                                
+    SLOGE("Unable to start NetlinkManager (%s)", strerror(errno));
+    exit(1);                                                      
+}                                                                 
+    int NetlinkManager::start() {                                                            
+        struct sockaddr_nl nladdr;                                                            
+        int sz = 64 * 1024;                                                                   
+         int on = 1;                                                                                                                                                                                                                                            
+                                                                                             
+        memset(&nladdr, 0, sizeof(nladdr));                                                  
+        nladdr.nl_family = AF_NETLINK;                                                       
+        nladdr.nl_pid = getpid();                                                            
+        nladdr.nl_groups = 0xffffffff;                                                       
+                                                                                             
+        if ((mSock = socket(PF_NETLINK,                                                      
+                            SOCK_DGRAM,NETLINK_KOBJECT_UEVENT)) < 0) {//注册UEVENT事件，用于接收内核消息  
+            SLOGE("Unable to create uevent socket: %s", strerror(errno));                    
+            return -1;                                                                       
+        }                                                                                    
+                                                                                             
+        if (setsockopt(mSock, SOL_SOCKET, SO_RCVBUFFORCE, &sz, sizeof(sz)) < 0) {            
+            SLOGE("Unable to set uevent socket options: %s", strerror(errno));               
+            return -1;                                                                       
+        }                                                                                    
+                                                                                             
+        if (setsockopt(mSock, SOL_SOCKET, SO_REUSEADDR,  &on, sizeof(on)) < 0) {             
+            LOGE("Unable to set SO_REUSEADDR options: %s", strerror(errno));                 
+            return -1;                                                                       
+        }                                                                                    
+                                                                                             
+        if (bind(mSock, (struct sockaddr *) &nladdr, sizeof(nladdr)) < 0) {                  
+            SLOGE("Unable to bind uevent socket: %s", strerror(errno));                      
+            return -1;                                                                       
+        }                                                                                    
+                                                                                             
+        mHandler = new NetlinkHandler(mSock);//NetlinkHandler用于对接收到的内核消息进行处理                 
+        if (mHandler->start()) {//开始监听内核消息                                                   
+            SLOGE("Unable to start NetlinkHandler: %s", strerror(errno));                    
+            return -1;                                                                       
+        }                                                                                    
+        return 0;                                                                            
+    }    
+   我们跟进mHandler->start()最终调用 SocketListener::startListener()
+       int SocketListener::startListener() {                                         
+                                                                                       
+           if (!mSocketName && mSock == -1) { //这里mSock 刚赋值了                                                                                                              
+               SLOGE("Failed to start unbound listener");                            
+               errno = EINVAL;                                                       
+               return -1;                                                            
+           } else if (mSocketName) {                                                 
+               if ((mSock = android_get_control_socket(mSocketName)) < 0) {          
+                   SLOGE("Obtaining file descriptor socket '%s' failed: %s",         
+                        mSocketName, strerror(errno));                               
+                   return -1;                                                        
+               }                                                                     
+           }                                                                         
+                                                                                     
+           if (mListen && listen(mSock, 4) < 0) {                                    
+               SLOGE("Unable to listen on socket (%s)", strerror(errno));            
+               return -1;                                                            
+           } else if (!mListen)                                                      
+               mClients->push_back(new SocketClient(mSock));                         
+                                                                                     
+           if (pipe(mCtrlPipe)) {//建立管道，用于后面的关闭监听循环                                  
+               SLOGE("pipe failed (%s)", strerror(errno));                           
+               return -1;                                                            
+           }                                                                         
+                                                                                     
+           if (pthread_create(&mThread, NULL, SocketListener::threadStart, this)) {  
+               SLOGE("pthread_create (%s)", strerror(errno));                        
+               return -1;                                                            
+           }                                                                         
+                                                                                     
+           return 0;                                                                 
+       }
+     们再看下threadStart，最终调用runListener
+         void SocketListener::runListener() {                                                                         
+                                                                                                                                                                                                   
+             while(1) {                                                                                             
+                 SocketClientCollection::iterator it;                                                               
+                 fd_set read_fds;                                                                                   
+                 int rc = 0;                                                                                        
+                 int max = 0;                                                                                       
+                                                                                                                    
+                 FD_ZERO(&read_fds);                                                                                
+                                                                                                                    
+                 if (mListen) {                                                                                     
+                     max = mSock;                                                                                   
+                     FD_SET(mSock, &read_fds);                                                                      
+                 }                                                                                                  
+                                                                                                                    
+                 FD_SET(mCtrlPipe[0], &read_fds);  //把mCtrlPipe[0]也加入监听中                                            
+                 if (mCtrlPipe[0] > max)                                                                            
+                     max = mCtrlPipe[0];                                                                            
+                                                                                                                    
+                 pthread_mutex_lock(&mClientsLock);                                                                 
+                 for (it = mClients->begin(); it != mClients->end(); ++it) {                                        
+                     FD_SET((*it)->getSocket(), &read_fds);                                                         
+                     if ((*it)->getSocket() > max)                                                                  
+                         max = (*it)->getSocket();                                                                  
+                 }                                                                                                  
+                 pthread_mutex_unlock(&mClientsLock);                                                               
+                                                                                                                    
+                 if ((rc = select(max + 1, &read_fds, NULL, NULL, NULL)) < 0) {//阻塞直到有数据到来                          
+                     SLOGE("select failed (%s)", strerror(errno));                                                  
+                     sleep(1);                                                                                      
+                     continue;                                                                                      
+                 } else if (!rc)                                                                                    
+                     continue;                                                                                      
+                                                                                                                    
+                 if (FD_ISSET(mCtrlPipe[0], &read_fds))//mCtrlPipe[0]有数据，则结循环，注意是在stopListener的时候 往mCtrlPipe[1]写数据  
+                     break;                                                                                         
+                 if (mListen && FD_ISSET(mSock, &read_fds)) {                                                       
+                     struct sockaddr addr;                                                                          
+                     socklen_t alen = sizeof(addr);                                                                 
+                     int c;                                                                                         
+                                                                                                                    
+                     if ((c = accept(mSock, &addr, &alen)) < 0) {//有新的连接来了，主要是FrameWork层的，                          
+                         SLOGE("accept failed (%s)", strerror(errno));                                              
+                         sleep(1);                                                                                  
+                         continue;                                                                                  
+                     }                                                                                              
+                     pthread_mutex_lock(&mClientsLock);                                                             
+                     mClients->push_back(new SocketClient(c));//加到监听的列表                                             
+                     pthread_mutex_unlock(&mClientsLock);                                                           
+                 }                                                                                                  
+                                                                                                                    
+                 do {                                                                                               
+                     pthread_mutex_lock(&mClientsLock);                                                             
+                     for (it = mClients->begin(); it != mClients->end(); ++it) {                                    
+                         int fd = (*it)->getSocket();                                                               
+                         if (FD_ISSET(fd, &read_fds)) {                                                             
+                             pthread_mutex_unlock(&mClientsLock);                                                   
+                             if (!onDataAvailable(*it)) {//处理消息                                                     
+                                 close(fd);                                                                         
+                                 pthread_mutex_lock(&mClientsLock);                                                 
+                                 delete *it;                                                                        
+                                 it = mClients->erase(it);                                                          
+                                 pthread_mutex_unlock(&mClientsLock);                                               
+                             }                                                                                      
+                             FD_CLR(fd, &read_fds);                                                                 
+                             pthread_mutex_lock(&mClientsLock);                                                     
+                             continue;                                                                              
+                         }                                                                                          
+                     }                                                                                              
+                     pthread_mutex_unlock(&mClientsLock);                                                           
+                 } while (0);                                                                                       
+             }                                                                                                      
+         } 
+         这样，就开始了监听来自内核的事件   
+coldboot("/sys/block");                                                  
+//  coldboot("/sys/class/switch");                                         
+                                                                         
+/*                                                                       
+ * Now that we're up, we can respond to commands                                                                                                                                
+ */                                                                
+if (cl->startListener()) {                                         
+    SLOGE("Unable to start CommandListener (%s)", strerror(errno));
+    exit(1);                                                       
+}                                                                  
+   
+   这里主要看cl->startListener,也跟前面 的一样，调用SocketListener::startListener()，注意这时  
+       if (!mSocketName && mSock == -1) {                                                                                                
+           SLOGE("Failed to start unbound listener");                     
+           errno = EINVAL;                                                
+           return -1;                                                     
+       } else if (mSocketName) {                                          
+           if ((mSock = android_get_control_socket(mSocketName)) < 0) {   
+               SLOGE("Obtaining file descriptor socket '%s' failed: %s",  
+                    mSocketName, strerror(errno));                        
+               return -1;                                                 
+           }                                                              
+       } 
+       这里mSocketName 为"vold",mSock = -1，所以会调用android_get_control_socket，我们看下这个函数 
+           /*                                                                                                                                              
+            * android_get_control_socket - simple helper function to get the file          
+            * descriptor of our init-managed Unix domain socket. `name' is the name of the 
+            * socket, as given in init.rc. Returns -1 on error.                            
+            *                                                                              
+            * This is inline and not in libcutils proper because we want to use this in    
+            * third-party daemons with minimal modification.                               
+            */                                                                             
+           static inline int android_get_control_socket(const char *name)                  
+           {                                                                               
+               char key[64] = ANDROID_SOCKET_ENV_PREFIX;                                   
+               const char *val;                                                            
+               int fd;                                                                     
+                                                                                           
+               /* build our environment variable, counting cycles like a wolf ... */       
+           #if HAVE_STRLCPY                                                                
+               strlcpy(key + sizeof(ANDROID_SOCKET_ENV_PREFIX) - 1,                        
+                   name,                                                                   
+                   sizeof(key) - sizeof(ANDROID_SOCKET_ENV_PREFIX));                       
+           #else   /* for the host, which may lack the almightly strncpy ... */            
+               strncpy(key + sizeof(ANDROID_SOCKET_ENV_PREFIX) - 1,                        
+                   name,                                                                   
+                   sizeof(key) - sizeof(ANDROID_SOCKET_ENV_PREFIX));                       
+               key[sizeof(key)-1] = '\0';                                                  
+           #endif                                                                          
+                                                                                           
+               val = getenv(key);                                                          
+               if (!val)                                                                   
+                   return -1;                                                              
+                                                                                           
+               errno = 0;                                                                  
+               fd = strtol(val, NULL, 10);                                                 
+               if (errno)                                                                  
+                   return -1;                                                              
+                                                                                           
+               return fd;                                                                  
+           }  
+           
+           这里面通过组合成一个环境变量名，然后获取对应的值，那么这个值是什么时候设置的呢，我们看下系统初始化的时候调用的service_start 
+               void service_start(struct service *svc, const char *dynamic_args)                                                                                                  
+               {                                                                                     
+                  ...                                                                                
+                  for (si = svc->sockets; si; si = si->next) {                                       
+                           int socket_type = (                                                       
+                                   !strcmp(si->type, "stream") ? SOCK_STREAM :                       
+                                       (!strcmp(si->type, "dgram") ? SOCK_DGRAM : SOCK_SEQPACKET));  
+                           int s = create_socket(si->name, socket_type,                              
+                                                 si->perm, si->uid, si->gid);                        
+                           if (s >= 0) {                                                             
+                               publish_socket(si->name, s);                                          
+                           }                                                                         
+                       }                                                                             
+               }    
+       跟进publish_socket 
+       
+       tatic void publish_socket(const char *name, int fd)                    
+       {                                                                      
+           char key[64] = ANDROID_SOCKET_ENV_PREFIX;                                                                                                           
+           char val[64];                                              
+                                                                      
+           strlcpy(key + sizeof(ANDROID_SOCKET_ENV_PREFIX) - 1,       
+                   name,                                              
+                   sizeof(key) - sizeof(ANDROID_SOCKET_ENV_PREFIX));  
+           snprintf(val, sizeof(val), "%d", fd);                      
+           add_environment(key, val);                                 
+                                                                      
+           /* make sure we don't close-on-exec */                     
+           fcntl(fd, F_SETFD, 0);                                     
+       }                                                              

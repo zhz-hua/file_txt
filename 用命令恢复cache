@@ -1,0 +1,70 @@
+4.下面是对bootCommand进行分析。
+
+    private static void bootCommand(Context context, String arg) throws IOException {
+        RECOVERY_DIR.mkdirs();  // 创建/cache/recovery目录
+        COMMAND_FILE.delete();  // 删除command文件，进行初始化
+        LOG_FILE.delete();//删除log文件，进行初始化
+
+        Log.d(TAG,"Preapre to write command: " + arg +"\n");
+        WriteByFdSync(COMMAND_FILE,arg);//将参数写入到command文件中
+        Log.d(TAG,"Success to write command: " + arg +"\n");
+
+        Log.d(TAG,"Current build type is: " + Build.TYPE +"\n");
+        ReadInAndPrint(COMMAND_FILE);//读取command文件，并打印log
+
+        // Having written the command file, go ahead and reboot
+        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);//从系统服务中获得PowerManager实例
+        pm.reboot("recovery");//重启
+        Log.d(TAG,"!!! pm.reboot failed !!!\n");
+        throw new IOException("Reboot failed (no permissions?)");
+    }
+
+tep 1: Build r13.4.1
+
+        make         /* Store images file for MFGTool use */
+
+        make dist    /* Get ota_1.zip, and target_files_1.zip at out/dist, store them in a dedicated directory, for example .../release-1 */
+
+Step 2: Modify any files in source code base;
+
+Step 3: make dist    /* Get ota_2.zip, and target_files_2.zip at out/dist, store them in a dedicated directory, for example .../release-2 */
+
+ 
+
+Step 4: MFGTool flash release-1 images;
+
+Step 5: cp ota_2.zip to SD;
+
+Step 6: start board, then execute following commands under serial terminal;
+
+        cp /sdcard/ota_2.zip /cache/ota_2.zip
+
+        mkdir /cache/recovery
+
+        echo --update_package=/cache/ota_2.zip > /cache/recovery/command
+
+        sync
+
+        reboot recovery
+
+ 
+
+        Then you can see the upgrade successful.
+
+ 
+
+Step 7: MFGTool flash release-1 images;
+
+Step 8: ./build/tools/releasetools/ota_from_target_files -i .../release-1/target_files_1.zip .../release-2/target_files_2.zip ./diff_from_1_to_2.zip Step 9: cp diff_from_1_to_2.zip to SD;
+
+Step10: start board, then execute following commands under serial terminal;
+
+        cp /sdcard/diff_from_1_to_2.zip /cache/diff.zip
+
+        mkdir /cache/recovery
+
+        echo --update_package=/cache/diff.zip > /cache/recovery/command
+
+        sync
+
+        reboot recovery

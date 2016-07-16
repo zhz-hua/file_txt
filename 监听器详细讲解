@@ -1,0 +1,119 @@
+
+android中控件设置监听器详细讲解
+
+
+        什么是监听器?
+        深入理解给控件设置监听器以及对控件事件的监控的实现过程
+        创建实现了OnClickListener接口的对象l
+            方法一.创建一个类实现View.OnClickListener接口
+            方法二，通过接口实现的匿名内部类来创建对象。
+        监听器的种类:
+        监听点击事件的步骤:
+        通过控件对象操作控件
+
+什么是监听器?
+
+监听器就是一个对象，该对象的类实现了指定的接口。
+
+
+我们在点击控件的时候，如果设置了点击监听器(调用该控件的SetOnClickListener方法)，就会调用监听器对象的相应方法(这里是onClick方法)，也就实现了监听点击。
+拿TextView类来说，TextView对象中有实现了OnClickListener接口类型的对象mOnClickListener，和setOnClickListener方法。
+我们调用setOnClickListener方法时传入一个实现了OnClickListener接口类型的对象l到TextView对象中，
+setOnClickListener方法将l赋值给了mOnClickListener，这个过程就是设置监听器。
+当我们点击该TextView，TextView中的performClick方法会被执行
+，该方法中，判断mOnClickListener是否为null,如果不为null就调用mOnClickListener的onClick方法并且把触发点击事件的对象（也就是该TextView对象）传到onClick方法中，
+也就是调用我们传入的实现了OnClickListener接口类型的对象l的onClick方法， 也就是说，我们只要在对象l的类定义的onClick方法里面写入我们要响应的代码，就可以实现对点击事件的响应了
+
+	
+
+TextView
+{
+  OnClickListener mOnClickListener;
+  public void setOnClickListener(OnClickListener l) {
+        mOnClickListener = l;
+  }
+ public boolean performClick() {
+        if (mOnClickListener != null) {
+ 
+            mOnClickListener.onClick(this);
+            return true;
+        }
+      return false;
+    }
+}
+
+创建实现了OnClickListener接口的对象l
+
+注意，这个OnClickListener接口是andorid.view.View包下面的接口在导入包的时候不要导错了
+有两种方法创建实现了OnClickListener接口的对象，第一种是创建一个类实现OnClickListener接口，第二种是，通过接口实现的匿名内部类来创建对象。
+
+方法一.创建一个类实现View.OnClickListener接口
+	
+import android.view.View;
+import android.view.View.OnClickListener;
+ 
+public class TextViewClickListener implements OnClickListener {
+ 
+     @Override
+     public void onClick(View v) {//此处的v表示触发该点击事件的对象。
+          // TODO Auto-generated method stub
+          System.out.println("TextView被点击了！");
+     }
+ 
+}
+
+定义好了TextViewClickListener类后，创建TextViewClickListener类的对象，
+
+并调用helloWorldTextView的setOnClickListener方法把该对象传入给helloWorldTextView对象中的mOnclickListener属性，如果有点击事件，就会调用TextViewClickListener对象的onClick方法。
+
+	
+
+ protected void onCreate(Bundle savedInstanceState) {
+	  super.onCreate(savedInstanceState);
+	  setContentView(R.layout.activity_main);
+ 
+	  TextView helloWorldTextView = (TextView) findViewById(R.id.helloWorldTextView);
+	  helloWorldTextView.setText("World Hello!");
+ 
+	  TextViewClickListener textViewClickListener = new TextViewClickListener();
+	  helloWorldTextView.setOnClickListener(textViewClickListener);
+ }
+
+运行程序，点击文字，会在LogCat中看到”TextView被点击了！”这段文字
+
+方法二，通过接口实现的匿名内部类来创建对象。
+
+直接在onCreate方法中，创建OnClickListener接口的匿名内部类对象
+
+	
+
+protected void onCreate(Bundle savedInstanceState) {
+          super.onCreate(savedInstanceState);
+          setContentView(R.layout.activity_main);
+ 
+          TextView helloWorldTextView = (TextView) findViewById(R.id.helloWorldTextView);
+          helloWorldTextView.setText("World Hello!");
+ 
+          helloWorldTextView.setOnClickListener(new View.OnClickListener() {//此处也是要注意导入OnClickListener包要导入android.view.View包
+				@Override
+				public void onClick(View v) {
+					// TODO Auto-generated method stub
+					System.out.println("匿名内部类实现的监听TextView点击！");
+				}
+		});
+ 
+     }
+
+运行程序点击后，在LogCat会出现”匿名内部类实现的监听TextView点击！”这段文字
+
+监听器的种类:
+
+OnLongClickListener:长按事件
+OnClickListener:点击事件
+
+监听点击事件的步骤:
+
+1.创建一个类实现了相应的监听接口,并实现接口中的方法，在方法中添加触发事件后要做的操作
+2.创建实现了相应的监听接口类的对象
+3.调用控件的setOn…Listener()方法，把创建的实现了相应的监听接口类的对象传给该控件
+

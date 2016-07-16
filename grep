@@ -1,0 +1,34 @@
+zhz@zhz:~/imx6-android-4.4.3$ grep -r TARGET_BOOTLOADER_CONFIG ./android/*
+./android/build/core/Makefile:ifneq ($(strip $(TARGET_BOOTLOADER_CONFIG)),)
+./android/device/fsl/hdmidongle_6dq/BoardConfig.mk:TARGET_BOOTLOADER_CONFIG := 6q:mx6q_hdmidongle_nand_android_config 6dl:mx6dl_hdmidongle_nand_android_config
+
+－c：只输出匹配行的计数。
+－I：不区分大 小写(只适用于单字符)。
+－h：查询多文件时不显示文件名。
+－l：查询多文件时只输出包含匹配字符的文件名。
+－n：显示匹配行及 行号。
+－s：不显示不存在或无匹配文本的错误信息。
+－v：显示不包含匹配文本的所有行
+
+grep SD3_DAT7__ * -nr
+
+
+
+1. 查找所有".h"文件
+
+find /PATH -name "*.h"
+
+2. 查找所有".h"文件中的含有"helloworld"字符串的文件
+
+find /PATH -name "*.h" -exec grep -in "helloworld" {} \;
+
+3. 查找所有".h"和".c"文件中的含有"helloworld"字符串的文件
+
+find /PATH /( -name "*.h" -or -name "*.c" /) -exec grep -in "helloworld" {} \;
+
+4. 查找非备份文件中的含有"helloworld"字符串的文件
+
+find /PATH /( -not -name "*~" /) -exec grep -in "helloworld" {} \;
+
+注：/PATH为查找路径，默认为当前路径。带-exec参数时必须以\;结尾，否则会提示“find: 遗漏“-exec”的参数”。
+

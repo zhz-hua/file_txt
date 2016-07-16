@@ -1,0 +1,122 @@
+用串口或者adb启动fastboot服务
+reboot fastboot
+
+fresscale 的fastboot工具在./out/host/linux-x86/bin/fastboot 目录下
+./out/host/linux-x86/bin/fastboot flash bootloader bootable/bootloader/uboot-imx/u-boot.imx
+
+
+Download the U-Boot image:
+# sudo dd if=u-boot.imx of=/dev/sdx bs=1K seek=1; sync
+Download the boot image:
+# sudo dd if=boot.img of=/dev/sdx1; sync
+Download the Android system root image:
+# sudo dd if=system.img of=/dev/sdx5; sync
+Download the Android recovery image:
+# sudo dd if=recovery.img of=/dev/sdx2; sync
+
+擦除分区命令:
+$ fastboot erase system #檫除 system 分区
+烧写分区命令:
+$ fastboot flash system system.img #把 system.img 烧写到 system 分区
+1. Power on the board with USB OTG connected.
+2. Press any key to enter the U-Boot shell.
+3. Select the correct device to do fastboot image download by command: SD/MMC card
+U-Boot > setenv fastboot_dev mmc3
+U-Boot > fastboot
+use fastboot The size of images downloaded by fastboot must be < 320 MB.
+ Run the following commands to flash the SD or eMMC:
+
+
+$fastboot flash bootloader images\u-boot-no-padding.bin
+$fastboot flash boot images\boot.img
+$fastboot flash system images\system.img
+$fastboot flash recovery images\recovery.img
+$fastboot reboot
+
+4. Run the following commands to flash NAND
+$fastboot flash boot images\boot.img
+$fastboot flash android_root images\android_root.img
+$fastboot flash recovery images\recovery.img
+$fastboot	reboot
+
+fastboot命令
+ 1 升级系统
+
+fastboot flash bootloader u-boot.bin
+fastboot flash kernel uImage
+fastboot flash system system.img
+fastboot flash userdata userdata.img
+fastboot flash ramdisk ramdisk-uboot.img
+fastboot erase cache
+
+fastboot flash {partition} {*.img}   例：fastboot flash boot boot.img或fastboot flash system system.img等。
+
+fastboot flashall   注意：此命令会在当前目录中查找所有img文件，将这些img文件烧写到所有对应的分区中，并重新启动手机。
+
+一次烧写boot，system，recovery分区：
+
+    （1）创建包含boot.img，system.img，recovery.img文件的zip包。
+
+    （2）执行：fastboot update {*.zip}
+
+烧写开机画面：
+
+    fastboot flash splash1 开机画面
+
+2 重启系统
+
+fastboot reboot
+
+3 不烧写flash情况下调试
+
+fastboot boot uImage 或者u-boot.bin
+
+4 查看版本号
+
+fastboot getver:version
+
+5 复位到bootloader
+
+fastboot reboot-bootloader
+
+6 命令格式
+
+主机端发送字符串的命令，字符串小于等于64个字节，客户端首先返回四个字节的内容，是OKAY、FAIL、DATA、INFO之一，随后跟着是信息或数数据。
+
+7 清空分区
+
+fastboot erase {partition}   例：fastboot erase boot或fastboot erase system等。
+
+fastboot erase boot
+
+fastboot erase system
+
+fastboot erase data
+
+fastboot erase cache
+
+上面的命令也可以简化成一条命令
+
+fastboot erase system -w
+
+8 获取客户端(手机端)变量信息
+
+fastboot getvar version:version-bootloader:version-baseband:product:serialno:secure 
+
+version 客户端支持的fastboot协议版本
+
+version-bootloader  Bootloader的版本号
+
+version-baseband    基带版本
+
+product             产品名称
+
+serialno             产品序列号
+
+secure              返回yes 表示在刷机时需要获取签名
+
+支持的参数
+
+偏移和地址在u-boot中定义，要想使用好fastboot，就必须要知道参数名称与文件的对应关系。
+
+ 

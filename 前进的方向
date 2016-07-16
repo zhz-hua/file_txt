@@ -1,0 +1,150 @@
+http://edu.21cn.com/sz_kc321/1796903_5489225.htm
+Android 开发环境
+掌握 Makefile 编写，Linux 常用脚本语言的编写（ .Config 、 Kconfig、 Shell ）
+		
+掌握字符型驱动开发
+掌握android 驱动核心理论（并发/竞态/阻塞/非阻塞/异步通知/任务队列/时钟管理/中断处理/中断底半部机制）。
+掌握android 驱动模型及热拔插理论（设备/驱动/总线，平台总线）
+掌握android 电源管理架构（earlysuspend  及 suspend ）
+掌握android 驱动调试技术( Proc、Sys 、OOPS 、Printk )
+掌握input子系统/键盘/触摸屏/重力传感器/RTC/闹钟/misc/网络驱动/LCD驱动/I2C驱动/USB驱动/Binder等开发。
+了解块设备驱动开发（Flash驱动）
+掌握Android Binder通讯原理
+掌握Android传感器框架
+掌握Android振动马达、背光框架
+掌握Android显示框架
+掌握Android Ril层
+掌握Jni的两种调用方法（基于Android 框架，设计UI，Hal层和LED驱动，实现流水灯）
+详细课程介绍
+
+第一部分  Android 基础理论
+
+1． Android 系统简介
+
+2． Android 开发环境搭建
+
+3． NDK 开发流程
+
+4． Android 常用工具使用
+
+5． Android Makefile 
+
+6. LINUX 内核介绍、.Config、Kconfig、LINUX内核Makefile修改
+
+第二部分  android驱动基础理论
+
+ 1. 模块驱动、模块参数概念
+
+2．字符驱动详细介绍
+
+3. 并发/竞态 
+
+4. 阻塞/非阻塞/队列/异步通知/poll 
+
+5. 时钟/中断/TaskLet
+
+6. 内核线程/工作队列
+
+第三部分  android驱动模型
+
+1．android 驱动模型（Kobject、Kset）
+
+2. android 总线的实现
+
+3. android 设备的实现
+
+4. android 驱动的实现
+
+5. 总线,设备,驱动的关系
+
+6．热拔插理论
+
+第四部分  android电源管理
+
+1. android电源管理原理及其架构分析
+
+2. android驱动对电源管理的支持
+
+第五部分  android块设备驱动
+
+1. 块设备驱动原理
+
+2. 块设备驱动实现
+
+第六部分  掌握调试技术
+
+  1.Printk调试
+
+2.OOPS堆栈调试
+
+3.Proc调试
+
+4.Sys文件系统实现
+
+第七部分  掌握工程中的驱动程序
+
+1．掌握键盘/触摸屏/重力传感器/RTC/闹钟/misc/I2C驱动等开发。
+
+2.LCD驱动分析移植
+
+3.网卡驱动分析移植
+
+4.USB 驱动分析移植
+
+5.Flash驱动分析移植
+
+6.input子系统原理
+
+第八部分  Android Binder通讯原理
+
+1．Binder通讯原理及框架介绍
+
+2．客户端跟服务器模型
+
+实验:基于Binder编写一个服务器并实现客户端对服务器的功能调用
+
+第九部分  Android传感器框架
+
+1． Android传感器框架分析
+
+2． Android Hal 层实现
+
+实验: Android传感器框架下调试重力传感器
+
+第十部分  Android振动马达、背光框架
+
+1．Android振动马达框架分析及Hal 层实现
+
+2．Android背光框架分析及Hal 层实现
+
+实验: Android振动马达调试及修改方法
+
+      Android背光调试及修改方法
+
+第十一部分 Android显示框架
+
+1． Android显示框架分析及其实现
+
+2.  Android开机动画修改
+
+实验: Android开机动画修改
+
+第十二部分 Android Ril 层
+
+1．Android Ril层分析及其调试
+
+ 实验:Ril层调试
+
+第十二部分 Android 系统框架实例
+
+1．掌握 Android 系统框架,掌握Jni的两种调用方法
+
+2．基于Android 框架，设计UI，Hal层和LED驱动，实现流水灯。
+
+实验:编写UI和HAL层和驱动完成UI对流水灯的控制
+
+第十三部分  综合项目
+
+基于android 调试 3G模块。
+ 
+

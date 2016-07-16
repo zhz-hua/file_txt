@@ -1,0 +1,4 @@
+busybox mkfs.ext2 dev/block/mmcblk3p10
+
+(需要注意如果之前mount过，一定要Umount掉 --busybox unmount /dev/block/sda否则会出错
+mount -t ext2 /dev/block/sda /mnt/sata

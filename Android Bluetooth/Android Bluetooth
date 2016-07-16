@@ -1,0 +1,58 @@
+http://www.tuicool.com/articles/raI7Fn
+
+Android 4.4上蓝牙协议栈采用的是BRCM和Google共同开发的bluedroid，代替了之前的Bluez.
+
+一、 Bluetooth 源码分布 （基于Android 4.4 ）
+
+1.  packages/apps/Settings/src/com/android/settings/bluetooth
+
+     bluetooth Settings 代码
+
+2.  packages/apps/Bluetooth
+
+     BT 应用层代码，及BT profile（如：A2dp,gatt,hdp,hfp,hid,map,opp,pan,pbap ...） 上层代码
+
+     packages/apps/Bluetooth/jni
+
+3.  frameworks/base/core/java/android/bluetooth
+
+     framework 层相关 java 代码与aidl
+
+4.  external/bluetooth/bluedroid      
+
+     BRCM和Google共同开发的官方蓝牙协议栈
+
+5.  linux/kernel/drivers/bluetooth
+
+6.  linux/kernel/net/bluetooth
+二、Bluetooth 常用类及相关profile
+
+A2dp: Advanced Audio Distribution Profile 蓝牙音频传输模型协定
+
+ 蓝牙立体声，和蓝牙耳机听歌有关那些，另还有个AVRCP--(Audio/Video Remote Control Profile)音频/视频远程控制配置文件，是用来听歌时暂停，上下歌曲选择的
+
+GATT: Generic Attribute Profile   通用属性配置文件
+
+       GATT是基于ATT Protocol的，ATT针对BLE设备做了专门的优化，具体就是在传输过程中使用尽量少的数据。每个属性都有一个唯一的UUID，属性将以characteristics and services的形式传输
+
+       https://developer.bluetooth.org/TechnologyOverview/Pages/GATT.aspx
+
+HDP：Bluetooth Health Device Profile 蓝牙关于医疗方面的应用 
+
+HFP : Hands-free Profile  和电话相关，蓝牙接听、挂断电话 
+
+HID : Human Interface Device  
+
+         定义了蓝牙在人机接口设备中的协议、特征和使用规程。典型的应用包括蓝牙鼠标、蓝牙键盘、蓝牙游戏手柄等。该协议改编自USB HID Protocol
+
+MAP : Message Access Profile
+
+OPP : Object Push Profile
+
+PAN : Personal Area Network Profile
+
+描述了两个或更多个 Bluetooth 设备如何构成一个即时网络，和网络有关的还有串行端口功能(SPP)，拨号网络功能(DUN)
+
+PBAP: Phonebook Access Profile 电话号码簿访问协议
+
+ 

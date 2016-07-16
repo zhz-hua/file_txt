@@ -1,0 +1,22 @@
+#!/bin/bash
+#android 开机动画
+#bootanimation.zip文件打包前的结构为：
+#1. desc.txt             动画属性描述文件  
+#2. part0/                          第一阶段动画图片的目录（动画是由一帧帧图片组成的）  
+#3. part1/                          第二阶段动画图片的目录  
+#desc.txt文件的格式为：
+#480 800 15  
+#p 1 0 part0  
+#p 0 10 part1  
+#480 800是指显示的分辨率 宽 高 15是一秒的帧数
+#p后面的数字是指播放次数 0为循环 后面那位数字 一般为阶段切换间隔时间 
+#part1是播放一遍的
+#part2是循环播放直到开机
+#mogrify -format png *.jpg
+#adb push  bootanimation.zip /system/media/
+zip -r -X -Z store bootanimation part*/*.png desc.txt
+
+
+ 
+ 
+

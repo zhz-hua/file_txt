@@ -1,0 +1,194 @@
+有时候，我们需要在自己的程序（进程）中启动另一个程序（进程）来帮助我们完成一些工作，那么我们需要怎么才能在自己的进程中启动其他的进程呢？在Linux中提供了不少的方法来实现这一点，下面就来介绍一个这些方法及它们之间的区别。
+
+一、system函数调用
+system函数的原型为：
+[cpp] view plain copy
+print?
+
+    #include <stdlib.h>  
+    int system (const char *string);  
+
+它的作用是，运行以字符串参数的形式传递给它的命令并等待该命令的完成。命令的执行情况就如同在shell中执行命令：sh -c string。如果无法启动shell来运行这个命令，system函数返回错误代码127；如果是其他错误，则返回-1。否则，system函数将返回该命令的退出码。
+
+注意：system函数调用用一个shell来启动想要执行的程序，所以可以把这个程序放到后台中执行，这里system函数调用会立即返回。
+
+一 ：先先下面的例子，源文件为new_ps_system.c，代码如下：
+    #include <stdlib.h>  
+    #include <stdio.h>  
+      
+	    int main()  
+	    {  
+		printf("Running ps with system\n");  
+		//ps进程结束后才返回，才能继续执行下面的代码  
+		system("ps au");// 1  
+		printf("ps Done\n");  
+		exit(0);  
+	    }  
+
+		该程序调用ps程序打印所有与本用户有关的进程，最后才打印ps Done。运行结果如下：
+
+
+如果把注释1的语句改为：system("ps au &");则system函数立即返回，不用等待ps进程结束即可执行下面的代码。所以你看到的输出，ps Done可能并不是出现在最后一行，而是在中间。
+
+一般来说，使用system函数不是启动其他进程的理想手段，因为它必须用一个shell来启动需要的程序，即在启动程序之前需要先启动一个shell，而且对shell的环境的依赖也很大，因此使用system函数的效率不高。
+
+二、替换进程映像——使用exec系列函数
+	exec系列函数由一组相关的函数组成，它们在进程的启动方式和程序参数的表达方式上各有不同。但是exec系列函数都有一个共同的工作方式，就是把当前进程替换为一个新进程，也就是说你可以使用exec函数将程序的执行从一个程序切换到另一个程序，在新的程序启动后，原来的程序就不再执行了,新进程由path或file参数指定。exec函数比system函数更有效。
+
+	exec系列函数的类型为：
+	    #include <unistd.h>  
+	      
+	    char **environ;  
+	      
+	    int execl (const char *path, const char *arg0, ..., (char*)0);  
+	    int execlp(const char *file, const char *arg0, ..., (char*)0);  
+	    int execle(const char *path, const char *arg0, ..., (char*)0, char *const envp[]);  
+	      
+	    int execv (const char *path, char *const argv[]);  
+	    int execvp(cosnt char *file, char *const argv[]);  
+	    int execve(const char *path, char *const argv[], char *const envp[]);  
+
+	这类函数可以分为两大类，execl、execlp和execle的参数是可变的，以一个空指针结束，而execv、execvp和execve的第二个参数是一个字符串数组，在调用新进程时，argv作为新进程的main函数的参数。而envp可作为新进程的环境变量,传递给新的进程，从而变量它可用的环境变量。
+
+	承接上一个例子，如果想用exec系统函数来启动ps进程，则这6个不同的函数的调用语句为：
+	注：arg0为程序的名字，所以在这个例子中全为ps。
+	    char *const ps_envp[] = {"PATH=/bin:usr/bin", "TERM=console", 0};  
+	    char *const ps_argv[] = {"ps", "au", 0};  
+	      
+	    execl("/bin/ps", "ps", "au", 0);  
+	    execlp("ps", "ps", "au", 0);  
+	    execle("/bin/ps", "ps", "au", 0, ps_envp);  
+	      
+	    execv("/bin/ps", ps_argv);  
+	    execvp("ps", ps_argv);  
+	    execve("/bin/ps", ps_argv, ps_envp);  
+
+	下面我给出一个完整的例子，源文件名为new_ps_exec.c，代码如下：
+
+	    #include <unistd.h>  
+	    #include <stdio.h>  
+	    #include <stdlib.h>  
+	      
+	    int main()  
+	    {  
+		printf("Running ps with execlp\n");  
+		execlp("ps", "ps", "au", (char*)0);  
+		printf("ps Done");  
+		exit(0);  
+	    }  
+
+	运行结果如下：
+
+	细心的话，可以发现，最后的ps Done并没有输出，这是偶然吗？并不是，因为我们并没有再一次返回到程序new_ps_exec.exe上，因为调用execlp函数时，new_ps_exec.exe进程被替换为ps进程，当ps进程结束后，整个程序就结束了，并没有回到原来的new_ps_exec.exe进程上，原本的进程new_ps_exec.exe不会再执行，所以语句printf("ps Done");根本没有机会执行。
+
+	注意，一般情况下，exec函数是不会返回的，除非发生错误返回-1，由exec启动的新进程继承了原进程的许多特性，在原进程中已打开的文件描述符在新进程中仍将保持打开，但任何在原进程中已打开的目录流都将在新进程中被关闭。
+
+三、复制进程映像——fork函数
+	1、fork函数的应用
+	exec调用用新的进程替换当前执行的进程，而我们也可以用fork来复制一个新的进程，新的进程几乎与原进程一模一样，执行的代码也完全相同，但新进程有自己的数据空间、环境和文件描述符。
+
+	fork函数的原型为：
+
+	    #include <sys/type.h>  
+	    #include <unistd.h>  
+	      
+	    pid_t fork();  
+
+	注：在父进程中，fork返回的是新的子进程的PID，子进程中的fork返回的是0，我们可以通过这一点来判断父进程和子进程，如果fork调用失败，它返回-1.
+
+	继承上面的例子，下面我给出一个调用ps的例子，源文件名为new_ps_fork.c，代码如下：
+
+
+	    #include <unistd.h>  
+	    #include <sys/types.h>  
+	    #include <stdio.h>  
+	    #include <stdlib.h>  
+	      
+	    int main()  
+	    {  
+		pid_t pid = fork();  
+		switch(pid)  
+		{  
+		case -1:  
+		    perror("fork failed");  
+		    exit(1);  
+		    break;  
+		case 0:  
+		    //这是在子进程中，调用execlp切换为ps进程  
+		    printf("\n");  
+		    execlp("ps", "ps", "au", 0);  
+		    break;  
+		default:  
+		    //这是在父进程中，输出相关提示信息  
+		    printf("Parent, ps Done\n");  
+		    break;  
+		}  
+		exit(0);  
+	    }  
+
+	输出结果为：
+
+
+	我们可以看到，之前在第二点中没有出现的ps Done是打印出来了，但是顺序却有点不对，这是因为，父进程先于子程序执行，所以先输出了Parent， ps Done，那有没有办法让它在子进程输出完之后再输出，当然有，就是用wait和waitpid函数。注意，一般情况下，父进程与子进程的生命周期是没有关系的，即便父进程退出了，子进程仍然可以正常运行。
+
+2、等待一个进程
+
+    #include <sys/types.h>  
+    #include <sys/wait.h>  
+      
+    pid_t wait(int *stat_loc);  
+    pid_t waitpid(pid_t pid, int *stat_loc, int options);  
+
+wait用于在父进程中调用，让父进程暂停执行等待子进程的结束，返回子进程的PID，如果stat_loc不是空指针，状态信息将被写入stat_loc指向的位置。
+
+waitpid等待进程id为pid的子进程的结束（pid为-1，将返回任一子进程的信息），stat_loc参数的作用与wait函数相同，options用于改变waitpid的行为，其中有一个很重要的选项WNOHANG，它的作用是防止waippid调用者的执行挂起。如果子进程没有结束或意外终止，它返回0，否则返回子进程的pid。
+
+改变后的程序保存为源文件new_ps_fork2.c，代码如下：
+[cpp] view plain copy
+print?
+
+    #include <unistd.h>  
+    #include <sys/types.h>  
+    #include <stdio.h>  
+    #include <stdlib.h>  
+      
+    int main()  
+    {  
+        pid_t pid = fork();  
+        int stat = 0;  
+        switch(pid)  
+        {  
+        case -1:  
+            perror("fork failed");  
+            exit(1);  
+            break;  
+        case 0:  
+            //这是在子进程中，调用execlp切换为ps进程  
+            printf("\n");  
+            execlp("ps", "ps", "au", 0);  
+            break;  
+        default:  
+            //这是在父进程中，等待子进程结束并输出相关提示信息  
+            pid = wait(&stat);  
+            printf("Child has finished: PID = %d\n", pid);  
+            //检查子进程的退出状态  
+            if(WIFEXITED(stat))  
+                printf("Child exited with code %d\n", WEXITSTATUS(stat));  
+            else  
+                printf("Child terminated abnormally\n");  
+            printf("Parent, ps Done\n");  
+            break;  
+        }  
+        exit(0);  
+    }  
+
+输出为：
+
+可以看到这次的输出终于正常了，Parent的输出也在子进程的输出之后。
+
+总结——三种启动新进程方法的比较
+首先是最简单的system函数，它需要启动新的shell并在新的shell是执行子进程，所以对环境的依赖较大，而且效率也不高。同时system函数要等待子进程的返回才能执行下面的语句。
+
+exec系统函数是用新的进程来替换原先的进程，效率较高，但是它不会返回到原先的进程，也就是说在exec函数后面的所以代码都不会被执行，除非exec调用失败。然而exec启动的新进程继承了原进程的许多特性，在原进程中已打开的文件描述符在新进程中仍将保持打开，但需要注意，任何在原进程中已打开的目录流都将在新进程中被关闭。
+
+fork则是用当前的进程来复制出一个新的进程，新进程与原进程一模一样，执行的代码也完全相同，但新进程有自己的数据空间、环境变量和文件描述符，我们通常根据fork函数的返回值来确定当前的进程是子进程还是父进程，即它并不像exec那样并不返回，而是返回一个pid_t的值用于判断，我们还可以继续执行fork后面的代码。感觉用fork与exec系列函数就能创建很多需的进程。

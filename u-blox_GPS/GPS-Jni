@@ -1,0 +1,71 @@
+err = hw_get_module(GPS_HARDWARE_MODULE_ID, (hw_module_t const**)&module);
+if (err == 0) {
+    hw_device_t* device;
+    err = module->methods->open(module, GPS_HARDWARE_MODULE_ID, &device);
+    if (err == 0) {
+        gps_device_t* gps_device = (gps_device_t *)device;
+        sGpsInterface = gps_device->get_gps_interface(gps_device);
+    }
+}
+static JNINativeMethod sMethods[] = {
+    {"class_init_native", "()V", (void *)android_location_GpsLocationProvider_class_init_native},
+    {"native_is_supported", "()Z", (void*)android_location_GpsLocationProvider_is_supported},
+    {"native_init", "()Z", (void*)android_location_GpsLocationProvider_init},
+    {"native_cleanup", "()V", (void*)android_location_GpsLocationProvider_cleanup},
+    {"native_set_position_mode", "(IIIII)Z", (void*)android_location_GpsLocationProvider_set_position_mode},
+    {"native_start", "()Z", (void*)android_location_GpsLocationProvider_start},
+    {"native_stop", "()Z", (void*)android_location_GpsLocationProvider_stop},
+    {"native_delete_aiding_data", "(I)V", (void*)android_location_GpsLocationProvider_delete_aiding_data},
+    {"native_read_sv_status", "([I[F[F[F[I)I", (void*)android_location_GpsLocationProvider_read_sv_status},
+    {"native_read_nmea", "([BI)I", (void*)android_location_GpsLocationProvider_read_nmea},
+    {"native_inject_time", "(JJI)V", (void*)android_location_GpsLocationProvider_inject_time},
+    {"native_inject_location", "(DDF)V", (void*)android_location_GpsLocationProvider_inject_location},
+    {"native_supports_xtra", "()Z", (void*)android_location_GpsLocationProvider_supports_xtra},
+    {"native_inject_xtra_data", "([BI)V", (void*)android_location_GpsLocationProvider_inject_xtra_data},
+    {"native_agps_data_conn_open", "(Ljava/lang/String;)V", (void*)android_location_GpsLocationProvider_agps_data_conn_open},
+    {"native_agps_data_conn_closed", "()V", (void*)android_location_GpsLocationProvider_agps_data_conn_closed},
+    {"native_agps_data_conn_failed", "()V", (void*)android_location_GpsLocationProvider_agps_data_conn_failed},
+    {"native_agps_set_id","(ILjava/lang/String;)V",(void*)android_location_GpsLocationProvider_agps_set_id},
+    {"native_agps_set_ref_location_cellid","(IIIII)V",(void*)android_location_GpsLocationProvider_agps_set_reference_location_cellid},
+    {"native_set_agps_server", "(ILjava/lang/String;I)V", (void*)android_location_GpsLocationProvider_set_agps_server},
+    {"native_send_ni_response", "(II)V", (void*)android_location_GpsLocationProvider_send_ni_response},
+    {"native_agps_ni_message", "([BI)V", (void *)android_location_GpsLocationProvider_agps_send_ni_message},
+    {"native_get_internal_state", "()Ljava/lang/String;", (void*)android_location_GpsLocationProvider_get_internal_state},
+    {"native_update_network_state", "(ZIZZLjava/lang/String;Ljava/lang/String;)V", (void*)android_location_GpsLocationProvider_update_network_state },
+    {"native_is_geofence_supported", "()Z", (void*) android_location_GpsLocationProvider_is_geofence_supported},
+    {"native_add_geofence", "(IDDDIIII)Z", (void *)android_location_GpsLocationProvider_add_geofence},
+    {"native_remove_geofence", "(I)Z", (void *)android_location_GpsLocationProvider_remove_geofence},
+    {"native_pause_geofence", "(I)Z", (void *)android_location_GpsLocationProvider_pause_geofence},
+    {"native_resume_geofence", "(II)Z", (void *)android_location_GpsLocationProvider_resume_geofence}
+};
+class_init_native 		类的初始化方法
+native_is_supported 		是否支持 Gps 模块
+native_init 			初始化方法
+native_cleanup 			负责清理工作
+native_set_position_mode 	设置位置模式
+native_start 			开始导航
+native_stop 			停止导航
+native_delete_aiding_data 	删除辅助信息
+native_read_sv_status 		读取 SV 状态
+native_read_nmea 		读取 nmea 信息
+native_inject_location 		注入位置信息
+native_inject_time 		注入时间信息
+native_supports_xtra 		是否支持 XTRA
+native_inject_xtra_data 	注入 XTRA 数据
+native_get_internal_state 	获取内部状态
+native_agps_data_conn_open 	打开 AGps 数据连接
+native_agps_data_conn_closed 	关闭 AGps 数据连接
+native_agps_data_conn_failed 	AGps 数据连接失败
+native_agps_ni_message 		AGps NI（Network-initiated）消息
+native_set_agps_server 		设置 AGPS 服务器
+native_send_ni_response 	发送 NI 响应
+native_agps_set_ref_location_cellid 	AGPS 设置引用位置
+native_agps_set_id 		AGPS 设置 id
+native_update_network_state 	更新网络状态
+
+int register_android_server_location_GpsLocationProvider(JNIEnv* env)
+{
+    return jniRegisterNativeMethods(env, "com/android/server/location/GpsLocationProvider", sMethods, NELEM(sMethods));
+}
+
+

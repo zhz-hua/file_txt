@@ -1,0 +1,327 @@
+http://blog.csdn.net/xnwyd/article/details/7198728 HAL-----JAVA
+http://www.ibm.com/developerworks/cn/opensource/os-cn-android-location/  GPS的讲解
+http://blog.csdn.net/lqxandroid2012/article/details/49076703
+
+satellite value（SV）做是卫星信息的简称
+
+GPS的P码最多分配32个给卫星作为卫星的识别号码，另外5个留作他用，建议看看GPS的P码原理
+
+GPS模块有个要求，就是必须用它的 callback 来创建线程（gps_state_thread）， 而将在的位置信息回调只能在此线程中
+（gps_state_thread）,这是因为framework 需要一个vm可见的java thread,  gps_state_thread 会被attach 到 vm 上了，从来回调 java 层函数
+state->thread = callbacks->create_thread_cb( "gps_state_thread", gps_state_thread, state );
+所以当QEMU_CHANNEL_NAME的位置信息过来不能直接调用callback, 而要在 gps_state_thread 发送到 android framework
+因此 gps.default.so 调用 epoll 函数监听文件fd, 实现在 gps_state_thread 中把 location 信息送回
+
+GPGSV：可见卫星信息
+GPGLL：地理定位信息
+GPRMC：推荐最小定位信息
+GPVTG：地面速度信息
+GPGGA：GPS定位信息
+GPGSA：当前卫星信息
+
+GPS数据都是一条条的ASCII字符串。每个字符串的开头都是以’$’开头。以累加和校验（’*’后的两个字符）以及回车换行结束。
+’$’后跟的标识表示当前的字符的种类。如GPRMC,GPGGA等。每种字符串内所包含的数据以’,’分开。每种字符串所包含数据的格式，
+$GP RMC，最常用的字符串，包含了时间，日期，定位，和航速航向信息。一般应用，只要有这些信息就可以了。
+$GP GGA，包含了定位信息相关的详细信息。如定位时用到的星数，定位的方式，天线的海拔高度，精度等等。
+$GP GSA，包含了定位，水平，海拔三种DOP信息，即精度信息，包含了定位所用到的卫星ID。
+$GP GSV，包含了GPS模块可以看到的星数（注意，只是能看到的星数，实际使用到的星数在GPGGA中）。
+
+$GP VTG，包含了更详细的航向航速的信息，航向信息分为以真北为参考和以地磁北为参考（真北和地磁北是不一样的，两者相差几度），航速信息则给出了以节为单位和以公里/时为单位的数据。
+
+推荐定位信息(RMC)   要得到方向，可以通过几次location（经度和纬度）的变化来得到平均
+$GPRMC,<1>,<2>,<3>,<4>,<5>,<6>,<7>,<8>,<9>,<10>,<11>,<12>*hh
+<1> UTC时间，hhmmss(时分秒)格式
+<2> 定位状态，A=有效定位，V=无效定位
+<3> 纬度ddmm.mmmm(度分)格式(前面的0也将被传输)
+<4> 纬度半球N(北半球)或S(南半球)
+<5> 经度dddmm.mmmm(度分)格式(前面的0也将被传输)
+<6> 经度半球E(东经)或W(西经)
+<7> 地面速率(000.0~999.9节，前面的0也将被传输)
+<8> 地面航向(000.0~359.9度，以真北为参考基准，前面的0也将被传输)
+<9> UTC日期，ddmmyy(日月年)格式
+<10> 磁偏角(000.0~180.0度，前面的0也将被传输)
+<11> 磁偏角方向，E(东)或W(西)
+<12> 模式指示(仅NMEA0183 3.00版本输出，A=自主定位，D=差分，E=估算，N=数据无效)
+
+GPS固定数据输出语句($GPGGA)
+$GPGGA,<1>,<2>,<3>,<4>,<5>,<6>,<7>,<8>,<9>,M,<10>,M,<11>,<12>*xx<CR><LF>
+<1>  UTC时间，格式为hhmmss.sss；
+<2>  纬度，格式为ddmm.mmmm(第一位是零也将传送)；
+<3>  纬度半球，N或S(北纬或南纬)
+<4>  经度，格式为dddmm.mmmm(第一位零也将传送)；
+<5>  经度半球，E或W(东经或西经)
+<6>  定位质量指示，0=定位无效，1=定位有效；
+<7>  使用卫星数量，从00到12(第一个零也将传送)
+<8>  水平精确度，0.5到99.9
+<9>  天线离海平面的高度，-9999.9到9999.9米M    指单位米
+<10> 大地水准面高度，-9999.9到9999.9米M    指单位米
+<11> 差分GPS数据期限(RTCM SC-104)，最后设立RTCM传送的秒数量
+<12>  差分参考基站标号，从0000到1023(首位0也将传送)。
+*    语句结束标志符
+xx    从$开始到*之间的所有ASCII码的异或校验和
+<CR>   回车
+<LF>   换行
+
+.当前卫星信息($GSA)　
+$GPGSA,<1>,<2>,<3>,<3>,,,,,<3>,<3>,<3>,<4>,<5>,<6>,<7>
+<1>模式 ：M = 手动， A = 自动。
+<2>定位型式 1 = 未定位， 2 = 二维定位， 3 = 三维定位。
+<3>PRN 数字：01 至 32 表天空使用中的卫星编号，最多可接收12颗卫星信息。
+<4> PDOP位置精度因子(0.5~99.9)
+<5> HDOP水平精度因子(0.5~99.9)
+<6> VDOP垂直精度因子(0.5~99.9)
+<7> Checksum.(检查位).
+
+2：$GPGSV，2，1，08，06，33，240，45，10，36，074，47，16，21，078，44，17，36，313，42*78 　　
+$GPGSV，(1)，(2)，(3)，(4)，(5)，(6)，(7)，…(4),(5)，(6)，(7)*hh(CR)(LF) 　　 　　
+(1)总的GSV语句电文数；2;
+(2)当前GSV语句号:1; 　　
+(3)可视卫星总数:08; 　　
+(4)卫星号:06; 　　
+(5)仰角(00～90度):33度; 　　
+(6)方位角(000～359度):240度; 　　
+(7)信噪比(00～99dB):45dB(后面依次为第10，16，17号卫星的信息); 　　
+*总和校验域；　　
+hh 总和校验数:78; 　　
+(CR)(LF)回车，换行。 　　
+注：每条语句最多包括四颗卫星的信息，每颗卫星的信息有四个数据项，即：　　
+(4)－卫星号，(5)－仰角，(6)－方位角，(7)－信噪比。 　
+
+e.地面速度信息(VTG)
+$GPVTG,<1>,T,<2>,M,<3>,N,<4>,K,<5>*hh
+<1> 以真北为参考基准的地面航向(000~359度，前面的0也将被传输)
+<2> 以磁北为参考基准的地面航向(000~359度，前面的0也将被传输)
+<3> 地面速率(000.0~999.9节，前面的0也将被传输)
+<4> 地面速率(0000.0~1851.8公里/小时，前面的0也将被传输)
+<5> 模式指示(仅NMEA0183 3.00版本输出，A=自主定位，D=差分，E=估算，N=数据无效)
+
+$GPGLL  
+例：$GPGLL,4250.5589,S,14718.5084,E,092204.999,A*2D  
+字段0：$GPGLL，语句ID，表明该语句为Geographic Position（GLL）地理定位信息  
+字段1：纬度ddmm.mmmm，度分格式（前导位数不足则补0） 
+字段2：纬度N（北纬）或S（南纬）  
+字段3：经度dddmm.mmmm，度分格式（前导位数不足则补0）  
+字段4：经度E（东经）或W（西经）  
+字段5：UTC时间，hhmmss.sss格式  
+字段6：状态，A=定位，V=未定位  字段7：校验值 
+
+
+1. android.location 包中的类和接口
+名称	类型	说明
+GpsStatus.Listener	接口 	用于接受 GPS 状态改变时的通知。
+GpsStatus.NmeaListener	接口 	用于接受 Nmea（为海用电子设备制定的格式）信息。
+LocationListener	接口 	用于接受位置信息改变时的通知。
+Address	类 	用于描述地址信息。
+Criteria	类 	用于选择 LocationProvider。
+Geocoder	类 	用于处理地理位置的编码。
+GpsSatellite	类 	用于描述 GPS 卫星的状态。
+GpsStatus	类 	用于描述 GPS 设备的状态。
+Location	类 	用于描述地理位置信息，包括经度，纬度，海拔，方向等信息。
+LocationManager	类 	用于获取和调用定位服务。
+LocationProvider	类 	描述 Location Provider 的超类，Location Provider 是真正用来获取位置信息的组件。Location Provider 的实现主要可以分为两类：一种依赖于 GPS 设备，另一种依赖网络状态。 
+
+
+reportLocation 	报告位置
+reportStatus 	报告状态
+reportSvStatus 	报告 SV 状态
+reportAGpsStatus 	报告 AGps 状态
+reportNmea 	报告 Nmea
+setEngineCapabilities 	设置引擎能力
+xtraDownloadRequest 	XTRA 下载请求
+reportNiNotification 	报告 NI 通知
+requestRefLocation 	请求引用位置
+requestSetID 	请求设置 id
+requestUtcTime 	请求 Utc 时间 
+
+
+GpsLocationProvider.java 中包含的重要的常量
+名称	值	说明
+GPS_POSITION_MODE_STANDALONE 	0 	GPS 单独运行模式
+GPS_POSITION_MODE_MS_BASED 	1 	AGPS MS-Based 模式
+GPS_POSITION_MODE_MS_ASSISTED 	2 	AGPS MS-Assisted 模式
+GPS_POSITION_RECURRENCE_PERIODIC 	0 	以固定的间隔重复接受 GPS 调整
+GPS_POSITION_RECURRENCE_SINGLE 	1 	一次性接受 GPS 调整
+GPS_STATUS_NONE 	0 	GPS 状态未知
+GPS_STATUS_SESSION_BEGIN 	1 	开始导航
+GPS_STATUS_SESSION_END 	2 	导航结束
+GPS_STATUS_ENGINE_ON 	3 	GPS 引擎开始工作
+GPS_STATUS_ENGINE_OFF 	4 	GPS 引擎关闭
+GPS_REQUEST_AGPS_DATA_CONN 	1 	GPS 模块为 AGPS 请求数据连接
+GPS_RELEASE_AGPS_DATA_CONN 	2 	AGPS 数据连接关闭
+GPS_AGPS_DATA_CONNECTED 	3 	AGPS 数据连接开始
+GPS_AGPS_DATA_CONN_DONE 	4 	AGPS 数据连接完成
+GPS_AGPS_DATA_CONN_FAILED 	5 	AGPS 数据连接
+LOCATION_INVALID 	0 	无效位置
+LOCATION_HAS_LAT_LONG 	1 	位置信息中包含了经度和纬度信息
+LOCATION_HAS_ALTITUDE 	2 	位置信息中包含了海拔信息
+LOCATION_HAS_SPEED 	4 	位置信息中包含了速度信息
+LOCATION_HAS_BEARING 	8 	位置信息中包含了方位信息
+LOCATION_HAS_ACCURACY 	16 	位置信息中包含了准确度信息
+GPS_CAPABILITY_SCHEDULING 	0x0000001 	GPS 支持计划能力
+GPS_CAPABILITY_MSB 	0x0000002 	GPS 支持 MS-Based AGPS
+GPS_CAPABILITY_MSA 	0x0000004 	GPS 支持 MS-Assisted
+GPS_CAPABILITY_SINGLE_SHOT 	0x0000008 	GPS 支持 single-shot
+GPS_CAPABILITY_ON_DEMAND_TIME 	0x0000010 	GPS 支持 demand time injection 
+
+GpsLocationProvider 调用 JNI 层为上层提供服务。它使用了 Android 提供的 Looper 和 Handler 
+
+
+表 9. GpsLocationProvider 中包含的 native 方法
+名称	说明
+class_init_native 	类的初始化方法
+native_is_supported 	是否支持 Gps 模块
+native_init 	初始化方法
+native_cleanup 	负责清理工作
+native_set_position_mode 	设置位置模式
+native_start 	开始导航
+native_stop 	停止导航
+native_delete_aiding_data 	删除辅助信息
+native_read_sv_status 	读取 SV 状态
+native_read_nmea 	读取 nmea 信息
+native_inject_location 	注入位置信息
+native_inject_time 	注入时间信息
+native_supports_xtra 	是否支持 XTRA
+native_inject_xtra_data 	注入 XTRA 数据
+native_get_internal_state 	获取内部状态
+native_agps_data_conn_open 	打开 AGps 数据连接
+native_agps_data_conn_closed 	关闭 AGps 数据连接
+native_agps_data_conn_failed 	AGps 数据连接失败
+native_agps_ni_message 	AGps NI（Network-initiated）消息
+native_set_agps_server 	设置 AGPS 服务器
+native_send_ni_response 	发送 NI 响应
+native_agps_set_ref_location_cellid 	AGPS 设置引用位置
+native_agps_set_id 	AGPS 设置 id
+native_update_network_state 	更新网络状态 
+
+被 JNI 方法回调的方法
+
+GpsLocationProvider 中最后一类方法是被 JNI 方法回调的方法。在 JNI 的实现中，通过这些方法的回调来传递 JNI 层的执行结果。它们如表 10 所示：
+表 10. GpsLocationProvider 中被 JNI 回调的方法
+名称	说明
+reportLocation 	报告位置
+reportStatus 	报告状态
+reportSvStatus 	报告 SV 状态
+reportAGpsStatus 	报告 AGps 状态
+reportNmea 	报告 Nmea
+setEngineCapabilities 	设置引擎能力
+xtraDownloadRequest 	XTRA 下载请求
+reportNiNotification 	报告 NI 通知
+requestRefLocation 	请求引用位置
+requestSetID 	请求设置 id
+requestUtcTime 	请求 Utc 时间 
+
+定位服务实现中牵涉到的文件一览
+路径	说明
+frameworks/base/location/java/android 	包含提供给应用开发的 API
+frameworks/base/services/java/com/android/server 	包含 LocationManagerService.java
+frameworks/base/core/java/android/os 	包含 ServiceManager.java
+frameworks/base/core/java/android/app 	包含 ContextImpl.java
+system/core/rootdir 	包含 init.rc
+frameworks/base/services/java/com/android/server/location 	包含 LocationManagerService.java
+frameworks/base/services/jni 	包含 com_android_server_location_GpsLocationProvider.cpp
+hardware/libhardware/include/hardware 	包含了 HAL 层的接口
+hardware/qcom/gps 	包含了对于高通公司的 Gps 模块的实现 
+
+
+
+GPRMC数据详解：
+
+$GPRMC,<1>,<2>,<3>,<4>,<5>,<6>,<7>,<8>,<9>,<10>,<11>,<12>*hh
+
+<1> UTC时间，hhmmss(时分秒)格式
+
+<2> 定位状态，A=有效定位，V=无效定位
+
+<3> 纬度ddmm.mmmm(度分)格式(前面的0也将被传输)
+
+<4> 纬度半球N(北半球)或S(南半球)
+
+<5> 经度dddmm.mmmm(度分)格式(前面的0也将被传输)
+
+<6> 经度半球E(东经)或W(西经)
+
+<7> 地面速率(000.0~999.9节，前面的0也将被传输)
+
+<8> 地面航向(000.0~359.9度，以真北为参考基准，前面的0也将被传输)
+
+<9> UTC日期，ddmmyy(日月年)格式
+
+<10> 磁偏角(000.0~180.0度，前面的0也将被传输)
+
+<11> 磁偏角方向，E(东)或W(西)
+
+<12> 模式指示(仅NMEA0183 3.00版本输出，A=自主定位，D=差分，E=估算，N=数据无效)
+
+ 
+
+解析内容：
+
+1.     时间，这个是格林威治时间，是世界时间（UTC），我们需要把它转换成北京时间（BTC），BTC和UTC差了8个小时，要在这个时间基础上加8个小时。
+
+2.     定位状态，在接收到有效数据前，这个位是‘V’，后面的数据都为空，接到有效数据后，这个位是‘A’，后面才开始有数据。
+
+3.     纬度，我们需要把它转换成度分秒的格式，计算方法：
+
+如接收到的纬度是：4546.40891
+
+4546.40891 / 100  =  45.4640891   可以直接读出45度
+
+4546.40891–45 * 100 = 46.40891   可以直接读出46分
+
+46.40891–46 = 0.40891 * 60 = 24.5346  读出24秒
+
+所以纬度是：45度46分24秒。
+
+4.     南北纬，这个位有两种值‘N’（北纬）和‘S’（南纬）
+
+5.     经度的计算方法和纬度的计算方法一样
+
+6.     东西经，这个位有两种值‘E’（东经）和‘W’（西经）
+
+7.     速率，这个速率值是 海里/时，单位是节，要把它转换成千米/时，根据：1海里 = 1.85公里，把得到的速率乘以1.85。
+
+8.     航向，指的是偏离正北的角度
+
+9.     日期，这个日期是准确的，不需要转换
+
+
+GPGGA数据详解：
+
+$GPGGA,<1>,<2>,<3>,<4>,<5>,<6>,<7>,<8>,<9>,M,<10>,M,<11>,<12>*xx
+
+$GPGGA：起始引导符及语句格式说明(本句为GPS定位数据)；
+
+<1>  UTC时间，格式为hhmmss.sss；
+
+<2>  纬度，格式为ddmm.mmmm(第一位是零也将传送)；
+
+<3>  纬度半球，N或S(北纬或南纬)
+
+<4>  经度，格式为dddmm.mmmm(第一位零也将传送)；
+
+<5>  经度半球，E或W(东经或西经)
+
+<6>  定位质量指示，0=定位无效，1=定位有效；
+
+<7>  使用卫星数量，从00到12(第一个零也将传送)
+
+<8>  水平精确度，0.5到99.9
+
+<9>  天线离海平面的高度，-9999.9到9999.9米  M  指单位米
+
+<10> 大地水准面高度，-9999.9到9999.9米  M    指单位米
+
+<11> 差分GPS数据期限(RTCM SC-104)，最后设立RTCM传送的秒数量
+
+<12>  差分参考基站标号，从0000到1023(首位0也将传送)。
+
+ 
+
+解析内容：
+
+       7. 使用卫星数量，表示当前GPS所接收到的有效卫星数量（在u-center中显示为绿色的卫星）
+
+9．海拔高度，单位是米
+
+
+

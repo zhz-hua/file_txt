@@ -1,0 +1,68 @@
+在 shell 中，最常使用的 FD (file descriptor) 大概有三个, 分别是:
+
+0: Standard Input (STDIN)
+
+1: Standard Output (STDOUT)
+
+2: Standard Error Output (STDERR)
+
+在标准情况下, 这些FD分别跟如下设备关联:
+
+stdin(0): keyboard  键盘输入,并返回在前端
+
+stdout(1): monitor  正确返回值 输出到前端
+
+stderr(2): monitor 错误返回值 输出到前端
+
+举例说明吧:
+
+当前目录只有一个文件 a.txt.
+
+[root@redhat box]# ls
+
+a.txt
+
+[root@redhat box]# ls a.txt b.txt         
+
+ls: b.txt: No such file or directory     由于没有b.txt这个文件, 于是返回错误值, 这就是所谓的2输出
+
+a.txt     而这个就是所谓的1输出
+
+再接着看:
+
+[root@redhat box]# ls a.txt b.txt  1>file.out 2>file.err
+
+执行后,没有任何返回值. 原因是, 返回值都重定向到相应的文件中了,而不再前端显示
+
+[root@redhat box]# cat file.out
+
+a.txt
+
+[root@redhat box]# cat file.err
+
+ls: b.txt: No such file or directory
+
+
+
+默认 "1>" 通常可以省略成 ">".
+
+即可以把如上命令写成: ls a.txt b.txt  >file.out 2>file.err
+
+有了这些认识才能理解 "1>&2" 和 "2>&1".
+
+1>&2  把正确返回值 传递给 2输出通道 ，&2表示2输出通道
+
+如果此处错写成 1>2, 就表示把1输出重定向到文件2中.
+
+2>&1 把错误返回值 传递给1输出通道,，同样&1表示1输出通道.
+
+举个例子.
+
+[root@redhat box]# ls a.txt b.txt 1>file.out 2>&1
+
+[root@redhat box]# cat file.out
+
+ls: b.txt: No such file or directory
+
+a.txt
+

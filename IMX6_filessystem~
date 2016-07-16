@@ -1,0 +1,65 @@
+imx6-android-4-4-3/src/android/out/host/linux-x86/bin   		adb fastboot
+imx6-android-4-4-3/src/android/out/target/product/sabresd_6dq$		boot.img system.img recovery.img	
+/imx6-android-4-4-3/src/android/kernel_imx/arch/arm/boot/dts$ 		drivesTreeSources 	dts	
+imx6-android-4.4.3/android/device/fsl$ 					see android product
+
+修改软件版本和
+imx6-android-4.4.3/android/build$ vim buildspec.mk.default
+$ cd ~/myandroid
+$ cp build/buildspec.mk.default   buildspec.mk
+
+/fsl/imx6/imx6.mk
+add the package MODULE_NAME or PACKAGE_NAME to this list.
+Set ro.secure=1, and ro.debuggable=0. adb is disabled by default.
+
+/device/fsl/common/tools/fsl-sdcard-partition.sh		系统分区脚本
+
+
+
+i.MX 6Dual/6Quad  双 四
+i.MX 6Solo/6DualLite 单核双核
+i.MX 6SoloLite
+i.MX 6SoloX
+
+u-boot-imx6dl.imx 
+boot-imx6dl.img
+system.img
+recovery-imx6dl.img
+
+imx6-android-4.4.3/android/build/core$ vim Makefile				//read config file
+imx6-android-4.4.3/android/device/fsl/sabresd_6dq$ vim BoardConfig.mk		//config file
+TARGET_BOOTLOADER_CONFIG := imx6q:mx6qsabresdandroid_config imx6dl:mx6dlsabresdandroid_config
+TARGET_BOARD_DTS_CONFIG := imx6q:imx6q-sabresd.dtb imx6dl:imx6dl-sabresd.dtb imx6q-ldo:imx6q-sabresd-ldo.dtb
+
+u-boot
+zhz@zhz:~/imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/board/freescale/mx6sabresd$ ls
+Makefile  mx6sabresd.c  plugin.S
+修改内存参数
+zhz@zhz:~/imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/board/freescale/mx6sabresd$ 
+
+kernel
+内核修改串口管脚配置
+zhz@zhz:~/imx6-android-4.4.3/android/kernel_imx/arch/arm/boot/dts$ ls imx6dl-sabresd.dts
+imx6dl-sabresd.dts
+u-boot.imx=u-boot.bin+IVT header
+1:创建board配置文件
+修改Makefile中的文件名。打开imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/Makefile，将mx6qsabresd替换为mx6q_tqimx6q.c。
+2:board配置文件
+imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/include/configs$ vim mx6sabresd.h
+
+3:定制DDR配置。
+	imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/board/freescale/mx6sabresd/plugin.S
+	1)	定制board端子
+	zhz@zhz:~/imx6-android-4.4.3/android/bootable/bootloader/uboot-imx/board/freescale/mx6sabresd/mx6sabresd.c
+	S2)	D卡端子
+ 
+
+
+
+
+
+	
+
+
+
+

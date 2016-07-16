@@ -1,0 +1,23 @@
+vim out/target/product/m41s_6dl/system/build.prop 
+device/autolink/m41s_6dl/build_id.mk
+
+/data/local.prop logcat
+
+
+commit 91e5f4b36b848045aac6adff2df8a9b0c8e95698
+Author: chenhui <chenh@auto-link.com.cn>
+Date:   Mon Feb 22 14:44:20 2016 +0800
+
+    1、去掉ro.debuggable属性对/data/local.prop文件读取的限制
+    2、将log输出文件定位到/data/media/0/log目录下
+
+commit d4cca7ecef916f2a9241277edffb5acf15166b70
+Author: chenhui <chenh@auto-link.com.cn>
+Date:   Thu Feb 18 19:55:18 2016 +0800
+
+    1、添加log_kernel misc设备驱动。
+    2、将kernel日志输出到log_kernel设备驱动。
+    3、根据属性过滤Android log。
+    4、根据属性将日志输出到/data/log目录下。
+
+

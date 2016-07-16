@@ -1,0 +1,42 @@
+Understanding Looper
+Looper是用于给一个线程添加一个消息队列(MessageQueue)，并且循环等待，当有消息时会唤起线程来处理消息的一个工具，直到线程结束为止。通常情况下不会用到Looper，因为对于Activity，Service等系统组件，Frameworks已经为我们初始化好了线程(俗称的UI线程或主线程)，在其内含有一个Looper，和由Looper创建的消息队列，所以主线程会一直运行，处理用户事件，直到某些事件(BACK）退出。
+如果，我们需要新建一个线程，并且这个线程要能够循环处理其他线程发来的消息事件，或者需要长期与其他线程进行复杂的交互，这时就需要用到Looper来给线程建立消息队列。
+使用Looper也非常的简单，它的方法比较少，最主要的有四个:
+    public static prepare();
+    public static myLooper();
+    public static loop();
+    public void quit();
+使用方法如下：
+1. 在每个线程的run()方法中的最开始调用Looper.prepare()，这是为线程初始化消息队列。
+2. 之后调用Looper.myLooper()获取此Looper对象的引用。这不是必须的，但是如果你需要保存Looper对象的话，一定要在prepare()之后，否则调用在此对象上的方法不一定有效果，如looper.quit()就不会退出。
+3. 在run()方法中添加Handler来处理消息
+4. 添加Looper.loop()调用，这是让线程的消息队列开始运行，可以接收消息了。
+5. 在想要退出消息循环时，调用Looper.quit()注意，这个方法是要在对象上面调用，很明显，用对象的意思就是要退出具体哪个Looper。如果run()中无其他操作，线程也将终止运行。
+下面来看一个实例
+
+注意主线程 用 Looper类中的主线程创建方法prepareMainLooper()： Looper.prepareMainLooper();
+public static final void main(String[] args) {
+        // other codes...
+
+        // 创建主线程循环
+        Looper.prepareMainLooper();
+        if (sMainThreadHandler == null) {
+            sMainThreadHandler = new Handler();
+        }
+
+        ActivityThread thread = new ActivityThread();
+        thread.attach(false);
+
+        // other codes...
+
+        // 进入当前线程(此时是主线程)消息循环
+        Looper.loop();
+
+        // other codes...
+
+        thread.detach();
+        // other codes...
+}
+要完全彻底理解这个问题，需要准备以下4方面的知识：Process/Thread，Android Binder IPC，Handler/Looper/MessageQueue消息机制，Linux pipe/epoll机制。
+
+

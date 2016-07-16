@@ -1,0 +1,106 @@
+一 wif组建原理
+	一般架设无线网络的基本配备就是 无线网卡 及 一个AP（无线接入点）。有了AP，就像一般有线网络的Hub一般，无线工作站可以快速且轻易地与网络相连。
+	特别是对于宽带的使用，WiFi更显优势，有线宽带网络（ADSL、小区LAN等）到户后，连接到一个AP，然后在电脑中安装一块无线网卡即可上网。
+	普通的家庭有一个AP已经足够，甚至用户的邻里得到授权后，则无需增加端口，也能以共享的方式上网。
+二 =================== android WIFI 框架 =======================
+			Android wifi sysytem
+			 java应用层
+			 java Framework层
+			 JNI层
+			 适配器层
+			 wpa_supplicant程序
+			 kernel层
+三、 Android平台Wifi 编译前 基本代码 路径 及 文件名（根文件系统的源码下）
+	1、Wifi setting 部分（Java应用层）
+		位于packages/apps/Settings/src/com/android/settings/wifi/
+		WifiSettings.java&WifiEnabler.java
+
+	2、JAVA Framework部分
+		位于frameworks/base/services/java/com/android/server/wifi
+
+		WifiService.java
+		 &WifiWatchdogService.java
+		位于frameworks/base/wifi/java/android/net/wifi/
+
+		WifiManager.java&WifiMonitoer.java&WifiStateTracker.java
+		 &WifiNative.java
+	3.       Wifi的JNI部分
+
+		位于 frameworks/base/core/jni/android_net_wifi_WifiNative.cpp
+
+	4.       Wifi的HAL层代码(wpa_supplicant适配器层)
+
+		位于 hardware/libhardware_legary/wifi/wifi.c
+
+	5.       Wpa_supplicant程序的 源码部分（tools）
+			位于 external/wpa_supplicant_8/
+
+			external/wpa_supplicant/
+			生成库libwpa_client.so 和 守护进程wpa_supplicant
+	6.kernel （wifi 驱动*.ko）
+		位于 net/wireless     drivers/wlan_sd8688       arch/arm/mach-pxa/wlan_pm.c
+
+四、每一层 编译后 的所在位置
+
+Java应用层
+  -- Settings, Wifi Switcher等应用
+
+  --> /system/app/
+
+Java Framework层  
+
+    --> 
+
+        /system/framework/services.jar
+
+JNI层  
+
+  --> /system/framework/framework.jar
+
+wpa_supplicant 适配器层
+
+    --> /system/lib/libhardware_legacy.so
+
+wpa_supplicant 程序
+
+    --> /system/bin/wpa_supplicant
+
+        /system/lib/libwpa_client.so
+
+Kernel层
+  -- kernel network drivers  
+
+
+
+===================== android WIFI 框架 end ====================================
+
+Wifi 网卡状态
+
+1.    WIFI_STATE_DISABLED: WIFI网卡不可用
+
+2.    WIFI_STATE_DISABLING: WIFI正在关闭
+
+3.    WIFI_STATE_ENABLED:WIFI网卡可用
+
+4.    WIFI_STATE_ENABLING:WIFI网卡正在打开
+
+5.    WIFI_STATE_UNKNOWN:未知网卡状态
+
+
+Rootfs中 关于wpa_supplicant的配置
+
+1) /device/amlogic/f08refe1/BoardConfig.mk  //wpa_supplicant版本，driver
+	WPA_SUPPLICANT_VERSION := VER_0_6_X
+	BOARD_WPA_SUPPLICANT_DRIVER := WEXT
+2) root/init.rc   //wpa_supplicant service
+	setprop wifi.interface wlan0
+	service wpa_supplicant /system/bin/wpa_supplicant -Dwext -iwlan0 -d -c /data/misc/wifi/wpa_supplicant.conf
+    	socket wpa_wlan0 dgram 0666 wifi wifi
+3) /system/etc/wifi/wpa_supplicant.conf//config for wpa_supplicant service
+	update_config=1
+	ctrl_interface=wlan0
+	eapol_version=1
+	ap_scan=1
+	fast_reauth=1
+
+---------------------

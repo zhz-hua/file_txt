@@ -1,0 +1,31 @@
+ 1. 首先修改kernel的bootargs，在bootargs中添加以下内容：
+    
+
+    printk.time=y  initcall_debug
+
+ 我使用的bootargs修改后如下：
+    
+
+    setenv bootargs "root=/dev/mtdblock2 rootfstype=yaffs2 init=/init console=ttySAC2,115200printk.time=y initcall_debug"
+
+ 这样kernel在启动时，将会打印出每个模块的启动耗时：
+
+   printk.time=y 代表内核打印信息含有时间戳，如何您的内核没有配置：
+
+      Kernel hacking
+           --->Show timing information on printks
+
+    可以在bootargs 增加printk.time=y 内核参数，打印时间信息，如果配置了如上的选项，可以不增加printk.time=y参数。
+
+    printk.time=y 适用于不需要重新编译内核即可查看启动时间信息。
+
+    initcall_debug打印内核加载的各个模块信息，通过这个选项可以看到内核加载各个模块的顺序，内核加载了哪些模块，从信息中可以看到，如果您的内核系统没有必要使用某个模块，尽量不要加载进去，这样即可节约内核占用的存储空间，也可以加快内核的启动过程。
+
+
+   2. 使用kernel里的脚本协助分析启动时间
+    kernel中提供了一个“show_delta”的脚本，可以使用此脚本来协助我们分析kernel启动时每个模块的耗时情况。使用方法如下：
+ 
+
+    $kernel/scripts/show_delta log_file > boot_time_info
+
+

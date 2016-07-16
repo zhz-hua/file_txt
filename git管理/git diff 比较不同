@@ -1,0 +1,9 @@
+Git diff:查看working tree和index file之间的区别
+Git diff --cached:查看index file和commit之间的区别
+Git diff HEAD:查看working tree和commit之间的区别
+
+git diff --cached kernel_imx/drivers/video/console/fbcon.c  查看index file和commit之间的区别
+
+git diff --staged  device/fsl/imx6/sabresd_6dq.mk
+
+假如加入暂存区了，（就是git add之后），想查看可以用git diff --cached. 或者 git diff --staged这样就行了。

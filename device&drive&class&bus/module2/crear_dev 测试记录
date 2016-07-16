@@ -1,0 +1,35 @@
+./sys/devices/virtual/myledok    	class_create(THIS_MODULE,"myledok");  
+./sys/devices/virtual/myledok/myledok device_create(led_cls,NULL,dev_id,NULL,"myledok");      
+./sys/class/myledok           	 class_create(THIS_MODULE,"myledok");   
+./sys/class/myledok/myledok      device_create(led_cls,NULL,dev_id,NULL,"myledok");
+./dev/myledok      		 device_create(led_cls,NULL,dev_id,NULL,"myledok");              
+
+root@s50_6dl:/ # busybox find ./ -name myledok      244 myledok
+./sys/class/myledok		class_create(THIS_MODULE,"myledok");
+
+
+cat /proc/devices
+
+
+root@s50_6dl:/ # busybox find ./ -name led  class_create(THIS_MODULE,"led");
+./sys/devices/virtual/led
+./sys/class/led
+
+root@s50_6dl:/ # busybox find ./ -name myledok    device_create(led_cls,NULL,dev_id,NULL,"myledok");                              
+./sys/devices/virtual/led/myledok
+./sys/class/led/myledok
+./dev/myledok
+
+
+
+device_create实在对用的class 和 dev下创建设备节点
+
+在驱动用加入对udev的支持主要做的就是：在驱动初始化的代码里调用class_create(...)为该设备创建一个class，再为每个设备调用device_create(...)( 在2.6较早的内核中用class_device_create)创建对应的设备。
+内核中定义的struct class结构体，顾名思义，一个struct class结构体类型变量对应一个类，内核同时提供了class_create(…)函数，可以用它来创建一个类，
+这个类存放于sysfs下面，一旦创建好了这个类，再调用 device_create(…)函数来在/dev目录下创建相应的设备节点。
+这样，加载模块的时候，用户空间中的udev会自动响应 device_create(…)函数，去/sysfs下寻找对应的类从而创建设备节点。
+struct class和class_create(…) 以及device_create(…)都包含在在/include/linux/device.h中，使用的时候一定要包含这个头文件，否则编译器会报错。
+struct class定义在头文件include/linux/device.h中
+class_create(…)在/drivers/base/class.c中实现
+device_create(…)函数在/drivers/base/core.c中实现
+class_destroy(...),device_destroy(...)也在/drivers/base/core.c中实现调用过程类似如下：

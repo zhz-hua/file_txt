@@ -1,0 +1,67 @@
+调试：
+$(error hjdshfksd)
+$(warning kjfhksdjhfkjsd)
+一个简单的 Makefile 描述规则组成:
+TARGET... : PREREQUISITES...
+COMMAND
+...
+...
+当在 shell 提示符下输入“make”命令以后。make 读取当前目录下的 Makefile 文
+件,并将 Makefile 文件中的第一个目标作为其执行的“终极目标”
+
+
+include”指示符告诉 make 暂停读取当前的 Makefile,而转去读取“include”
+指定的一个或者多个文件,完成以后再继续当前 Makefile 的读取。Makefile 中指示符
+“include”书写在独立的一行,其形式如下:
+include FILENAMES...
+FILENAMES 是 shell 所支持的文件名(可以使用通配符)通常我们在 Makefile 中可使用“-include”来代替“include”,来忽略由于包含文件不存在或者无法创建时的错误提示(
+“-”的意思是告诉 make,忽略此操作的错误。make 继续执行)
+
+
+make 在执行时,首先读取的是环境变量“MAKEFILES”所指定的文件列表,
+之后才是工作目录下的 makefile 文件,
+“include”所指定的文件是在 make 发
+现此关键字的时、暂停正在读取的文件而转去读取“include”所指定的文件
+
+
+执行 make 时,如果没有使用“-f(--file)”选项指定一个文件,make 程序将读
+取缺省的文件。和使用“-f(--file)”选项不同,make 无法确定工作目录下是否存在
+缺省名称的 makefile 文件
+
+make –f mfile –n foo  
+
+IMMEDIATE = DEFERRED
+IMMEDIATE ?= DEFERRED
+IMMEDIATE := IMMEDIATE
+IMMEDIATE += DEFERRED or IMMEDIATE
+define IMMEDIATE
+DEFERRED
+Endef
+
+1. 依次读取变量“MAKEFILES”定义的 makefile 文件列表
+2. 读取工作目录下的 makefile 文件(根据命名的查找顺序“GNUmakefile”“makefile”“Makefile”,首先找到那个就读取那个)
+3. 依次读取工作目录 makefile 文件中使用指示符“include”包含的文件
+4. 查找重建所有已读取的 makefile 文件的规则(如果存在一个目标是当前读取的某一个 makefile 文件,则执行此规则重建此 makefile 文件,完成以后从第一步开始重新执行)
+5. 初始化变量值并展开那些需要立即展开的变量和函数并根据预设条件确定执行分支
+6. 根据“终极目标”以及其他目标的依赖关系建立依赖关系链表
+7. 执行除“终极目标”以外的所有的目标的规则(规则中如果依赖文件中任一个文件的时间戳比目标文件新,则使用规则所定义的命令重建目标文件)
+8. 执行“终极目标”所在的规则
+
+
+
+
+
+envsetup.mk:171:PRODUCT_OUT := $(TARGET_PRODUCT_OUT_ROOT)/$(TARGET_DEVICE)
+TARGET_PRODUCT_OUT_ROOT := $(TARGET_OUT_ROOT)/product 
+TARGET_OUT_ROOT := $(TARGET_OUT_ROOT_$(TARGET_BUILD_TYPE))
+TARGET_OUT_ROOT_release := $(OUT_DIR)/target
+OUT_DIR := $(TOPDIR)out
+TOPDIR :=
+BUILD_SYSTEM := $(TOPDIR)build/core
+
+/build/core
+envsetup.mk
+main.mk
+Makefile
+
+

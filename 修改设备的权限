@@ -1,0 +1,57 @@
+一：include $(all-subdir-makefiles) 者表示“当前目录下没有需要编译的文件，请向子目录深入”，是告诉编译器继续向目录深处递归的一种规定写法。
+
+二：自动copy./device/fsl/imx6/imx6.mk文件里面
+		RODUCT_COPY_FILES := \   
+			+   hardware/u-blox/gps/gps.conf:system/etc/gps.conf \   //注意：就是把hardware/u-blox/gps/gps.conf拷贝到system/etc/gps.conf
+			+   hardware/u-blox/gps/u-blox.conf:system/etc/u-blox.conf 
+三：修改权限
+  （1）如驱动挂载在/dev下只用所有者权限，这样程序还是没有办法访问这个设备。这个时候要修改一个文件，主目录/system/core/rootdir目录下的ueventd.rc文件，这个文件可以设置驱动挂载到/dev目录下时的权限和所有者。
+	 如添加这句
+	/dev/demuxer               0666   root       root
+  （2）在device/fsl/imx6/etc/ueventd.freescale.rc    修改权限   这是板卡系列的
+	  如添加这句                                
+                               
+	/dev/ttymxc4              0666   system     system                                    
+	/dev/ttymxc3              0666   system     gps                                       
+	/dev/ttymxc2              0666   system     system                                    
+	/dev/ttymxc1              0666   system     system   
+  (3)  /system/core/rootdir/init.rc //这？？
+
+  (4)  device/fsl/imx6/etc$/init.rc  
+	setprop ro.kernel.android.gps /dev/athrnmea
+	setprop persist.gps.oacmode @f
+	symlink /dev/ttymxc1 /dev/gpsdevice
+	write /sys/class/gpio/export 44
+	write /sys/class/gpio/gpio44/direction "out"
+	write /sys/class/gpio/gpio44/value 1
+
+	setprop [key] [value]	设置名为<key>的系统属性的值为<value>
+	设置指定key的属性值 
+	SystemProperties.set()/SystemProperties.get()；通过这两个接口可以对系统的属性进行读取/设置，
+	可以通过命令adb shell ：
+　　　　getprop查看设备上所有属性状态值。
+	如果属性名称以“ro.”开头，那么这个属性被视为只读属性。一旦设置，属性值不能改变。
+　　	如果属性名称以“persist.”开头，当设置这个属性时，其值也将写入/data/property。
+　　	如果属性名称以“net.”开头，当设置这个属性时，“net.change”属性将会自动设置，以加入到最后修改的属性名。
+
+	
+	symlink <target> <path>
+	创建一个从<path>指向<target>的符号链接，
+
+	write <path> <string> [ <string> ]*
+	打开路径为<path>的文件并将一个多这多个字符串写入到该文件中
+					     
+	/default.prop
+	/system/build.prop
+	/system/default.prop
+	/data/local.prop
+	int property_get(const char *key, char *value, const char *default_value);
+	int property_set(const char *key, const char *value);
+
+
+	if (property_get("ro.kernel.android.gps",prop,"")
+
+
+ 
+
+

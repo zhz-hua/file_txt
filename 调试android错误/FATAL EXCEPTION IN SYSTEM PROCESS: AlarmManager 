@@ -1,0 +1,14 @@
+
+
+这个问题出现的原因是没有rtc驱动。
+
+在kernel中
+
+device driver-> real time clock
+
+android alarm driver
+
+android alarm device
+
+s3c soc rtc
+

@@ -1,0 +1,49 @@
+D/dalvikvm(  244): GC_CONCURRENT freed 2392K, 37% free 10507K/16452K, paused 3ms+5ms, total 50ms
+
+
+一般Java虚拟机要求支持verbosegc选项，输出详细的垃圾收集调试信息。dalvik虚拟机很安静的接受verbosegc选项，然后什么都不做。dalvik虚拟机使用自己的一套LOG机制来输出调试信息。 
+
+如果在Linux下运行adb logcat命令，可以看到如下的输出： 
+D/dalvikvm(  745): GC_CONCURRENT 
+freed 199K, 53% free 3023K/6343K,external 0K/0K, paused 2ms+2ms 
+
+其中D/dalvikvm表示由dalvikvm输出的调试信息，括号后的数字代表dalvikvm所在进程的pid。 
+
+GC_CONCURRENT表示触发垃圾收集的原因，有以下几种：
+
+
+
+        GC_MALLOC, 内存分配失败时触发
+
+ 
+
+        GC_CONCURRENT，当分配的对象大小超过384K时触发
+
+ 
+
+        GC_EXPLICIT，对垃圾收集的显式调用(System.gc)
+
+ 
+
+    GC_EXTERNAL_ALLOC，外部内存分配失败时触发
+
+
+freed 199K表示本次垃圾收集释放了199K的内存， 
+
+53% free 3023K/6343K，其中6343K表示当前内存总量，3023K表示已用内存，53%表示可用内存占总内存的比例。 
+
+external 0K/0K，表示可用外部内存/外部内存总量 
+paused 
+2ms+2ms，第一个时间值表示markrootset的时间，第二个时间值表示第二次mark的时间。如果触发原因不是GC_CONCURRENT，这一行为单个时间值，表示垃圾收集的耗时时间。 
+
+2. 分析 
+
+（1）虽然dalvikvm提供了一些调试信息，但是还缺乏一些关键信息，比如说mark和sweep的时间， 
+
+分配内存失败时是因为分配多大的内存失败，还有对于SoftReference,WeakReference和PhantomReference的处理，每次垃圾收集处理了多少个这些引用等。 
+
+（2）目前dalvik所有线程共享一个内存堆，这样在分配内存时必须在线程之间互斥，可以考虑为每个内存分配一个线程局部存储堆，一些小的内存分配可以直接从该堆中分配而无须互斥锁。 
+
+（3）dalvik虚拟机中引入了concurrentmark，但是对于多核CPU，可以实现parrelmark，即可以使用多个线程同时运行mark阶段。 
+
+这些都是目前dalvik虚拟机内存管理可以做出的改进。

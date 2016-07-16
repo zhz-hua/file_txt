@@ -1,0 +1,125 @@
+前不久，因为工作需要更换了液晶屏，分辨率由原来的800*480换成了800*600。
+
+当然首先更改了液晶屏驱动，修改了相应的参数。把开机Logo也进行了更换，分辨率修改为800*600。
+
+但是开机时，Logo无法显示，提示以下错误。
+
+[plain] view plaincopy
+
+    fbcon_init: disable boot-logo (boot-logo bigger than screen).  
+
+
+真是扯淡啊，查看源代码，该提示在drvers/video/console/Fbcon.c下，在此截取这段代码。
+
+[csharp] view plaincopy
+
+    static void fbcon_prepare_logo(struct vc_data *vc, struct fb_info *info,  
+                       int cols, int rows, int new_cols, int new_rows)  
+    {  
+        /* Need to make room for the logo */  
+        struct fbcon_ops *ops = info->fbcon_par;  
+        int cnt, erase = vc->vc_video_erase_char, step;  
+        unsigned short *save = NULL, *r, *q;  
+        int logo_height;  
+      
+        if (info->flags & FBINFO_MODULE) {  
+            logo_shown = FBCON_LOGO_DONTSHOW;  
+            return;  
+        }  
+      
+        /* 
+         * remove underline attribute from erase character 
+         * if black and white framebuffer. 
+         */  
+        if (fb_get_color_depth(&info->var, &info->fix) == 1)  
+            erase &= ~0x400;  
+        logo_height = fb_prepare_logo(info, ops->rotate);  
+              
+        //logo_lines在此赋值  
+        logo_lines = DIV_ROUND_UP(logo_height, vc->vc_font.height);  
+        q = (unsigned short *) (vc->vc_origin +  
+                    vc->vc_size_row * rows);  
+        step = logo_lines * cols;  
+        for (r = q - logo_lines * cols; r < q; r++)  
+            if (scr_readw(r) != vc->vc_video_erase_char)  
+                break;  
+        if (r != q && new_rows >= rows + logo_lines) {  
+            save = kmalloc(logo_lines * new_cols * 2, GFP_KERNEL);  
+            if (save) {  
+                int i = cols < new_cols ? cols : new_cols;  
+                scr_memsetw(save, erase, logo_lines * new_cols * 2);  
+                r = q - step;  
+                for (cnt = 0; cnt < logo_lines; cnt++, r += i)  
+                    scr_memcpyw(save + cnt * new_cols, r, 2 * i);  
+                r = q;  
+            }  
+        }  
+        if (r == q) {  
+            /* We can scroll screen down */  
+            r = q - step - cols;  
+            for (cnt = rows - logo_lines; cnt > 0; cnt--) {  
+                scr_memcpyw(r + step, r, vc->vc_size_row);  
+                r -= cols;  
+            }  
+            if (!save) {  
+                int lines;  
+                if (vc->vc_y + logo_lines >= rows)  
+                    lines = rows - vc->vc_y - 1;  
+                else  
+                    lines = logo_lines;  
+                vc->vc_y += lines;  
+                vc->vc_pos += lines * vc->vc_size_row;  
+            }  
+        }  
+        scr_memsetw((unsigned short *) vc->vc_origin,  
+                erase,  
+                vc->vc_size_row * logo_lines);  
+      
+        if (CON_IS_VISIBLE(vc) && vc->vc_mode == KD_TEXT) {  
+            fbcon_clear_margins(vc, 0);  
+            update_screen(vc);  
+        }  
+      
+        if (save) {  
+            q = (unsigned short *) (vc->vc_origin +  
+                        vc->vc_size_row *  
+                        rows);  
+            scr_memcpyw(q, save, logo_lines * new_cols * 2);  
+            vc->vc_y += logo_lines;  
+            vc->vc_pos += logo_lines * vc->vc_size_row;  
+            kfree(save);  
+        }  
+      
+        //错误提示在此  
+        if (logo_lines > vc->vc_bottom) {  
+            logo_shown = FBCON_LOGO_CANSHOW;  
+            printk(KERN_INFO  
+                   "fbcon_init: disable boot-logo (boot-logo bigger than screen).\n");  
+        } else if (logo_shown != FBCON_LOGO_DONTSHOW) {  
+            logo_shown = FBCON_LOGO_DRAW;  
+            vc->vc_top = logo_lines;  
+        }  
+    }  
+
+
+可以发现是因为logo_lines > vc->vc_bottom引起的。
+
+其中logo_lines = DIV_ROUND_UP(logo_height, vc->vc_font.height);    //（DIV_ROUND_UP是向上取整的意思）
+
+而vc->vc_bottom代码读下来为vc->vc_bottom  = info->var.yres/ vc->vc_font.height;
+
+其关键就是vc->vc_font.height了，Linux下vc->vc_font.height默认为16，所以当液晶屏和Logo的分辨率都为800*600时，600/16无法整除，故取整logo_lines =38;  vc->vc_bottom = 37;提示错误无法显示。
+
+只要把logo的改小一下，改为592，则logo_lines = 592/16=37；  vc->vc_bottom = 600/16=37；就可以正常显示了。
+
+//~End
+
+if ((logo_lines-1) > vc->vc_bottom) {
+	logo_shown = FBCON_LOGO_CANSHOW;
+	printk(KERN_INFO
+                "fbcon_init: disable boot-logo (boot-logo bigger than screen).\n");                                                                                       
+     } else if (logo_shown != FBCON_LOGO_DONTSHOW) {
+         logo_shown = FBCON_LOGO_DRAW;
+         vc->vc_top = logo_lines-1;
+}
+

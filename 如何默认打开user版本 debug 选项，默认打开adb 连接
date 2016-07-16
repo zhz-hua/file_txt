@@ -1,0 +1,50 @@
+
+系统属性中有一类是永久保存在文件中的：
+bionic/libc/include/sys/_system_properties.h
+#define PROP_SERVICE_NAME "property_service"
+#define PROP_PATH_RAMDISK_DEFAULT  "/default.prop"
+#define PROP_PATH_SYSTEM_BUILD     "/system/build.prop"
+#define PROP_PATH_SYSTEM_DEFAULT   "/system/default.prop"
+#define PROP_PATH_LOCAL_OVERRIDE   "/data/local.prop
+
+而这个persist.service.adb.enable 默认是放在在default.prop 中,在编译的时候在
+build/core/main.mk 中确认,
+
+enable_target_debugging := true 
+	 ifeq (true,$(strip $(enable_target_debugging)))                                                                                                                           
+		  # Target is more debuggable and adbd is on by default                                                                                                                   
+		  ADDITIONAL_DEFAULT_PROPERTIES += ro.debuggable=1                                                                                                                        
+		  # Include the debugging/testing OTA keys in this build.                                                                                                                 
+		  INCLUDE_TEST_OTA_KEYS := true                                                                                                                                           
+	else # !enable_target_debugging                                                                                                                                           
+		  # Target is less debuggable and adbd is off by default                                                                                                                  
+		  ADDITIONAL_DEFAULT_PROPERTIES += ro.debuggable=0                                                                                                                        
+	endif # !enable_target_debugging  
+
+您需要将: ADDITIONAL_DEFAULT_PROPERTIES += 
+ro.debuggable=0
+persist.service.adb.enable=0  改成
+
+ADDITIONAL_DEFAULT_PROPERTIES 
++= ro.debuggable=1 persist.service.adb.enable=1
+
+2. 在/imx6-android-4.4.3/android/frameworks/base/services/java/com/android/server/usb/UsbDeviceManager.java
+因为adb 的控制,统一使用了persist.sys.usb.config 来控制,于是对
+应的设置点也改到了/imx6-android-4.4.3/android/frameworks/base/services/java/com/android/server/usb/UsbDeviceManager.java 中,您也可以
+看到类似的代码如:
+public UsbHandler(Looper looper) {                                                                                                                                
+		super(looper);
+		try {
+		    // persist.sys.usb.config should never be unset.  But if it is, set it to "adb"                                                                           
+		    // so we have a chance of debugging what happened.                                                                                                        
+		    mDefaultFunctions = SystemProperties.get("persist.sys.usb.config", "adb");                                                                                
+		
+		    // Check if USB mode needs to be overridden depending on OEM specific bootmode.                                                                           
+		    mDefaultFunctions = processOemUsbOverride(mDefaultFunctions);
+		    
+		    // sanity check the sys.usb.config system property                                                                                                        
+		    // this may be necessary if we crashed while switching USB configurations                                                                                 
+		    String config = SystemProperties.get("sys.usb.config", "none");                                                                                           
+		    if (!config.equals(mDefaultFunctions)) 
+}
+

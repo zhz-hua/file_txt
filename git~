@@ -1,0 +1,168 @@
+1 git config
+	git config –global user.name “Your Name”
+	git config –global user.email “you@example.com”
+	我照例执行:
+	[root@wupengchong ~]# git config –global user.name “rocrocket”
+	[root@wupengchong ~]# git config –global user.email “wupengchong@gmail.com”
+
+
+2 git init
+
+3 git commit -a -m “ ”
+
+4 git remote -v
+
+5 git remote add origin git@192.168.2.249:root/imx6-android-4.4.3.git
+
+6 git push -u origin master
+
+7 got clone git@192.168.2.249:root/imx6-android-4.43.git
+
+进入gitlab
+http://192.168.2.249:8012/
+
+git status
+git diff
+git log
+
+
+    HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset --hard commit_id。
+
+    穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。
+
+    要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。
+
+
+git log 
+git status
+git branck
+git checkout 
+git commit	-am "描述信息"
+git add 
+git commit  -m "提交的描述信息"
+	如果我们这里不用-m参数的话，git将调到一个文本编译器（通常是vim）来让你输入提交的描述信息
+	可能一天下来，你对工作树中的许多文档都进行了更新（文档添加、修改、删除），但是我忘记了它们的名字，此时若将所做的全部更新添加到索引中，比较轻省的做法就是：
+git commit -a -m "提交的描述信息"
+git commit 命令的-a 选项可只将所有被修改或者已删除的且已经被git管理的文档提交倒仓库中。如果只是修改或者删除了已被Git 管理的文档，是没必要使用git add 命令的。
+git add .	命令除了能够判断出当前目录（包括其子目录）所有被修改或者已删除的文档，还能判断用户所添加的新文档，并将其信息追加到索引中。
+git commit --amend 对于已经修改提交过的注释，如果需要修改，可以借助 git commit --amend 来进行。
+
+
+git diff readme.txt
+git diff master
+
+git reset –hard：彻底回退到某个版本，本地的源码也会变为上一个版本的内容　　　　
+#回退所有内容到上一个版本　　　　
+git　　reset　　HEAD^　　　　　　
+#回退a.py这个文件的版本到上一个版本　　　　　　
+git　　reset　　HEAD^　　a.py　　　　　　
+#向前回退到第3个版本　　　　　　
+git　　reset　　–soft　　HEAD~3　
+
+上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100
+
+git reset --hard (版本ID）
+git reset --hard 3628164
+git reflog用来记录你的每一次命令
+
+git reset --hard commit_id
+git reset --soft 
+
+
+git 删除 错误 提交的 commit
+方法: 
+        根据–soft –mixed –hard，会对working tree和index和HEAD进行重置:
+    git reset --mixed：此为默认方式，不带任何参数的git reset，即时这种方式，它回退到某个版本，只保留源码，回退commit和index信息
+    git reset --soft：回退到某个版本，只回退了commit的信息，不会恢复到index file一级。如果还要提交，直接commit即可
+    git reset  --hard：彻底回退到某个版本，本地的源码也会变为上一个版本的内容，此命令 慎用！
+
+
+    HEAD 最近一个提交
+    HEAD^ 上一次提交
+
+    HEAD^ ^ 上一次的 上一次的提交（倒数第三次）
+
+    HEAD^^^ 倒数 第四次的 提交
+----------------------
+
+    HEAD~0 最近一个提交
+    HEAD~1 上一次提交
+
+    HEAD^2 上一次的 上一次的提交（倒数第三次）
+
+    HEAD^3 倒数 第四次的 提交
+
+Git Reset
+
+有时候，你可能想要撤销 Git 操作。通常，git reset 就是你需要的命令。但是，使用 git reset 可能会非常复杂，取决于你的撤销操作。如果本文没有提到你需要的，查看 git reset 官方文档。
+
+假设，你正在进行一个项目，想要取消所有的改变，返回到最近一次的提交，命令如下：
+
+$ git reset --hard HEAD
+
+–hard flag 将指定提交（上例中，HEAD）中的任意内容放入工作目录和缓存区内。因为 HEAD 是最近一次提交，所以我们没有做任何改变。运行 git status，会看到提示没有需要提交的。
+
+还有其它一些 git reset 使用的 flag。假设你想要回滚你的项目到多个提交之前，但是想要保存没有提交的改变，尝试下面的：
+
+$ git reset --soft 3ce072c72d948abfa
+
+当然，替换为你自己需要的 hash。–soft flag 将保存你的改变在工作目录和缓存区。换句话来说，最新的提交将会是你选择的提交。
+
+还有很多情况，你可以使用 git reset。如果你认为需要这个名利概念的功能，查看文档。
+Git Checkout
+
+我们之前就提到过 git checkout 命令：用于切换分支。但是还有更多的特性。比如使用 -b flag 同一时间，建立并切换到新分支：
+
+$ git checkout -b newBranchName
+ Switched to a new branch ‘newBranchName’
+
+git checkout 也可以进行回滚撤销工作。git reset 回滚整个提交，而 git checkout 可以回滚单个文件。回滚在缓存区内的文件：
+
+$ git checkout -- file.ext
+
+如果需要回滚提交中的文件，替换指定提交的指针，如下所示：
+
+$ git checkout HEAD file.ext
+$ git checkout master~2 file.exe
+
+Git Diff
+
+另外一个很有用的 Git 命令是 git diff。使用这个命令找出两个文件，提交或分支之间的改变。假设你想看自从上一次提交后工作目录都有什么改变，可以执行如下命令：
+
+$ git diff
+
+如果只是想看一个文件的改变，添加文件名作为参数：
+
+$ git diff index.html
+
+如果想要比较最新提交和缓存区内的文件，使用 –cached flag。
+
+$ git diff --cached
+$ git diff --cached index.html
+
+比较工作目录和一个提交，使用想要比较的提交的指针，代替上例中的 –cached flag。
+
+$ git diff be96dbeab1
+$ git diff HEAD^2 index.html
+
+也可以使用 git diff 比较分支。将两个分支名作为参数，两个分支名中间为两个 “.”：
+
+$ git diff master..otherBranch
+
+这样 Git 将会 diff 两个分支的最新提交。如果需要 diff otherBranch 分支和 master 主分支，在分支名间加入三个 “.”。当然，使用你的分支名。
+
+$ git diff master...otherBranch
+
+又到了小结时间。
+
+场景1：当你改乱了工作区某个文件的内容，想直接丢弃工作区的修改时，用命令git checkout -- file。
+
+场景2：当你不但改乱了工作区某个文件的内容，还添加到了暂存区时，想丢弃修改，分两步，第一步用命令git reset HEAD file，就回到了场景1，第二步按场景1操作。
+
+场景3：已经提交了不合适的修改到版本库时，想要撤销本次提交，参考版本回退一节，不过前提是没有推送到远程
+
+
+
+
+
+

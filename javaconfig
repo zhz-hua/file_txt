@@ -1,0 +1,33 @@
+sudo apt-get install openjdk-7-jdk
+
+java -version
+1:sudo update-alternatives --config java
+	zhz@zhz:~$ sudo update-alternatives --config java
+	There are 2 choices for the alternative java (providing /usr/bin/java).
+
+	  Selection    Path                                            Priority   Status
+	------------------------------------------------------------
+	  0            /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java   1051      auto mode
+	* 1            /opt/jdk1.6.0_45/bin/java                        1         manual mode
+	  2            /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java   1051      manual mode
+drwxr-xr-x 1 1011 zhz   4096 Dec  1 15:21 wifi/
+-rw-r--r-- 1 1011 zhz  17984 Dec  1 15:21 WiredAccessoryManager.java
+
+	Press enter to keep the current choice[*], 
+
+
+2:sudo update-alternatives --config javac
+	zhz@zhz:~$ sudo update-alternatives --config javac
+	[sudo] password for zhz: 
+	There are 2 choices for the alternative javac (providing /usr/bin/javac).
+
+	  Selection    Path                                         Priority   Status
+	------------------------------------------------------------
+	  0            /usr/lib/jvm/java-7-openjdk-amd64/bin/javac   1051      auto mode
+	* 1            /opt/jdk1.6.0_45/bin/javac                    1         manual mode
+	  2            /usr/lib/jvm/java-7-openjdk-amd64/bin/javac   1051      manual mode
+
+	Press enter to keep the current choice[*], 
+
+java -version
+

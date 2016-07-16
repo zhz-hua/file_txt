@@ -1,0 +1,80 @@
+u 盘会当成 usb storage 在 Settings Storage 里面显示
+内核需支持 usb host，需支持 FUSE 文件系统，在 FS 选项里面配置即可（CONFIG_FUSE_FS=y）
+Android 的配置
+配置 init.<board>.rc
+./out/target/product/sabresd_6dq/root/init.freescale.rc
+
+init.freescale.rc
+	    mkdir /storage/udisk0 0000 system system  
+	    mkdir /mnt/media_rw/udisk0 0700 media_rw media_rw
+
+
+	# See storage config details at http://source.android.com/tech/storage/
+	mkdir /mnt/shell/emulated 0700 shell shell
+	mkdir /storage/emulated 0555 root root
+
+	device/fsl/sabresd_6dq/init.rc
+
+	export EXTERNAL_STORAGE /storage/emulated/legacy
+	export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
+	export EMULATED_STORAGE_TARGET /storage/emulated
+
+	# Support legacy paths
+	symlink /storage/emulated/legacy /sdcard
+	symlink /storage/emulated/legacy /mnt/sdcard
+	symlink /storage/emulated/legacy /storage/sdcard0
+	symlink /mnt/shell/emulated/0 /storage/emulated/legacy
+
+
+配置 fstab.<board>
+android/device$ vim ./fsl/sabresd_6dq/fstab.freescale
+
+# Android fstab file.                                                                                                                                                                                    
+#<src>                                                  <mnt_point>         <type>    <mnt_flags and options>                       <fs_mgr_flags>
+# The filesystem that contains the filesystem checker binary (typically /system) cannot
+# specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
+
+/devices/soc0/soc.1/2100000.aips-bus/2198000.usdhc/mmc_host /mnt/media_rw/extsd vfat defaults voldmanaged=extsd:auto
+/devices/soc0/soc.1/2100000.aips-bus/2184000.usb/ci_hdrc.0  /mnt/media_rw/udisk vfat defaults voldmanaged=udisk:auto
+/dev/block/mmcblk3p5    /system      ext4    ro                                                                               wait
+/dev/block/mmcblk3p4    /data        ext4    nosuid,nodev,nodiratime,noatime,nomblk_io_submit,noauto_da_alloc,errors=panic    wait,encryptable=footer
+/dev/block/mmcblk3p6    /cache       ext4    nosuid,nodev,nomblk_io_submit                                                    wait
+/dev/block/mmcblk3p7    /device      ext4    ro,nosuid,nodev                                                                  wait
+/dev/block/mmcblk3p1    /boot        emmc    defaults                                                                         defaults
+/dev/block/mmcblk3p2    /recovery    emmc    defaults                                                                         defaults
+/dev/block/mmcblk3p8    /misc        emmc    defaults                                                                         defaults
+
+配置 overlay
+	overlay/frameworks/base/core/res/res/xml/storage_list.xml
+
+	<StorageList xmlns:android="http://schemas.android.com/apk/res/android">
+	    <storage android:storageDescription="@string/storage_internal"
+		     android:primary="true"
+		     android:emulated="true"                                                                                                                                                                     
+		     android:mtpReserve="100" />
+	    <storage android:mountPoint="/storage/extsd"
+		     android:storageDescription="@string/storage_sd_card"
+		     android:primary="false"
+		     android:removable="true" />
+	    <storage android:mountPoint="/storage/udisk"
+		     android:storageDescription="@string/storage_usb"
+		     android:primary="false"
+		     android:removable="true" />
+	</StorageList>
+
+在 Android 4.4 中， Vold 会解析 vold.<hardware> 文件
+    property_get("ro.hardware", propbuf, "");  
+     snprintf(fstab_filename, sizeof(fstab_filename), FSTAB_PREFIX"%s", propbuf);  
+      
+     fstab = fs_mgr_read_fstab(fstab_filename);  
+     if (!fstab) {  
+         SLOGE("failed to open %s\n", fstab_filename);  
+         return -1;  
+     }  
+
+define FSTAB_PREFIX "/fstab."  所以，配置的 fatab 文件必须放在根目录， Vold 是 android 的后台进程，将会一直监听 fatab 里面标记为 voldmanaged 的项目
+如果没有标记，则略过。没有标记的项目。可以交给 init 的 mount 命令处理，但是不会监听，所以你可以将recovery 和 cache 目录这样只需启动是挂载的目录项放在 fatab
+里面交给 init 的 mount 命令处理，例如三星 device//fsl/sabresd_6dq/fstab.freescale
+
+grabserial -v -d "/dev/ttyUSB0" -b 115200 -w 8 -p N -s 1 -e 30 -t -m "Starting kernel.*"  
+

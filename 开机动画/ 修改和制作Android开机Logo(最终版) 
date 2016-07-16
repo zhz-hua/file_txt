@@ -1,0 +1,106 @@
+以下在Telechips tcc8900上，用Android 2.3的源码编译通过
+
+1.bootloader图片修改
+     bootable\bootloader\lk\platform\tcc_shared\include\lcd\logo.h替换就行了
+
+     logo.h的制作：准备一张图片，然后用Img2Lcd工具把图片转成C语言数组
+
+注意：在使用Img2Lcd工具转换的图片最左边会有一条白边，把数组中前8个数值删除就不会有这样的情况。
+
+2.kernel图片（linux logo）原来是没有的，需要先在menuconfig中加入配置Device Driver---Graphic support---Bootup Logo中选中224 color
+然后把自己的LOGO（png-8格式）转换成ppm格式，替换这个文件，同时删除logo_linux_clut224.c logo_linux_clut224.o文件，重新编译。（/drivers/video/logo/logo_linux_clut224.ppm 是默认的启动LOGO图片格式为ppm）
+
+ppm图片的生成：
+# pngtopnm logo_linux_clut224.png > logo_linux_clut224.pnm
+# pnmquant 224 logo_linux_clut224.pnm > logo_linux_clut224.pnm（如果执行出错，可以省略）
+# pnmtoplainpnm logo_linux_clut224.pnm > logo_linux_clut224.ppm
+
+注意：使用pngtopnm ，pnmquant ，pnmtoplainpnm 工具前要先安装，在虚拟机下sudo apt-get install netpbm 这三个工具会安装好。
+
+设置图片居中显示:
+修改drivers/video/fbmem.c
+/*modified by creatory*/
+// image.dx=0;
+// image.dy=y;
+ image.dx=(info->var.xres/2)-(logo->width/2);
+ image.dy=(info->var.yres/2)-(logo->height/2);
+在drivers/video/console/fbcon.c文件中的
+logo_height=fb_prepare_logo(info,ops->rotate);
+下面加入
+logo_height += (info->var.yres/2)-(logo_height/2);
+
+3.device\telechips\common\initlogo800x480.rle替换，同时删除out\target\product\tcc8900\ramdisk.img,ramdisk-recovery.img,再重新编译。
+
+这张图片是telechips加入的logo图片，制作和修改方法如下：
+
+1）. 制作当前屏幕像素的图片(模拟器默认为320*480)
+ 使用PS制作一张800*480的图片，保存时选“保存为 Web 所用格式”，然后在弹开的窗口上，“预设”项选择“PNG-24”，保存为android_logo.png(
+
+注：好像只支持png-24，其他格式生成的rle文件显示不正常，有兴趣大家可以再验证一下。
+
+2). 将图片转换为raw格式
+ 使用linux下的ImageMagick自带的convert命令，进行raw格式转换，命令为：
+  convert -depth 8 android_logo.png rgb:android_logo.raw
+
+ 注：ubuntu 10.04 默认已经安装ImgageMagick工具，如果当前系统没有安装，可以执行下面的命令安装：
+  sudo apt-get install imagemagick
+
+3. 将raw格式转化为rle文件
+ 需要用到android编译后的rgb2565工具，在android/out/host/linux-x86/bin目录下(android为当前源码所在目录)，转换命令如下：
+ rgb2565 -rle < android_logo.raw > initlogo.rle
+
+到目前为止，启动需要显示的图像已经做好了，就是initlogo.rle，注意文件名必须是这个，如果想改文件名，需要修改
+
+android/system/core/init/init.h中的宏：
+ #define INIT_IMAGE_FILE "/initlogo.rle"
+
+============================================================================================
+
+下面需要将initlogo.rle加入的android文件系统中
+以下的4，5，6，7，需要先进行如下设置，把initlogo.rle放入device\telechips\common\,删除ramdisk.img之类的相关的文件重新make即可。
+
+4). 找到ramdisk.img文件(android/out/target/product/generic/ramdisk.img)，将文件名改为ramdisk.img.gz，然后使用下面的命令解压：
+ gunzip ramdisk.img.gz
+ 解压后得到ramdisk.img，可能有人要问，怎么文件名又改回去了？其实不然，使用file ramdisk.img查看一下就知道了：
+ 解压前：ramdisk.img: gzip compressed data, from Unix
+ 解压后：ramdisk.img: ASCII cpio archive (SVR4 with no CRC)
+ 跑题了，还是说正事儿。
+
+5). 使用cpio提取文件：
+ 新建一个temp目录：
+ mkdir temp
+ cd temp
+ cpio -i -F ../ramdisk.img
+
+6). 导出文件列表：
+ cpio -i -t -F ../ramdisk.img > list      
+
+ 注：list是一个文本文件，里面存储了ramdisk.img的文件结构，我们需要在这个文件中加入initlogo.rle这一行，修改后的文件如下：
+ data
+
+ default.prop
+
+ dev
+
+ init
+
+ init.goldfish.rc
+
+ init.rc
+
+ initlogo.rle
+
+ proc
+
+ sbin
+
+ sbin/adbd
+
+ sys
+
+ system
+7). 生成ramdisk.img
+ cpio -o -H newc -O ramdisk.img < list
+
+ 注：根据list文件的描述,生成ramdisk.img文件
+8). 用ramdisk.img覆盖sdk目录下的ramdisk.img(android-sdk-windows/platforms/android-2.1/images/ramdisk.img)，最好先备份一下。

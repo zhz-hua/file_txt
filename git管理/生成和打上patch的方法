@@ -1,0 +1,117 @@
+假如，有这样的 目录层次 x/xx/xxx/xxx/ttt.c
+
+而 我的 当前位置 是在 x/下 ，执行git diff> test.patch
+
+在test.patch补丁文件里的路径信息是这样的：
+
+- - - a/xx/xxx/xxx   
+
++++b/xx/xxx/xxx   
+
+如果 应用 test.patch 的时候的 位置 是在 x/ 下，
+
+那么 执行 patch -p1 < test.patch
+
+--------------------------------------
+
+git diff> test.patch，这是产生patch的方式。
+
+注意，使用git diff产生的patch都应该在执行
+patch 命令时,指定-p1，当 位置是 【在哪里制作的patch，就在哪里 执行】
+
+或者直接使用git apply test.patch 打补丁,执行 这个 命令的位置 也是<在哪里制作的patch，就在哪里
+ 执行此命令>。
+
+git apply <m41s_rev01_file_path>
+在团队开发的过程中，经常需要生成patch，或者打上别人提供的patch，那么一般情况是如何操作的呢。
+
+首先生成patch需要有两个工程，一个修改前的A工程，一个修改后的B工程。
+
+使用linux命令diff就可以生成patch了。格式如下：
+	
+diff -Naur path/to/A_Project  path/to/B_Project > Project.patch
+
+   -N 选项确保补丁文件将正确地处理已经创建或删除文件的情况。
+
+   -a 将所有文件都当作文本文件处理。
+
+   -u 输出每个修改前后的3行，也可以用-u5等指定输出更多上下文。
+
+   -r 递归。设置后diff会将两个不同版本源代码目录中的所有对应文件全部都进行一次比较，包括子目录文件。
+
+生成patch以后，在修改前A工程根目录下使用patch命令打上patch。	
+$ cd path/to/A_Project
+$ patch -p1 < Project.patch
+
+    -p Num 忽略几层文件夹
+
+为了解释 -p 参数，需要看看如下patch文件片段：
+
+--- old/modules/pcitable       Mon Sep 27 11:03:56 1999                                          +++ new/modules/pcitable       Tue Dec 19 20:05:41 2000
+
+如果使用参数 -p0，那就表示从当前目录找一个叫做old的文件夹，再在它下面寻找 modules/pcitable 文件来执行patch操作。
+而如果使用参数 -p1，那就表示忽略第一层目录（即不管old），从当前目录寻找 modules 的文件夹，再在它下面找pcitable。
+
+如果要取消补丁做出的更改，恢复旧版本，在A工程的根目录下执行以下命令，A工程就会恢复成没有打patch的样子：
+
+$ patch -RE -p0 < Project.patch
+
+
+由Git管理的工程处理patch的方法：
+
+【生成patch】
+
+分支master 上是没修改前的，分支patch 上是修改以后的打patch的。
+
+# git format-patch -M master         // 当前分支所有超前master的提交
+
+# git format-patch -s 4e16                // 某次提交以后的所有patch, --4e16指的是SHA1 ID
+
+# git format-patch -1                     //  单次提交
+# git format-patch -3                    // 从master往前3个提交的内容，可修改为你想要的数值
+# git format-patch –n 07fe            // -n指patch数，07fe对应提交的名称, 某次提交（含）之前的几次提交
+
+# git format-patch -s --root origin     // 从origin到指定提交的所有patch
+
+应用patch：
+先检查patch文件：# git apply --stat newpatch.patch
+检查能否应用成功：# git apply --check  newpatch.patch
+打补丁：# git am --signoff < newpatch.patch
+
+(使用-s或--signoff选项，可以commit信息中加入Signed-off-by信息)
+
+
+或git am 
+
+1. 先切换到 patch分支
+	
+git checkout patch
+
+
+	
+git format-patch -M master
+由于git format-patch生成的补丁中含有这个补丁开发者的名字，因此在应用补丁时，这个名字会被记录进版本库，显然，这样做是恰当的。因此，目前使用Git的开源社区往往建议大家使用format-patch生成补丁。
+
+会生成一个文件名如：0002-Release-version-1.4.6.patch 的patch文件
+
+【合并patch】
+
+拿到patch以后，执行下面的命令：
+git am 0002-Release-version-1.4.6.patch
+
+如果不想直接commit，那么可以用下面这个命令打patch：
+	
+patch -p1 < 0002-Release-version-1.4.6.patch
+
+然后手动commit。
+
+
+sweetdum@sweetdum-ASUS:~/GitEx$ git branch PATCH
+sweetdum@sweetdum-ASUS:~/GitEx$ git checkout PATCH
+Switched to branch 'PATCH'
+sweetdum@sweetdum-ASUS:~/GitEx$ git apply patch
+sweetdum@sweetdum-ASUS:~/GitEx$ git commit -a -m "Patch Apply"
+
+
+
+

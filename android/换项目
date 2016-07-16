@@ -1,0 +1,152 @@
+#	new file:   bootable/bootloader/uboot-imx/board/freescale/mx6dl-c61x/4x_is43tr16128B-15hbli.cfg
+#	new file:   bootable/bootloader/uboot-imx/board/freescale/mx6dl-c61x/Makefile
+#	new file:   bootable/bootloader/uboot-imx/board/freescale/mx6dl-c61x/mx6dl-c61x.c
+#	new file:   bootable/bootloader/uboot-imx/board/freescale/mx6dl-c61x/plugin.S
+#	new file:   bootable/bootloader/uboot-imx/board/freescale/mx6dl-s50/4x_is43tr16128B-15hbli.cfg
+#	new file:   bootable/bootloader/uboot-imx/board/freescale/mx6dl-s50/Makefile
+#	new file:   bootable/bootloader/uboot-imx/board/freescale/mx6dl-s50/mx6dl-s50.c
+#	new file:   bootable/bootloader/uboot-imx/board/freescale/mx6dl-s50/plugin.S
+#	modified:   bootable/bootloader/uboot-imx/boards.cfg
+#	new file:   bootable/bootloader/uboot-imx/include/configs/mx6dl-c61x.h
+#	new file:   bootable/bootloader/uboot-imx/include/configs/mx6dl-s50.h
+#	modified:   bootable/recovery/recovery.cpp
+
+#	modified:   device/autolink/AndroidProducts.mk
+#	new file:   device/autolink/c61x_6dl/AndroidBoard.mk
+#	new file:   device/autolink/c61x_6dl/BoardConfig.mk
+#	new file:   device/autolink/c61x_6dl/audio_effects.conf
+#	new file:   device/autolink/c61x_6dl/audio_policy.conf
+#	new file:   device/autolink/c61x_6dl/bluetooth/bdroid_buildcfg.h
+#	new file:   device/autolink/c61x_6dl/build_id.mk
+#	new file:   device/autolink/c61x_6dl/c61x_6dl.mk
+#	new file:   device/autolink/c61x_6dl/fstab.freescale
+#	new file:   device/autolink/c61x_6dl/init.rc
+#	new file:   device/autolink/c61x_6dl/logo/bootanimation.zip
+#	new file:   device/autolink/c61x_6dl/logo/initlogo.rle
+#	new file:   device/autolink/c61x_6dl/logo/logo_linux_clut224.ppm
+#	new file:   device/autolink/c61x_6dl/logo/products.mk
+#	new file:   device/autolink/c61x_6dl/overlay/build/target/product/base.mk
+#	new file:   device/autolink/c61x_6dl/overlay/build/target/product/core.mk
+#	new file:   device/autolink/c61x_6dl/overlay/build/target/product/core_base.mk
+#	new file:   device/autolink/c61x_6dl/overlay/build/target/product/core_minimal.mk
+#	new file:   device/autolink/c61x_6dl/overlay/build/target/product/generic.mk
+#	new file:   device/autolink/c61x_6dl/overlay/build/target/product/languages.mk
+#	new file:   device/autolink/c61x_6dl/overlay/frameworks/base/core/res/res/values/config.xml
+#	new file:   device/autolink/c61x_6dl/overlay/frameworks/base/core/res/res/xml/power_profile.xml
+#	new file:   device/autolink/c61x_6dl/overlay/frameworks/base/core/res/res/xml/storage_list.xml
+#	new file:   device/autolink/c61x_6dl/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml
+#	new file:   device/autolink/c61x_6dl/overlay/packages/apps/Launcher2/res/values-sw720dp/dimens.xml
+#	new file:   device/autolink/c61x_6dl/overlay/packages/apps/Launcher2/res/values/config.xml
+#	new file:   device/autolink/c61x_6dl/overlay/packages/apps/Settings/res/values/arrays.xml
+#	new file:   device/autolink/c61x_6dl/overlay/packages/apps/Settings/res/values/bools.xml
+#	new file:   device/autolink/c61x_6dl/overlay/packages/apps/Settings/res/values/config.xml
+#	new file:   device/autolink/c61x_6dl/overlay/packages/apps/Settings/res/values/strings.xml
+#	new file:   device/autolink/c61x_6dl/required_hardware.xml
+#	new file:   device/autolink/c61x_6dl/required_service.mk
+#	new file:   device/autolink/c61x_6dl/sepolicy/app.te
+#	new file:   device/autolink/c61x_6dl/sepolicy/file_contexts
+#	new file:   device/autolink/c61x_6dl/sepolicy/fs_use
+#	new file:   device/autolink/c61x_6dl/sepolicy/genfs_contexts
+#	new file:   device/autolink/c61x_6dl/sepolicy/untrusted_app.te
+#	new file:   device/autolink/c61x_6dl/system.prop
+#	new file:   device/autolink/c61x_6dl/vendorsetup.sh
+#	new file:   device/autolink/s50_6dl/AndroidBoard.mk
+#	new file:   device/autolink/s50_6dl/BoardConfig.mk
+#	new file:   device/autolink/s50_6dl/audio_effects.conf
+#	new file:   device/autolink/s50_6dl/audio_policy.conf
+#	new file:   device/autolink/s50_6dl/bluetooth/bdroid_buildcfg.h
+#	new file:   device/autolink/s50_6dl/build_id.mk
+#	new file:   device/autolink/s50_6dl/fstab.freescale
+#	new file:   device/autolink/s50_6dl/init.rc
+#	new file:   device/autolink/s50_6dl/logo/bootanimation.zip
+#	new file:   device/autolink/s50_6dl/logo/initlogo.rle
+#	new file:   device/autolink/s50_6dl/logo/logo_linux_clut224.ppm
+#	new file:   device/autolink/s50_6dl/logo/products.mk
+#	new file:   device/autolink/s50_6dl/overlay/build/target/product/base.mk
+#	new file:   device/autolink/s50_6dl/overlay/build/target/product/core.mk
+#	new file:   device/autolink/s50_6dl/overlay/build/target/product/core_base.mk
+#	new file:   device/autolink/s50_6dl/overlay/build/target/product/core_minimal.mk
+#	new file:   device/autolink/s50_6dl/overlay/build/target/product/generic.mk
+#	new file:   device/autolink/s50_6dl/overlay/build/target/product/languages.mk
+#	new file:   device/autolink/s50_6dl/overlay/frameworks/base/core/res/res/values/config.xml
+#	new file:   device/autolink/s50_6dl/overlay/frameworks/base/core/res/res/xml/power_profile.xml
+#	new file:   device/autolink/s50_6dl/overlay/frameworks/base/core/res/res/xml/storage_list.xml
+#	new file:   device/autolink/s50_6dl/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml
+#	new file:   device/autolink/s50_6dl/overlay/packages/apps/Launcher2/res/values-sw720dp/dimens.xml
+#	new file:   device/autolink/s50_6dl/overlay/packages/apps/Launcher2/res/values/config.xml
+#	new file:   device/autolink/s50_6dl/overlay/packages/apps/Settings/res/values/arrays.xml
+#	new file:   device/autolink/s50_6dl/overlay/packages/apps/Settings/res/values/bools.xml
+#	new file:   device/autolink/s50_6dl/overlay/packages/apps/Settings/res/values/config.xml
+#	new file:   device/autolink/s50_6dl/overlay/packages/apps/Settings/res/values/strings.xml
+#	new file:   device/autolink/s50_6dl/required_hardware.xml
+#	new file:   device/autolink/s50_6dl/required_service.mk
+#	new file:   device/autolink/s50_6dl/s50_6dl.mk
+#	new file:   device/autolink/s50_6dl/sepolicy/app.te
+#	new file:   device/autolink/s50_6dl/sepolicy/file_contexts
+#	new file:   device/autolink/s50_6dl/sepolicy/fs_use
+#	new file:   device/autolink/s50_6dl/sepolicy/genfs_contexts
+#	new file:   device/autolink/s50_6dl/sepolicy/untrusted_app.te
+#	new file:   device/autolink/s50_6dl/system.prop
+#	new file:   device/autolink/s50_6dl/vendorsetup.sh
+#	new file:   frameworks/base/policy/src/com/android/internal/policy/impl/MyPointTrack.java
+#	modified:   frameworks/base/policy/src/com/android/internal/policy/impl/PhoneWindowManager.java
+#	modified:   kernel_imx/arch/arm/boot/dts/Makefile
+#	new file:   kernel_imx/arch/arm/boot/dts/imx6dl-c61x.dts
+#	new file:   kernel_imx/arch/arm/boot/dts/imx6dl-s50.dts
+#	new file:   kernel_imx/arch/arm/configs/autolink_c61x_defconfig
+#	new file:   kernel_imx/arch/arm/configs/autolink_s50_defconfig
+
+
+
+ bootable/bootloader/uboot-imx/board/freescale/mx6dl-c61x/4x_is43tr16128B-15hbli.cfg                |    148 +
+ bootable/bootloader/uboot-imx/board/freescale/mx6dl-c61x/Makefile                                  |     13 +
+ bootable/bootloader/uboot-imx/board/freescale/mx6dl-c61x/mx6dl-c61x.c                              |    759 +
+ bootable/bootloader/uboot-imx/board/freescale/mx6dl-c61x/plugin.S                                  |    480 +
+ bootable/bootloader/uboot-imx/boards.cfg                                                           |      1 +
+ bootable/bootloader/uboot-imx/include/configs/mx6dl-c61x.h                                         |    290 +
+ device/autolink/AndroidProducts.mk                                                                 |      1 +
+
+ device/autolink/c61x_6dl/AndroidBoard.mk                                                           |      7 +
+ device/autolink/c61x_6dl/BoardConfig.mk                                                            |     90 +
+ device/autolink/c61x_6dl/audio_effects.conf                                                        |    173 +
+ device/autolink/c61x_6dl/audio_policy.conf                                                         |    103 +
+ device/autolink/c61x_6dl/bluetooth/bdroid_buildcfg.h                                               |     32 +
+ device/autolink/c61x_6dl/build_id.mk                                                               |     29 +
+ device/autolink/c61x_6dl/c61x_6dl.mk                                                               |     93 +
+ device/autolink/c61x_6dl/fstab.freescale                                                           |     24 +
+ device/autolink/c61x_6dl/init.rc                                                                   |    180 +
+ device/autolink/c61x_6dl/logo/bootanimation.zip                                                    |    Bin 0 -> 628946 bytes
+ device/autolink/c61x_6dl/logo/initlogo.rle                                                         |    Bin 0 -> 63988 bytes
+ device/autolink/c61x_6dl/logo/logo_linux_clut224.ppm                                               | 102603 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ device/autolink/c61x_6dl/logo/products.mk                                                          |     11 +
+ device/autolink/c61x_6dl/overlay/build/target/product/base.mk                                      |    109 +
+ device/autolink/c61x_6dl/overlay/build/target/product/core.mk                                      |     31 +
+ device/autolink/c61x_6dl/overlay/build/target/product/core_base.mk                                 |     70 +
+ device/autolink/c61x_6dl/overlay/build/target/product/core_minimal.mk                              |     65 +
+ device/autolink/c61x_6dl/overlay/build/target/product/generic.mk                                   |     78 +
+ device/autolink/c61x_6dl/overlay/build/target/product/languages.mk                                 |     24 +
+ device/autolink/c61x_6dl/overlay/frameworks/base/core/res/res/values/config.xml                    |    224 +
+ device/autolink/c61x_6dl/overlay/frameworks/base/core/res/res/xml/power_profile.xml                |     61 +
+ device/autolink/c61x_6dl/overlay/frameworks/base/core/res/res/xml/storage_list.xml                 |     58 +
+ device/autolink/c61x_6dl/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml |     31 +
+ device/autolink/c61x_6dl/overlay/packages/apps/Launcher2/res/values-sw720dp/dimens.xml             |     20 +
+ device/autolink/c61x_6dl/overlay/packages/apps/Launcher2/res/values/config.xml                     |      3 +
+ device/autolink/c61x_6dl/overlay/packages/apps/Settings/res/values/arrays.xml                      |     57 +
+ device/autolink/c61x_6dl/overlay/packages/apps/Settings/res/values/bools.xml                       |     19 +
+ device/autolink/c61x_6dl/overlay/packages/apps/Settings/res/values/config.xml                      |     21 +
+ device/autolink/c61x_6dl/overlay/packages/apps/Settings/res/values/strings.xml                     |     22 +
+ device/autolink/c61x_6dl/required_hardware.xml                                                     |     46 +
+ device/autolink/c61x_6dl/required_service.mk                                                       |     22 +
+ device/autolink/c61x_6dl/sepolicy/app.te                                                           |      7 +
+ device/autolink/c61x_6dl/sepolicy/file_contexts                                                    |      2 +
+ device/autolink/c61x_6dl/sepolicy/fs_use                                                           |      4 +
+ device/autolink/c61x_6dl/sepolicy/genfs_contexts                                                   |      2 +
+ device/autolink/c61x_6dl/sepolicy/untrusted_app.te                                                 |      9 +
+ device/autolink/c61x_6dl/system.prop                                                               |      0
+ device/autolink/c61x_6dl/vendorsetup.sh                                                            |      2 +
+ kernel_imx/arch/arm/boot/dts/Makefile                                                              |      1 +
+ kernel_imx/arch/arm/boot/dts/imx6dl-c61x.dts                                                       |    590 +
+ kernel_imx/arch/arm/configs/autolink_c61x_defconfig                                                |   3466 ++++
+ 48 files changed, 110081 insertions(+)
+
+

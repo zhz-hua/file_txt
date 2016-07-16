@@ -1,0 +1,80 @@
+http://www.cnblogs.com/youxia/p/linux002.html
+http://blog.csdn.net/namecyf/article/details/7787479
+
+
+zhz@zhz:~/.vim$ mkdir bundle
+zhz@zhz:~/.vim$ ls
+bundle
+zhz@zhz:~/.vim$ cd bundle/
+zhz@zhz:~/.vim/bundle$ git clone https://github.com/gmarik/vundle.git
+
+% 	跳转到配对的括号去
+[[ 	跳转到代码块的开头去(但要求代码块中'{'必须单独占一行)
+gD 	跳转到局部变量的定义处
+'' 	跳转到光标上次停靠的地方, 是两个', 而不是一个"
+mx 	设置书签,x只能是a-z的26个字母
+`x 	跳转到书签处("`"是1左边的键)
+> 	增加缩进,"x>"表示增加以下x行的缩进
+< 	减少缩进,"x<"表示减少以下x行的缩进
+
+vim 代码跟踪 ctags
+	http://ctags.sourceforge.net, 下载一个类似 ctags-5.8.tar.gz 的文件下来
+	用下面的命令解压安装:
+	$ tar -xzvf ctags-5.6.tar.gz
+	$ cd ctags-5.8
+	$ ./configure
+	# sduo make install   // 
+
+	然后去你的源码目录, 如果你的源码是多层的目录, 就去最上层的目录, 在该目录下运行命令: ctags -R
+
+	我现在以 kernel 的源码目录做演示
+	$ cd ~/imx6-android-4.4.3/android/kernel_imx/
+	$ ctags -R
+	此时在~/imx6-android-4.4.3/android/kernel_imx/目录下会生成一个 tags 文件, 现在用vim打开 ~/imx6-android-4.4.3/android/kernel_imx/drivers/i2c/i2c-core.c
+	$ vim ~/imx6-android-4.4.3/android/kernel_imx/drivers/i2c/i2c-core.c
+	再在vim中运行命令:
+	:set tags=~/imx6-android-4.4.3/android/kernel_imx/tags
+	:set tags=~/imx6-android-4.4.3/android/hardware/tags
+	该命令将tags文件加入到vim中来, 你也可以将这句话放到~/.vimrc中去, 如果你经常在这个工程编程的话.
+	CTRL-] 命令会跳转到当前光标下单词的标签(即追踪函数功能，定义)
+	CTRL-T 命令跳转到上一个标签
+	此时在回头学习一下第3节中说的vim手册吧
+	:help usr_29
+	不过还有一个小瑕疵, 你修改程序后, 比如增加了函数定义, 删除了变量定义, tags文件不能自动rebuild, 你必须手动再运行一下命令:
+	$ ctags -R
+
+
+
+
+
+vim taglis可列出前文件中的所有宏, 全局变量, 函数
+	进http://sourceforge.net/projects/vim-taglist/files/vim-taglist/4.4/ 下载 taglist
+	在 ~/.vim 目录下解压taglist_xx.zip
+	 用帮助文件	:help taglist.txt
+
+	首先请先在你的~/.vimrc文件中添加下面两句:
+	let Tlist_Show_One_File=1 		如果你不想同时显示多个文件中的tag，设置Tlist_Show_One_File为1。缺省为显示多个文件中的tag
+	let Tlist_Exit_OnlyWindow=1	如果你在想taglist窗口是最后一个窗口时退出VIM，设置Tlist_Exit_OnlyWindow为１
+	let Tlist_Show_Menu=１	在gvim中，如果你想显示taglist菜单，设置Tlist_Show_Menu为１。你可以使用Tlist_Max_Submenu_Items和Tlist_Max_Tag_Length来控制菜单条目数和所显示tag名字的长度；
+	let Tlist_Auto_Open=1	如果你想在启动VIM后，自动打开taglist窗口，设置Tlist_Auto_Open为1；
+
+	此时用vim打开一个c源文件试试:
+	$ vim ~/vim/src/main.c
+	进入vim后用下面的命令打开taglist窗口, 如图5:
+	:Tlist
+
+	将光标移到你想要看的tag上, 然后按下空格键, 在下面的命令栏中, 如图下边黄色的方框, 会显示该tag在源码中完整的写法,
+	将光标移到你想要看的tag上按下回车后, 源程序会自动跳转到VimMain的定义处.
+
+	使用“ctrl w w”将光标调到taglist的窗口里。在窗口里分别区分了宏定义和全局变量，函数等！
+	u             更新taglist窗口中的tag
+	s             更改排序方式，在按名字排序和按出现顺序排序间切换
+	x             taglist窗口放大和缩小，方便查看较长的tag
+	+             打开一个折叠，同zo
+	-             将tag折叠起来，同zc
+	*             打开所有的折叠，同zR
+	=             将所有tag折叠起来，同zM
+	[[            跳到前一个文件
+	]]            跳到后一个文件
+	q             关闭taglist窗口
+

@@ -1,0 +1,228 @@
+Power management options  --->
+电源管理有APM和ACPI两种标准且不能同时使用.即使关闭该选项,X86上运行的Linux也会在空闲时发出HLT指令将CPU进入睡眠状态
+─────────────────────────────────────────────────────────────────────────────────────┐ │  
+[*] Suspend to RAM and standby                                                
+[*] Opportunistic sleep                                                       
+[*] User space wakeup sources interface                                       
+(0)   Maximum number of user space wakeup sources (0 = no limit)              
+[ ]   Garbage collector for user space wakeup sources                         
+[*] Run-time PM core functionality                                            
+[*] Power Management Debug Support                                            
+[ ]   Extra PM attributes in sysfs for low-level debugging/testing            
+[*]   Test suspend/resume and wakealarm during bootup                         
+< > Advanced Power Management Emulation                                       
+-*- Operating Performance Point (OPP) Layer library                           
+[*] Log time spent in suspend  
+─────────────────────────────────────────────────────────────────────────────────────┐                                                
+                                                                                                                                                                                                      
+[*] Suspend to RAM and standby
+	CONFIG_SUSPEND
+	待机到内存，即内存供电而暂时关闭硬盘等外设	
+    	“休眠到内存”(ACPI S3)支持.也就是系统休眠后,除了内存之外,其他所有部件都停止工作,
+	重开机之后可以直接从内存中恢复运行状态.要使用此功能,你需要执行”echo mem > /sys/power/state”命令,还需要在BIOS中开启S3支持,否则	可能会有问题
+
+[*] Opportunistic sleep
+	CONFIG_PM_AUTOSLEEP
+    	这是一种从安卓借鉴过来的休眠方式.这个特性在安卓系统上被称为”suspend blockers”或”wakelocks”.这是一种更激进的电源管理模式,
+	以尽可能节约电力为目的.系统默认就处于休眠状态,仅为内存和少数唤醒系统所必须的设备供电,当有任务(唤醒源)需要运行的时候才唤醒相关组件工作,
+	工作完成后又立即进入休眠状态.不过这些特性需要相应的设备驱动程序的支持.目前除了安卓设备,在PC和服务器领域,能够利用此特性的驱动还比较少,不过这是一项非常有前途的电源技术,喜欢尝鲜的可以考虑开启
+	机会休眠， 当没有任务时，需要寻找时机，进入suspended
+[*] User space wakeup sources interface 
+	CONFIG_PM_WAKELOCKS
+    	允许用户空间的程序通过sys文件系统接口,创建/激活/撤销系统的”唤醒源”.需要与CONFIG_PM_AUTOSLEEP配合使用.
+	用户空间接口唤醒
+(0)   Maximum number of user space wakeup sources (0 = no limit) 
+	CONFIG_PM_WAKELOCKS_LIMIT
+	用户空间程序允许使用的”唤醒源”数量,”0″表示无限,最大值是”100000″.
+[ ]   Garbage collector for user space wakeup sources
+	CONFIG_PM_WAKELOCKS_GC
+    	对”唤醒源”对象使用垃圾回收.主要用于调试目的和Android环境.
+[*] Run-time PM core functionality 
+	CONFIG_PM_RUNTIME
+    	允许IO设备(比如硬盘/网卡/声卡)在系统运行时进入省电模式,并可在收到(硬件或驱动产生的)唤醒信号后恢复正常.此功能通常需要硬件的支持.建议在笔记本/嵌入式等需要节约电力的设备上选”Y”. 
+[*] Power Management Debug Support  
+	CONFIG_PM_DEBUG
+    	仅供调试使用
+[ ]   Extra PM attributes in sysfs for low-level debugging/testing 
+	在sysfs中额外的PM属性  的低级别的调试/测试
+[*]   Test suspend/resume and wakealarm during bootup  
+	测试 暂停/恢复和 wakealarm 在引导
+< > Advanced Power Management Emulation 
+	高级电源管理的支持
+
+-*- Operating Performance Point (OPP) Layer library  
+	Operating Performance Point (OPP)接口                         
+[*] Log time spent in suspend
+	暂停登录时间 
+
+
+
+
+Legacy Power Management API
+
+传统的电源管理API,比如软关机和系统休眠等接口
+
+
+
+
+
+ACPI (Advanced Configuration and Power Interface) Support
+
+必须运行acpid守护程序ACPI才能起作用.ACPI是为了取代APM而设计的,因此应该尽量使用ACPI而不是APM
+
+AC Adapter
+
+如果你的系统可以在AC和电池之间转换就可以选
+
+Battery
+
+通过/proc/acpi/battery向用户提供电池状态信息,用电池的笔记本可以选
+
+Button
+
+守护程序捕获Power,Sleep,Lid按钮事件,并根据/proc/acpi/event做相应的动作,软件控制的poweroff需要它
+
+Video
+
+仅对集成在主板上的显卡提供ACPI2.0支持,且不是所有集成显卡都支持
+
+Generic Hotkey
+
+统一的热键驱动,建议不选
+
+Fan
+
+允许通过用户层的程序来对系统风扇进行控制(开,关,查询状态),支持它的硬件并不多
+
+Dock
+
+支持由ACPI控制的集线器(docking stations)
+
+Processor
+
+让ACPI处理空闲状态,并使用ACPI C2和C3处理器状态在空闲时节省电能,同时它还被cpufreq的"Performance-state drivers"选项所依赖
+
+Thermal Zone
+
+系统温度过高时可以利用ACPI thermal zone及时调整工作状态以避免你的CPU被烧毁
+
+ASUS/Medion Laptop Extras
+
+ASUS笔记本专用,以提供额外按钮的支持,用户可以通过/proc/acpi/asus来打开或者关闭LCD的背光/调整亮度/定制LED的闪烁指示等功能
+
+IBM ThinkPad Laptop Extras
+
+IBM ThinkPad专用
+
+Toshiba Laptop Extras
+
+Toshiba笔记本专用
+
+Disable ACPI for systems before Jan 1st this year
+
+输入四位数的年份,在该年的1月1日前不使用ACPI的功能("0"表示一直使用)
+
+Debug Statements
+
+详细的ACPI调试信息,不搞开发就别选
+
+Power Management Timer Support
+
+这个Timer在所有ACPI兼容的平台上都可用,且不会受PM功能的影响,建议总是启用它.如果你在kernel log中看到了'many lost ticks'那就必须启用它
+
+ACPI0004,PNP0A05 and PNP0A06 Container Driver
+
+支持内存和CPU的热插拔
+
+Smart Battery System
+
+支持依赖于I2C的"智能电池".这种电池非常老旧且罕见,还与当前的ACPI标准兼容性差
+
+APM (Advanced Power Management) BIOS Support
+
+APM在SMP机器上必须关闭,一般来说当前的笔记本都支持ACPI,所以应尽量关闭该该选项
+
+Ignore USER SUSPEND
+
+只有NEC Versa M系列的笔记本才需要选择这一项
+
+Enable PM at boot time
+
+系统启动时即启用APM,选上这个选项能让系统自动的进行电源管理,但常常导致启动时死机
+
+Make CPU Idle calls when idle
+
+系统空闲时调用空闲指令(halt),只有老式的CPU才需要选它,且对于SMP系统必须关闭
+
+Enable console blanking using APM
+
+在屏幕空白时关闭LCD背光,事实上对所有的笔记本都无效
+
+RTC stores time in GMT
+
+将硬件时钟应该设为格林威治时间,否则视为本地时间.建议你使用GMT,这样你无须为时区的改变而担心
+
+Allow interrupts during APM BIOS calls
+
+允许APM的BIOS调用时中断,IBM Thinkpad的一些新机器需要这项.如果休眠时挂机(包括睡下去就醒不来),可以试试它
+
+Use real mode APM BIOS call to power off
+
+此驱动为某些有Bug的BIOS准备,如果你的系统不能正常关机或关机时崩溃,可以试试它
+
+CPU Frequency scaling
+
+允许动态改变CPU主频,达到省电和降温的目的,必须同时启用下面的一种governor才行
+
+Enable CPUfreq debugging
+
+允许对CPUfreq进行调试
+
+CPU frequency translation statistics
+
+通过sysfs文件系统输出CPU频率变换的统计信息
+
+CPU frequency translation statistics details
+
+输出详细的CPU频率变换统计信息
+
+Default CPUFreq governor
+
+默认的CPU频率调节器
+
+'performance' governor
+
+'性能'优先,静态的将频率设置为cpu支持的最高频率
+
+'powersave' governor
+
+'节能'优先,静态的将频率设置为cpu支持的最低频率
+
+'userspace' governor for userspace frequency scaling
+
+既允许手动调整cpu频率,也允许用户空间的程序动态的调整cpu频率(需要额外的调频软件,比如cpufreqd)
+
+'ondemand' cpufreq policy governor
+
+'立即响应',周期性的考察CPU负载并自动的动态调整cpu频率(不需要额外的调频软件),适合台式机
+
+'conservative' cpufreq governor
+
+'保守',和'ondemand'相似,但是频率的升降是渐变式的(幅度不会很大),更适合用于笔记本/PDA/AMD64环境
+
+ACPI Processor P-States driver
+
+将ACPI2.0的处理器性能状态报告给CPUFreq processor drivers以决定如何调整频率,该选项依赖于ACPI->Processor
+
+{省略的部分请按照自己实际使用的CPU选择}
+
+/proc/acpi/processor/../performance interface
+
+内核帮助文档反对使用该选项,即将被废除
+
+Relaxed speedstep capability checks
+
+放松对系统的speedstep兼容性检查,仅在某些老旧的Intel系统上需要打开
+
+版权声明：本文为博主原创文章，未经博主允许不得转载。
+

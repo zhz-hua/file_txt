@@ -1,0 +1,24 @@
++#include <linux/kprobes.h>
++#include <asm/traps.h>
+ /* Register definitions */
+ #define URXD0 0x0  /* Receiver Register */
+ #define URTX0 0x40 /* Transmitter Register */
+@@ -1148,7 +1150,8 @@ static int imx_startup(struct uart_port *port)
+        struct imx_port *sport = (struct imx_port *)port;
+        int retval, i;
+        unsigned long flags, temp;
+-
++       printk( "the imx startup:%s\n",__func__ );
++       dump_stack( ); 
+        retval = clk_prepare_enable(sport->clk_per);
+        if (retval)
+                goto error_out1;
+
+
+
+
+#include <linux/kprobes.h>
+#include <asm/traps.h>
+
+
+	dump_stack( ); 

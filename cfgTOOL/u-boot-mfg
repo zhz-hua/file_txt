@@ -1,0 +1,89 @@
+u-boot-imx6dl-m41s_mfg.imx
+一：在 bootable/bootloader/uboot-imx/boards.cfg 增加一项配置mx6dl-m41s_mfg 
+Active  arm         armv7          mx6         freescale       mx6dl-m41s          mx6dl-m41s_mfg               mx6dl-m41s:IMX_CONFIG=board/freescale/mx6dl-m41s/4x_is43tr16128B-15hbli.cfg,MX6DL,DDR_MB     =1024,DEFAULT_FDT_FILE="imx6dl-m41s.dtb"                       Clive Liu <liuxusheng@auto-link.com.cn>  
+
+                                                                                                
+Active  arm         armv7          mx6         freescale       mx6dl-m41s          mx6dl-m41s_android           mx6dl-m41s:IMX_CONFIG=board/freescale/mx6dl-m41s/4x_is43tr16128B-15hbli.cfg,MX6DL,DDR_MB     =1024,ANDROID_SUPPORT       Clive Liu <liuxusheng@auto-link.com.cn>
+
+
+二：在device/fsl/m41s_6dl/BoardConfig.mk 增加mx6dl-m41s_mfg_config
+TARGET_BOOTLOADER_CONFIG := imx6dl:mx6dl-m41s_android_config imx6dl-m41s_mfg:mx6dl-m41s_mfg_config
+TARGET_BOARD_DTS_CONFIG := imx6dl:imx6dl-m41s.dtb
+TARGET_KERNEL_DIFFCONF := m41s_diffconf
+
+git show e459ed7aff9b3fe5ec62d53cddb38811273062ea  优化了bootloader
+  1 /* Automatically generated - do not edit */                                                                                                                                                              
+  2 #define CONFIG_IMX_CONFIG   board/freescale/mx6dl-m41s/m41D_1IS4STR16128B.cfg
+  3 #define CONFIG_MX6Q 1
+  4 #define CONFIG_DDR_MB   1024
+  5 #define CONFIG_ANDROID_SUPPORT  1
+  6 #define CONFIG_SYS_ARCH  "arm"
+  7 #define CONFIG_SYS_CPU   "armv7"
+  8 #define CONFIG_SYS_BOARD "mx6dl-m41s"
+  9 #define CONFIG_SYS_VENDOR "freescale"
+ 10 #define CONFIG_SYS_SOC    "mx6"
+ 11 #define CONFIG_BOARDDIR board/freescale/mx6dl-m41s
+ 12 #include <config_cmd_defaults.h>
+ 13 #include <config_defaults.h>
+ 14 #include <configs/mx6dl-m41s.h>
+ 15 #include <asm/config.h>
+ 16 #include <config_fallbacks.h>
+ 17 #include <config_uncmd_spl.h>
+
+
+	How to Configure U-Boot and Kernel Image for MFG.
+	U-Boot:
+	1. Add Mfgtool configuration header file in : ${u_boot_root}\include\configs
+	The file name should align with existing configuration file name.  
+	Ex. mx6q_sabresd.h is used to generate normal U-Boot and 
+	mx6q_sabresd_mfg.h is used to generate the U-Boot for MFGTool firmware.
+
+	Generally, you can create it from the existing configuration file.
+	The following MACROS must be defined:
+	#define CONFIG_MFG 
+	#define CONFIG_CMDLINE_TAG 
+	#define CONFIG_REVISION_TAG 
+	#define CONFIG_SETUP_MEMORY_TAGS 
+	#define CONFIG_INITRD_TAG
+	#define CONFIG_BOOTDELAY 0  
+	#define CONFIG_BOOTARGS "console=ttymxc0,115200 "\
+	                                                  "rdinit=/linuxrc" 
+	#define CONFIG_BOOTCOMMAND      "bootm 0x10800000 0x10c00000"
+	; 0x10800000 is the load address of the kernel image. It neesd to be changed according to your specific platform memory configuration.
+	; 0x10c00000 is the initrd address. It needs to be changed according to your specific platform memory configuration. 
+	#define CONFIG_ENV_IS_NOWHERE 1;avoid reading U-Boot command from storage.
+	If a new bsp arg needs to be added, one can add it by following the contents in CONFIG_BOOTARGS, for instance: 
+	#define CONFIG_BOOTARGS "console=ttymxc0,115200 "\
+
+	还原已经提交的修改
+	此次操作之前和之后的commit和history都会保留，并且把这次撤销作为一次最新的提交
+	   git revert HEAD                  撤销前一次 commit
+	    git revert HEAD^               撤销前前一次 commit
+	    git revert commit-id （比如：fa042ce57ebbe5bb9c8db709f719cec2c58ee7ff）撤销指定的版本，撤销也会作为一次提交进行保存。
+	git revert是提交一个新的版本，将需要revert的版本的内容再反向修改回去，版本会递增，不影响之前提交的内容。
+
+
+Kernel:
+1. Add new configuration for MFG firmware. Normally, you can copy it from the existing configuration file. 
+If you take the i.MX 6 for instance, the configuration file is usually located in arch/arm/configs/. There is an imx6_defconfig which is used for i.MX 6 serial. We can add an imx6_updater_defconfig for MFG firmware. Note the following for the imx6_updater_defconfig:
+
+Must build in USB and storage related driver, such as SD Card ... 
+Must build in mass storage gadget class driver
+Must define CONFIG_FSL_UTP=y 
+Build in initramfs support
+Enable watchdog 
+CONFIG_WATCHDOG=y
+CONFIG_SOFT_WATCHDOG=y
+2. Build the kernel image for MFGTool V2.
+3. Copy kernel image to the “Profiles\${TARGET_PROFILE_NAME}\OS Firmware”, such as: “Profiles\MX6Q Linux Update\OS Firmware”. This kernel image file must be located in this directory. 
+4. Rename kernel image to what you want. Please note that it should align with the file name assigned in the ucl2.xml operation list. 
+For example, in your operation list, there should be a <CMD/> as below:
+<CMD state="BootStrap" type="load" file="uImage" address="0x10800000"
+loadSection="OTH" setSection="OTH" HasFlashHeader="FALSE" >Loading Kernel.</CMD>
+The name of your uboot bin should be “uImage”. 
+
+
+git revert e459ed7aff9b3fe5ec62d53cddb38811273062ea
+
+
+

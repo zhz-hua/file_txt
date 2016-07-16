@@ -1,0 +1,30 @@
+frameworks/base/core/jni/android_os_SystemClock.cpp
+setCurrentTimeMillis
+
+diff --git a/frameworks/base/services/java/com/android/server/LocationManagerService.java b/frameworks/base/services/java/com/android/server/LocationManagerService.java
+index e9b4956..310218b 100644
+--- a/frameworks/base/services/java/com/android/server/LocationManagerService.java
++++ b/frameworks/base/services/java/com/android/server/LocationManagerService.java
+@@ -13,6 +13,10 @@
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
++ *
++ * 修改记录:
++ * 日期         修改人          描述
++ * 2016/1/11     陈辉           添加同步gps时间
+  */
+ 
+ package com.android.server;
+@@ -1873,6 +1877,11 @@ public class LocationManagerService extends ILocationManager.Stub {
+         Message m = Message.obtain(mLocationHandler, MSG_LOCATION_CHANGED, location);
+         m.arg1 = (passive ? 1 : 0);
+         mLocationHandler.sendMessageAtFrontOfQueue(m);
++
++       long gpsTime = location.getTime();
++       if (gpsTime > 0 && (gpsTime / 1000 < Integer.MAX_VALUE)) {
++               SystemClock.setCurrentTimeMillis(gpsTime);
++       }
+     }
+ 
+

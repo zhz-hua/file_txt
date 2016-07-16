@@ -1,0 +1,59 @@
+Android GPS架构如下图所示，整个定位服务的系统架构共分为六层。
+
+
+
+
+（1）最上面是应用层，可安装基于定位服务的应用，这些应用可以发起定位请求，比如百度地图等。
+
+ 
+
+（2）第二层是框架层(framework层)，这一层包含了被APP调用的API以及系统服务的实现，主要由 Java 语言来实现。
+
+       a. Java语言实现的API，即android.location包中的内容，主要用来被APP调用
+
+目录：frameworks/base/location/java/android/location
+
+       b.系统服务实现
+
+目录1：frameworks/base/location/java/com/android/internal/location
+
+这个目录是Framework对Location服务的内部实现
+
+目录2：framework\base\services\core\java\com\android\server
+
+这个目录中的LocationManagerService.java是Location服务对内部实现的一种封装
+
+ 
+
+（3）第三层是JNI层
+
+JNI层只有一个文件，起到承上启下的作用。上层承接Framework，下层调用HAL层具体硬件抽象实现。
+
+目录：
+
+frameworks/base/services/jni/com_android_server_location_GpsLocationProvider.cpp
+
+ 
+
+（4）第四层是共享库层(HAL层)，本层由 C 以及 C++ 语言实现, 框架层与共享库层使用 JNI进行衔接。HAL层相当于一个linux应用程序接口，通过open，close等操作，操作硬件设备。
+
+目录：
+
+hardware/qcom/gps
+
+hardware/libhardware/include/hardware/gps.h
+
+ 
+
+（5）第五层是 Linux内核层,整个Android系统都是以Linux内核为基础的。
+
+ 
+
+（6）最底层是GPS硬件设备层
+
+ 
+
+从上至下它们是逐层依赖的关系，每层依赖下面一层完成其所需提供的服务。
+
+ 
+【概要定位流程】：由应用层APP发起定位请求，调用Framework层提供的API接口，此时会去启动一个定位服务的线程，通过LocationManagerService定位服务，会调用到对应的Location provider，然后通过native方法调用到JNI中，JNI获得GpsInterface并传递给接口一个回调函数的实现。GpsInterface是HAL层最主要的实现
